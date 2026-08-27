@@ -1,0 +1,8 @@
+node_modules/
+**/dist/
+**/dist-run/
+**/out/
+*.tsbuildinfo
+.env
+.DS_Store
+*.log

@@ -1,0 +1,13 @@
+{
+  "name": "morphpay-v2",
+  "version": "2.0.0",
+  "description": "MorphPay v2 — PaymentIntent Builder API (target surface; no phantom aliases)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

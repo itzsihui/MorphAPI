@@ -1,0 +1,10 @@
+export type { ApiOracle, PhantomFinding, InspectResult } from "./inspector";
+export { loadOracle, inspectCode, classifyPhantom } from "./inspector";
+export type { UsageSpan } from "./astScan";
+export { findChargesCreateSpans, parseSourceFile } from "./astScan";
+export { applySpanReplacement } from "./apply";
+export { runTypecheck } from "./typecheck";
+export { extractSymbolsFromCode } from "./symbols";
+export { generateCode, stripCodeFences, readUtf8, writeUtf8 } from "./llm";
+export type { LlmMessage, LlmGenerateOptions } from "./llm";
+export { loadEnv } from "./env";

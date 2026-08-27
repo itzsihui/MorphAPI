@@ -1,0 +1,13 @@
+{
+  "name": "morphpay-v1",
+  "version": "1.0.0",
+  "description": "MorphPay v1 — deprecated charges API (baseline fixture)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

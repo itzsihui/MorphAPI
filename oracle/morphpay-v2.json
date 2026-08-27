@@ -1,0 +1,60 @@
+{
+  "api": "morphpay",
+  "version": "2.0.0",
+  "description": "Trusted symbol oracle for MorphPay v2 — Hallucination Inspector membership set",
+  "classes": [
+    "PaymentIntent",
+    "PaymentIntentBuilder",
+    "MorphPayClient"
+  ],
+  "enums": [
+    "CaptureMode"
+  ],
+  "enumMembers": {
+    "CaptureMode": ["AUTOMATIC", "MANUAL"]
+  },
+  "methods": {
+    "PaymentIntentBuilder": [
+      "setAmount",
+      "setCurrency",
+      "setPaymentMethod",
+      "setCaptureMode",
+      "build"
+    ],
+    "IntentsApi": ["confirm"],
+    "MorphPayClient": []
+  },
+  "staticMembers": {
+    "PaymentIntent": ["Builder"]
+  },
+  "functions": ["createMorphPay"],
+  "allowedImports": [
+    "morphpay-v2",
+    "morphpay"
+  ],
+  "allowedSymbols": [
+    "CaptureMode",
+    "CaptureMode.AUTOMATIC",
+    "CaptureMode.MANUAL",
+    "PaymentIntent",
+    "PaymentIntent.Builder",
+    "PaymentIntentBuilder",
+    "setAmount",
+    "setCurrency",
+    "setPaymentMethod",
+    "setCaptureMode",
+    "build",
+    "confirm",
+    "createMorphPay",
+    "intents",
+    "MorphPayClient"
+  ],
+  "knownPhantoms": [
+    "CaptureMode.IMMEDIATE",
+    "IntentFactory",
+    "setCapture",
+    "CONTENT_TYPE_PAYMENT",
+    "CONTENT_TYPE_STREAM",
+    "charges"
+  ]
+}

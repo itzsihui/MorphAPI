@@ -1,0 +1,16 @@
+{
+  "name": "client-v1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample MorphPay client using deprecated v1 charges API",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "morphpay-v1": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

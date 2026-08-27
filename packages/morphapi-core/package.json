@@ -1,0 +1,16 @@
+{
+  "name": "@morphapi/core",
+  "version": "0.1.0",
+  "description": "AST scan, Hallucination Inspector, and surgical apply for MorphAPI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10"
+  }
+}

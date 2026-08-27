@@ -1,0 +1,25 @@
+{
+  "name": "morphapi",
+  "private": true,
+  "version": "0.1.0",
+  "description": "MorphAPI — hybrid AI+AST baseline for MorphPay scaffolding-hallucination demo",
+  "workspaces": [
+    "packages/*",
+    "fixtures/*",
+    "baselines/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @morphapi/core && npm run build -w morphpay-v1 && npm run build -w morphpay-v2",
+    "demo": "bash scripts/demo.sh",
+    "demo:llm-only": "npm run start -w @morphapi/baseline-llm-only",
+    "demo:hybrid": "npm run start -w @morphapi/baseline-hybrid",
+    "demo:ui": "npm run dev -w @morphapi/demo-ui",
+    "typecheck:v1": "npm run typecheck -w client-v1",
+    "typecheck:llm-only": "npm run typecheck -w @morphapi/baseline-llm-only",
+    "typecheck:hybrid": "npm run typecheck -w @morphapi/baseline-hybrid"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
