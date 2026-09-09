@@ -1,0 +1,13 @@
+{
+  "name": "stripe-charge-v2",
+  "version": "2.0.0",
+  "description": "Charge API v2 — same amount param name, unit = integer cents. Scenario 3 fixture.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

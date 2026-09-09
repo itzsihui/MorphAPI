@@ -1,0 +1,35 @@
+{
+  "api": "users-list",
+  "version": "2.0.0",
+  "description": "Oracle for Scenario 5 — listUsers returns { data, pagination }; consumers must unwrap .data (edge adapter).",
+  "classes": ["UsersListClient"],
+  "enums": [],
+  "enumMembers": {},
+  "methods": {
+    "UsersListClient": ["listUsers"]
+  },
+  "functions": ["createUsersApi"],
+  "allowedImports": ["users-list-v2"],
+  "allowedSymbols": [
+    "createUsersApi",
+    "listUsers",
+    "User",
+    "UsersPage",
+    "Pagination",
+    "UsersListClient",
+    "data",
+    "pagination",
+    "cursor",
+    "hasMore"
+  ],
+  "knownPhantoms": [],
+  "transforms": [
+    {
+      "response": "listUsers",
+      "from": "User[]",
+      "to": "{ data: User[]; pagination: Pagination }",
+      "rule": "(await api.listUsers()).data",
+      "requiredPatterns": [".data"]
+    }
+  ]
+}

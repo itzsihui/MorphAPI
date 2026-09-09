@@ -1,0 +1,40 @@
+{
+  "api": "auth-jwt",
+  "version": "2.0.0",
+  "description": "Oracle for Auth JWT secret→JWKS migration. Allowed surface + known phantoms + evasion markers.",
+  "enums": [],
+  "enumMembers": {},
+  "classes": ["JwksClient", "SigningKey"],
+  "methods": {
+    "JwksClient": ["getSigningKey"],
+    "SigningKey": ["getPublicKey"]
+  },
+  "functions": ["createJwksClient", "decodeHeader"],
+  "allowedImports": ["auth-jwt-v2"],
+  "allowedSymbols": [
+    "jwt",
+    "jwt.verify",
+    "verify",
+    "decodeHeader",
+    "createJwksClient",
+    "getSigningKey",
+    "getPublicKey",
+    "JwksClient",
+    "SigningKey",
+    "PublicKey",
+    "JwtPayload",
+    "JwtHeader"
+  ],
+  "knownPhantoms": [
+    "Auth0.verify",
+    "Auth0",
+    "jwt.verifyWithJwks",
+    "verifyWithJwks",
+    "jwksClient.verify",
+    "verifySync",
+    "jwt.verifySync",
+    "jsonwebtoken.verify",
+    "express-jwt",
+    "jose.jwtVerify"
+  ]
+}

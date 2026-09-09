@@ -1,0 +1,13 @@
+{
+  "name": "aws-s3-v1",
+  "version": "1.0.0",
+  "description": "Legacy AWS S3-style client — getObject().promise() (SDK v2 pattern)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

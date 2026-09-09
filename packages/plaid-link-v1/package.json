@@ -1,0 +1,13 @@
+{
+  "name": "plaid-link-v1",
+  "version": "1.0.0",
+  "description": "Legacy Plaid-style Link token API using string products/country_codes (baseline fixture)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

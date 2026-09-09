@@ -1,0 +1,32 @@
+{
+  "api": "aws-s3",
+  "version": "2.0.0",
+  "description": "Oracle for AWS S3 getObject().promise() → client.send(GetObjectCommand) migration + async contagion checks.",
+  "enums": [],
+  "enumMembers": {},
+  "classes": ["GetObjectCommand", "S3Client"],
+  "methods": {
+    "S3Client": ["send"]
+  },
+  "functions": ["createS3Client"],
+  "allowedImports": ["aws-s3-v2", "@aws-sdk/client-s3"],
+  "allowedSymbols": [
+    "createS3Client",
+    "GetObjectCommand",
+    "S3Client",
+    "send",
+    "GetObjectOutput",
+    "GetObjectRequest",
+    "Bucket",
+    "Key",
+    "Body",
+    "ContentType",
+    "input"
+  ],
+  "knownPhantoms": [
+    "S3.getObject",
+    "GetObjectRequestFactory",
+    "getObjectCommand",
+    "GetObject.promise"
+  ]
+}

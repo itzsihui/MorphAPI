@@ -1,0 +1,13 @@
+{
+  "name": "aws-s3-v2",
+  "version": "2.0.0",
+  "description": "Target AWS SDK v3-style S3 — client.send(new GetObjectCommand(...))",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

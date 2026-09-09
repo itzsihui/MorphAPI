@@ -1,0 +1,16 @@
+{
+  "name": "aws-s3-client-v1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-level S3 client — sync→async contagion fixture",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "aws-s3-v1": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

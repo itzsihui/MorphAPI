@@ -1,0 +1,18 @@
+{
+  "name": "@morphapi/baseline-auth-llm-only",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure LLM Auth JWT migration with typecheck repair loop (expect evasion or phantoms)",
+  "scripts": {
+    "start": "tsc -p tsconfig.run.json && node dist-run/run.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@morphapi/core": "*",
+    "auth-jwt-v2": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

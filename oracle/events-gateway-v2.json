@@ -1,0 +1,44 @@
+{
+  "api": "events-gateway",
+  "version": "2.0.0",
+  "description": "Oracle for Scenario 9 — discriminator type→event_type and SCREAMING_SNAKE→dotted lowercase values.",
+  "classes": ["GatewayClient"],
+  "enums": [],
+  "enumMembers": {},
+  "methods": {
+    "GatewayClient": ["subscribe"]
+  },
+  "functions": ["createGateway"],
+  "allowedImports": ["events-gateway-v2"],
+  "allowedSymbols": [
+    "createGateway",
+    "subscribe",
+    "GatewayEvent",
+    "GatewayClient",
+    "EventType",
+    "EventHandler",
+    "event_type",
+    "message.created",
+    "message.updated",
+    "reaction.added"
+  ],
+  "knownPhantoms": [
+    "MESSAGE_CREATE",
+    "MESSAGE_UPDATE",
+    "REACTION_ADD"
+  ],
+  "discriminator": {
+    "fromProperty": "type",
+    "toProperty": "event_type",
+    "valueMap": {
+      "MESSAGE_CREATE": "message.created",
+      "MESSAGE_UPDATE": "message.updated",
+      "REACTION_ADD": "reaction.added"
+    },
+    "requiredValues": [
+      "message.created",
+      "message.updated",
+      "reaction.added"
+    ]
+  }
+}

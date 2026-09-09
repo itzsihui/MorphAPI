@@ -1,0 +1,13 @@
+{
+  "name": "events-gateway-v2",
+  "version": "2.0.0",
+  "description": "Gateway events v2 — discriminator `event_type` with dotted lowercase values. Scenario 9 fixture.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

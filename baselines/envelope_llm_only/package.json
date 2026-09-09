@@ -1,0 +1,18 @@
+{
+  "name": "@morphapi/baseline-envelope-llm-only",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure LLM users-list flat→envelope migration (expect DFG miss on consumers)",
+  "scripts": {
+    "start": "tsc -p tsconfig.run.json && node dist-run/run.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@morphapi/core": "*",
+    "users-list-v2": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "api": "plaid-link",
+  "version": "2.0.0",
+  "description": "Oracle subset mirroring real Plaid TS SDK enums (plaid@30 CountryCode / Products). Source: published api.d.ts, not vague docs.",
+  "source": "Extracted from plaid package dist/api.d.ts — CountryCode.Us, Products.Transactions, …",
+  "enums": ["CountryCode", "Products"],
+  "enumMembers": {
+    "CountryCode": ["Us", "Gb", "Ca", "Fr", "De"],
+    "Products": ["Auth", "Identity", "Transactions", "Investments", "Liabilities"]
+  },
+  "classes": ["PlaidApi"],
+  "methods": {
+    "PlaidApi": ["linkTokenCreate"]
+  },
+  "functions": ["createPlaidClient"],
+  "allowedImports": ["plaid-link-v2", "plaid"],
+  "allowedSymbols": [
+    "CountryCode",
+    "CountryCode.Us",
+    "CountryCode.Gb",
+    "CountryCode.Ca",
+    "CountryCode.Fr",
+    "CountryCode.De",
+    "Products",
+    "Products.Auth",
+    "Products.Identity",
+    "Products.Transactions",
+    "Products.Investments",
+    "Products.Liabilities",
+    "Us",
+    "Gb",
+    "Ca",
+    "Fr",
+    "De",
+    "Auth",
+    "Identity",
+    "Transactions",
+    "Investments",
+    "Liabilities",
+    "createPlaidClient",
+    "linkTokenCreate",
+    "PlaidApi"
+  ],
+  "knownPhantoms": [
+    "CountryCode.US",
+    "CountryCode.USA",
+    "CountryCode.UnitedStates",
+    "CountryCode.GB",
+    "CountryCode.UK",
+    "Products.TRANSACTIONS",
+    "Products.Transaction",
+    "Products.TRANSACTION"
+  ]
+}

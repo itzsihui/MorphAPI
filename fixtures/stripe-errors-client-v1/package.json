@@ -1,0 +1,12 @@
+{
+  "name": "stripe-errors-client-v1",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "stripe-errors-v1": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "@types/node": "^22.13.10"
+  }
+}

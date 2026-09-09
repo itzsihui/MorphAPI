@@ -16,15 +16,35 @@ npm run demo           # CLI side-by-side
 npm run demo:ui        # browser UI → http://localhost:5173
 ```
 
-### Browser UI
+### Browser UI (professor walkthrough)
 
-`npm run demo:ui` opens a frontend that shows:
+```bash
+npm run demo:ui   # http://localhost:5173
+```
 
-1. **Without MorphAPI** — live LLM-only output + phantoms + typecheck FAIL  
-2. **With MorphAPI** — hybrid output + typecheck PASS  
-3. Diff hints + a short explanation of why the “errors” are the evidence
+Primary nav:
 
-Click **Run live comparison** to re-call the model.
+| Tab | What you show |
+|-----|----------------|
+| **Landing** | Why hybrid / why scaling AI alone fails (SWE-Bench Pro cites) + neurosymbolic pitch |
+| **Failure taxonomy** | 10 scenarios — **Live** badge only on MorphPay (1a) + Plaid (1b); others labeled **Taxonomy** |
+| **Live demos** | MorphPay \| Plaid — run LLM-only vs hybrid, before/docs/explain |
+| **Industry context** | Cursor vs MorphAPI AST, Stainless, OpenAPI limits, CLI vs GitHub-App deploy models |
+
+Deep links: `#landing`, `#taxonomy/plaid-enum-scaffolding`, `#live/plaid`, `#context`.
+
+**Accuracy:** only MorphPay + Plaid execute live LLM baselines. Scenarios 2–10 are thesis case studies with illustrative snippets and real provider doc links — not fake PASS/FAIL reports.
+
+### Plaid Link baseline (real SDK enum names)
+
+Second scenario using **real Plaid TypeScript enum shapes** from `plaid@30` (`CountryCode.Us`, `Products.Transactions` — not `US` / `TRANSACTIONS`):
+
+```bash
+npm run demo:plaid
+```
+
+Oracle: [`oracle/plaid-link-v2.json`](oracle/plaid-link-v2.json) (subset of published SDK enums).  
+Vague docs: [`docs/plaid-link-v2.md`](docs/plaid-link-v2.md).
 
 Requires `OPENAI_API_KEY` in `.env`. Every CLI/UI run calls a real model (default `gpt-4o-mini`).
 

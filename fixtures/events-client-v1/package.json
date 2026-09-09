@@ -1,0 +1,16 @@
+{
+  "name": "events-client-v1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample bot using events-gateway-v1 discriminator `type`",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "events-gateway-v1": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

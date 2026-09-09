@@ -1,0 +1,18 @@
+{
+  "name": "@morphapi/baseline-plaid-llm-only",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure LLM Plaid Link migration baseline (expect enum scaffolding fail)",
+  "scripts": {
+    "start": "tsc -p tsconfig.run.json && node dist-run/run.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@morphapi/core": "*",
+    "plaid-link-v2": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

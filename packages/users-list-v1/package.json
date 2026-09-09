@@ -1,0 +1,13 @@
+{
+  "name": "users-list-v1",
+  "version": "1.0.0",
+  "description": "Legacy users list API — flat User[] response. Scenario 5 DFG/envelope fixture.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

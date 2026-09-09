@@ -1,0 +1,13 @@
+{
+  "name": "stripe-charge-v1",
+  "version": "1.0.0",
+  "description": "Legacy charge API — amount in dollars (float). Scenario 3 behavioral-break fixture.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

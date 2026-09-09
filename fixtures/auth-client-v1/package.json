@@ -1,0 +1,16 @@
+{
+  "name": "auth-client-v1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample Auth JWT client using symmetric secret verify",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "auth-jwt-v1": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

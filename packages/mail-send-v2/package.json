@@ -1,0 +1,13 @@
+{
+  "name": "mail-send-v2",
+  "version": "2.0.0",
+  "description": "Structured send({ to, from, subject, content }). Scenario 7 — sendEmail removed.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

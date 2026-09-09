@@ -1,0 +1,44 @@
+{
+  "api": "stripe-errors",
+  "version": "2.0.0",
+  "description": "Oracle for Stripe-style PaymentIntent + Stripe.errors.StripeCardError. Legacy stripe.error.CardError is a phantom.",
+  "source": "Mirrors stripe-node errors module reorganization",
+  "enums": [],
+  "enumMembers": {},
+  "classes": ["Stripe", "StripeCardError", "StripeAPIError"],
+  "methods": {
+    "Stripe": ["paymentIntents", "create"],
+    "errors": ["StripeCardError", "StripeAPIError"]
+  },
+  "staticMembers": {
+    "Stripe": ["errors"]
+  },
+  "functions": [],
+  "allowedImports": ["stripe-errors-v2", "stripe"],
+  "allowedSymbols": [
+    "Stripe",
+    "errors",
+    "StripeCardError",
+    "StripeAPIError",
+    "paymentIntents",
+    "create",
+    "amount",
+    "currency",
+    "payment_method",
+    "confirm",
+    "id",
+    "status",
+    "ok",
+    "reason",
+    "instanceof"
+  ],
+  "knownPhantoms": [
+    "CardError",
+    "APIError",
+    "stripe.error",
+    "stripe.error.CardError",
+    "stripe.error.APIError",
+    "error.CardError",
+    "charges"
+  ]
+}

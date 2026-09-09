@@ -1,0 +1,18 @@
+{
+  "name": "@morphapi/baseline-mail-hybrid",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hybrid AI+AST multi-file mail migration with completeness checklist",
+  "scripts": {
+    "start": "tsc -p tsconfig.run.json && node dist-run/run.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@morphapi/core": "*",
+    "mail-send-v2": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

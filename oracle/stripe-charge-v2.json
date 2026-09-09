@@ -1,0 +1,32 @@
+{
+  "api": "stripe-charge",
+  "version": "2.0.0",
+  "description": "Oracle for Scenario 3 — same symbols as v1, plus dollars→cents transform on amount.",
+  "classes": ["StripeChargeClient", "ChargesApi"],
+  "enums": [],
+  "enumMembers": {},
+  "methods": {
+    "ChargesApi": ["create"]
+  },
+  "functions": ["createStripeCharge"],
+  "allowedImports": ["stripe-charge-v2"],
+  "allowedSymbols": [
+    "createStripeCharge",
+    "charges",
+    "create",
+    "StripeChargeClient",
+    "ChargesApi",
+    "Math",
+    "round"
+  ],
+  "knownPhantoms": [],
+  "transforms": [
+    {
+      "param": "amount",
+      "from": "dollars",
+      "to": "cents",
+      "rule": "Math.round(${expr} * 100)",
+      "requiredPatterns": ["* 100", "*100"]
+    }
+  ]
+}
