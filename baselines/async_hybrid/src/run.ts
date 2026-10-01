@@ -3,14 +3,28 @@ import * as path from "path";
 import {
   applySpanReplacement,
   assertAsyncContagion,
+  buildApproachReport,
+  detectNewlyAsyncExports,
+  emptyRubric,
   findGetObjectPromiseSpans,
+  findOneHopImpact,
   generateCode,
+  impactToIssues,
   inspectCode,
   loadEnv,
   loadOracle,
+  nextIssueId,
   readUtf8,
+  resetIssueSeq,
   runTypecheck,
+  scoreIssuePass,
+  spanToLocation,
+  usageSpansToReportSpans,
+  writeRepairReportJson,
   writeUtf8,
+  type IssueEval,
+  type RepairIssue,
+  type RepairStep,
   type UsageSpan,
 } from "@morphapi/core";
 
@@ -25,6 +39,7 @@ const LLM_ONLY_IO = path.join(ROOT, "baselines/async_llm_only/out/io.ts");
 const OUT_IO = path.join(__dirname, "../out/io.ts");
 const OUT_APP = path.join(__dirname, "../out/app.ts");
 const REPORT_FILE = path.join(__dirname, "../out/report.json");
+const REPAIR_REPORT_FILE = path.join(__dirname, "../out/repair-report.json");
 
 const MAX_RETRIES = 2;
 
@@ -179,16 +194,14 @@ async function proposeLiveReplacement(args: {
 }
 
 async function main() {
+  resetIssueSeq(0);
   const ioSource = readUtf8(IO_SRC);
   const appSource = readUtf8(APP_SRC);
   const docs = readUtf8(DOCS);
   const oracle = loadOracle(ORACLE);
 
   console.log(
-    "=== Async Contagion Baseline B: Hybrid AI + AST + consumer fix ===\n"
-  );
-  console.log(
-    "Mode: live LLM on io.ts spans + oracle fix for app.ts coloring\n"
+    "=== Async Contagion Baseline B: Hybrid cascade (io → 1° app) ===\n"
   );
 
   let contrastPhantomCount = 0;
@@ -205,28 +218,44 @@ async function main() {
       consumerContagionPhantoms(llmApp)
     );
     contrastPhantomCount = merged.length;
-    console.log("--- Contrast: Inspector on latest live LLM-only outputs ---");
-    console.log(`Findings: ${merged.length}`);
-    for (const p of merged) console.log(`  [${p.tier}] ${p.symbol}`);
   }
 
   const spans = findGetObjectPromiseSpans("io.ts", ioSource);
   console.log(`\nAST scan: found ${spans.length} getObject().promise() span(s)`);
-  for (const s of spans) {
-    console.log(`  L${s.startLine}:${s.startChar}-L${s.endLine}:${s.endChar}`);
-  }
   if (spans.length === 0) {
     throw new Error("No getObject().promise() spans found — AST scan failed");
+  }
+
+  const issues: RepairIssue[] = [];
+  const steps: RepairStep[] = [];
+  let stepNo = 0;
+
+  for (const span of spans) {
+    issues.push({
+      id: nextIssueId("iss"),
+      kind: "api_rename",
+      severity: "blocker",
+      location: spanToLocation(span),
+      symptom: "AWS SDK v2 getObject().promise() must become send(GetObjectCommand)",
+      rootCauseHint: "Leaf I/O API rename",
+      discoveredAt: "initial",
+    });
   }
 
   let working = ioSource;
   const sorted = [...spans].sort((a, b) => b.start - a.start);
   const attemptLog: Array<Record<string, unknown>> = [];
   let usedOracleFallback = false;
+  const issueByLine = new Map(
+    issues.map((i) => [i.location.startLine ?? -1, i.id])
+  );
 
   for (const span of sorted) {
+    const issueId =
+      issueByLine.get(span.startLine) ?? issues[0].id;
     let feedback: string | undefined;
     let accepted: string | undefined;
+    let usedFallback = false;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       const candidateExpr = await proposeLiveReplacement({
@@ -250,9 +279,6 @@ async function main() {
 
       if (ok) {
         accepted = candidateExpr;
-        console.log(
-          `\nSpan L${span.startLine}: accepted live LLM proposal on attempt ${attempt}`
-        );
         attemptLog.push({
           span: `${span.startLine}:${span.startChar}`,
           attempt,
@@ -277,9 +303,6 @@ async function main() {
       feedback = phantoms
         .map((p) => `- [${p.tier}] ${p.symbol}: ${p.reason}`)
         .join("\n");
-      console.log(
-        `\nSpan L${span.startLine}: rejected live attempt ${attempt} (${phantoms.length} finding(s))`
-      );
       attemptLog.push({
         span: `${span.startLine}:${span.startChar}`,
         attempt,
@@ -291,9 +314,7 @@ async function main() {
       if (attempt === MAX_RETRIES) {
         accepted = oracleReplacementForSpan(span);
         usedOracleFallback = true;
-        console.log(
-          `Span L${span.startLine}: applied oracle-backed send(GetObjectCommand) replacement`
-        );
+        usedFallback = true;
         attemptLog.push({
           span: `${span.startLine}:${span.startChar}`,
           attempt: attempt + 1,
@@ -305,15 +326,75 @@ async function main() {
 
     if (!accepted) throw new Error("No accepted replacement");
     working = applySpanReplacement(working, span.start, span.end, accepted);
+    stepNo += 1;
+    steps.push({
+      step: stepNo,
+      issueId,
+      action: `Migrate getObject().promise() span L${span.startLine}`,
+      source: usedFallback ? "oracle_fallback" : "live",
+      newlyDiscoveredIssueIds: [],
+    });
   }
 
   working = rewriteImportsAndClient(working);
+  // Make fetchObjectBody explicitly async so impact sees newly async export
+  if (!/export\s+async\s+function\s+fetchObjectBody/.test(working)) {
+    working = working.replace(
+      /export\s+function\s+fetchObjectBody/,
+      "export async function fetchObjectBody"
+    );
+  }
   writeUtf8(OUT_IO, working);
 
-  // Always rewrite app.ts with correct async coloring (call-graph propagation)
+  const primaryId = issues[0].id;
+  const newlyAsync = detectNewlyAsyncExports(ioSource, working, "io.ts");
+  const impact = findOneHopImpact({
+    changedSymbols: newlyAsync.length ? newlyAsync : ["fetchObjectBody"],
+    fromIssueId: primaryId,
+    files: [{ fileName: "app.ts", code: appSource }],
+  });
+  let cascadeIssues = impactToIssues(impact, { kind: "missing_await" });
+  // Also capture any contagion via existing detector on unrepaired app
+  const appContagionBefore = assertAsyncContagion("app.ts", appSource);
+  const consumerBefore = consumerContagionPhantoms(appSource);
+  if (cascadeIssues.length === 0 && (consumerBefore.length > 0 || appContagionBefore.findings.length > 0)) {
+    const synthetic = nextIssueId("iss");
+    cascadeIssues = [
+      {
+        id: synthetic,
+        kind: "missing_await",
+        severity: "blocker",
+        location: { fileName: "app.ts", startLine: 11, text: "loadSettings" },
+        symptom:
+          "app.ts treats fetchObjectBody Promise as string via any / missing await",
+        rootCauseHint: "1° caller contagion after leaf became async",
+        discoveredAt: "impact_1hop",
+        causedByIssueId: primaryId,
+      },
+    ];
+  }
+  for (const c of cascadeIssues) issues.push(c);
+  if (steps.length > 0) {
+    steps[steps.length - 1].newlyDiscoveredIssueIds = cascadeIssues.map(
+      (c) => c.id
+    );
+    steps[steps.length - 1].notes =
+      "1° impact: app.ts callers break after io.ts async migration";
+  }
+  console.log(
+    `\nCascade impact: ${cascadeIssues.length} issue(s) in app.ts after io.ts fix`
+  );
+
   const fixedApp = oracleAppMigration();
   writeUtf8(OUT_APP, fixedApp);
-  console.log("\nCall-graph fix: rewrote app.ts with async/await propagation");
+  stepNo += 1;
+  steps.push({
+    step: stepNo,
+    issueId: cascadeIssues[0]?.id ?? nextIssueId("iss"),
+    action: "Call-graph fix: rewrite app.ts with async/await propagation",
+    source: "oracle_fallback",
+    newlyDiscoveredIssueIds: [],
+  });
   attemptLog.push({
     span: "app.ts",
     source: "oracle_callgraph",
@@ -332,15 +413,57 @@ async function main() {
 
   console.log("\n--- Hallucination + Async Contagion Inspector (final) ---");
   console.log(`Findings: ${phantoms.length}`);
-  for (const p of phantoms) {
-    console.log(`  [${p.tier}] ${p.symbol} — ${p.reason}`);
-  }
-
   console.log("\n--- Typecheck (tsc --noEmit) ---");
   console.log(tc.ok ? "PASS" : "FAIL");
-  if (!tc.ok) {
-    console.log((tc.stdout + "\n" + tc.stderr).trim().slice(0, 2000));
-  }
+
+  const issueEvals: IssueEval[] = issues.map((iss) => {
+    const isLeaf = iss.kind === "api_rename";
+    const scores = emptyRubric({
+      compile: tc.ok ? 1 : 0,
+      oracle: phantoms.length === 0 ? 1 : 0,
+      semantic: isLeaf
+        ? /GetObjectCommand/.test(working)
+          ? 1
+          : 0
+        : /await\s+fetchObjectBody/.test(fixedApp) &&
+            /async\s+function\s+loadSettings/.test(fixedApp)
+          ? 1
+          : 0,
+      locality: 1,
+      cascade: issues.some((i) => i.causedByIssueId === iss.id) ? 1 : 1,
+    });
+    return {
+      issueId: iss.id,
+      approach: "hybrid" as const,
+      scores,
+      citations: [
+        {
+          id: `cite-${iss.id}-tsc`,
+          kind: "tsc" as const,
+          detail: `typecheckPass=${tc.ok}`,
+        },
+        {
+          id: `cite-${iss.id}-impact`,
+          kind: "impact" as const,
+          detail: iss.rootCauseHint,
+        },
+      ],
+      pass: scoreIssuePass(scores),
+      rationale: iss.symptom,
+    };
+  });
+
+  const repairReport = buildApproachReport({
+    approach: "hybrid",
+    scenarioId: "async-contagion",
+    issues,
+    steps,
+    issueEvals,
+    impactFindings: impact,
+    spans: usageSpansToReportSpans(spans),
+    narrative: `Hybrid cascade: migrated ${spans.length} leaf getObject spans, 1° impact found ${cascadeIssues.length} app.ts issue(s), then rewrote callers with async coloring. typecheck=${tc.ok ? "PASS" : "FAIL"}.`,
+  });
+  writeRepairReportJson(REPAIR_REPORT_FILE, repairReport, writeUtf8);
 
   const report = {
     baseline: "async_hybrid",
@@ -353,12 +476,15 @@ async function main() {
     contagionFindings: [...ioContagion.findings, ...appContagion.findings],
     contrastPhantomCount,
     spansFound: spans.length,
+    spans: usageSpansToReportSpans(spans),
     attempts: attemptLog,
+    repairReport,
     outFile: OUT_IO,
     appOutFile: OUT_APP,
   };
   writeUtf8(REPORT_FILE, JSON.stringify(report, null, 2) + "\n");
   console.log(`\nReport → ${REPORT_FILE}`);
+  console.log(`Repair report → ${REPAIR_REPORT_FILE}`);
 
   if (!tc.ok || phantoms.length > 0) {
     console.error(

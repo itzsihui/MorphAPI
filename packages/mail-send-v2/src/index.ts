@@ -1,6 +1,9 @@
 /**
  * Mail API v2 — structured payload only.
  * Flat sendEmail(to, from, subject, body) is removed (not deprecated-with-shim).
+ *
+ * Contract change vs v1 SendResult: `id` → `messageId` + `accepted`.
+ * Callers that treated helper return values as a bare string id must adapt.
  */
 
 export interface MailPayload {
@@ -12,12 +15,15 @@ export interface MailPayload {
 }
 
 export interface SendResult {
-  id: string;
+  /** Was `id` on mail-send-v1. */
+  messageId: string;
+  accepted: boolean;
 }
 
 export function send(payload: MailPayload): Promise<SendResult> {
   return Promise.resolve({
-    id: `msg_v2_${payload.to}_${payload.subject.length}_${payload.content.length}`,
+    messageId: `msg_v2_${payload.to}_${payload.subject.length}_${payload.content.length}`,
+    accepted: true,
   });
 }
 

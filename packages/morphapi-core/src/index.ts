@@ -23,8 +23,8 @@ export {
 export { applySpanReplacement } from "./apply";
 export { runTypecheck } from "./typecheck";
 export { extractSymbolsFromCode } from "./symbols";
-export { generateCode, stripCodeFences, readUtf8, writeUtf8 } from "./llm";
-export type { LlmMessage, LlmGenerateOptions } from "./llm";
+export { generateCode, resolveModelProfile, stripCodeFences, readUtf8, writeUtf8 } from "./llm";
+export type { LlmMessage, LlmGenerateOptions, ModelProfile } from "./llm";
 export { loadEnv } from "./env";
 export type { AmountSiteFinding, AmountTransformResult } from "./amountTransform";
 export {
@@ -73,3 +73,93 @@ export {
   assertHmacSecurity,
   oracleAuthorizeLegacyCompatReplacement,
 } from "./hmacSecurity";
+
+export type {
+  ApproachKind,
+  ApproachReport,
+  Citation,
+  ImpactFinding,
+  IssueDiscoveredAt,
+  IssueEval,
+  IssueKind,
+  IssueLocation,
+  IssueSeverity,
+  RepairIssue,
+  RepairStep,
+  RubricDimension,
+  RubricScore,
+  RubricScores,
+} from "./repairReport";
+export {
+  RUBRIC_GLOSSARY,
+  buildApproachReport,
+  cascadeImpactCounts,
+  emptyRubric,
+  meanRubric,
+  nextIssueId,
+  resetIssueSeq,
+  scoreIssuePass,
+  spanToLocation,
+  usageSpansToReportSpans,
+  writeRepairReportJson,
+} from "./repairReport";
+export {
+  detectNewlyAsyncExports,
+  findDirectCallers,
+  findOneHopImpact,
+  impactToIssues,
+} from "./impactGraph";
+export type { ImpactProbe, SourceFileInput } from "./impactGraph";
+export {
+  DepsNotInstalledError,
+  ProjectSession,
+  findDeprecatedReferences,
+  findNearestTsconfig,
+  findReferences,
+  loadProgram,
+  packageNameOf,
+  resolveAlias,
+  resolveModuleFile,
+  resolveSymbolSpec,
+} from "./program";
+export type {
+  DeprecatedCallSpan,
+  LoadedProgram,
+  SessionDiagnostic,
+  SymbolReference,
+} from "./program";
+export { buildCodePropertyGraph } from "./codePropertyGraph";
+export {
+  buildSlicePrompt,
+  needsStatementSlice,
+  parsesAs,
+  sliceFactsFor,
+  sliceFor,
+} from "./sliceMetadata";
+export type { Slice, SliceKind, SlicePromptInput, SuccessorKind } from "./sliceMetadata";
+export { addMissingImports, reconcileImports, removeUnusedImports } from "./importReconcile";
+export type { ImportCandidate, ImportEdits } from "./importReconcile";
+export { extractOracle, importCandidates, suggestSymbols } from "./oracleExtract";
+export type { ExtractedOracle, OracleExport } from "./oracleExtract";
+export { feedbackFor, gateSpan, repairLoop } from "./gate";
+export type { AttemptRecord, GateFinding, GateFindingKind, GateResult } from "./gate";
+export { propagateResponseShape } from "./dataflow";
+export type { ShapeResult, ShapeRewrite } from "./dataflow";
+export { diagnosticKeys, programImpact, snapshotSignatures } from "./impactProgram";
+export type { ProgramImpactFinding, ProgramImpactReason, ProgramImpactResult } from "./impactProgram";
+export { ARMS, runMigration } from "./pipeline";
+export type { ArmConfig, ArmId, ImpactFix, MigrationConfig, MigrationEvent, MigrationRun, SpanStep } from "./pipeline";
+export type {
+  AstOutlineNode,
+  BuildCpgInput,
+  CallArgFact,
+  CodePropertyGraph,
+  CpgEdge,
+  CpgEdgeKind,
+  CpgNode,
+  CpgNodeKind,
+  DataFlowRole,
+  DeprecatedReason,
+  FocusDfgNode,
+  SliceFacts,
+} from "./codePropertyGraph";

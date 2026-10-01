@@ -28,6 +28,10 @@
     "demo:plaid-hybrid": "npm run start -w @morphapi/baseline-plaid-hybrid",
     "demo:openai-llm-only": "npm run start -w @morphapi/baseline-openai-llm-only",
     "demo:openai-hybrid": "npm run start -w @morphapi/baseline-openai-hybrid",
+    "demo:openai-ast": "npm run start -w @morphapi/baseline-openai-ast",
+    "demo:async-ast": "npm run start -w @morphapi/baseline-async-ast",
+    "demo:envelope-ast": "npm run start -w @morphapi/baseline-envelope-ast",
+    "demo:mail-ast": "npm run start -w @morphapi/baseline-mail-ast",
     "demo:stripe-llm-only": "npm run start -w @morphapi/baseline-stripe-llm-only",
     "demo:stripe-hybrid": "npm run start -w @morphapi/baseline-stripe-hybrid",
     "demo:stripe-errors-llm-only": "npm run start -w @morphapi/baseline-stripe-errors-llm-only",
@@ -45,11 +49,21 @@
     "demo:discriminator-llm-only": "npm run start -w @morphapi/baseline-discriminator-llm-only",
     "demo:discriminator-hybrid": "npm run start -w @morphapi/baseline-discriminator-hybrid",
     "demo:ui": "npm run dev -w @morphapi/demo-ui",
+    "graph:cli": "node scripts/graph-run.mjs",
+    "eval:matrix": "node scripts/eval-matrix.mjs",
+    "eval:repair-reports": "node scripts/attach-llm-repair-reports.mjs && node scripts/attach-hybrid-repair-reports.mjs && node scripts/render-repair-report.mjs --all-pilots",
+    "eval:repair-pdf": "node scripts/render-repair-pdf.mjs --mail",
     "typecheck:v1": "npm run typecheck -w client-v1",
     "typecheck:llm-only": "npm run typecheck -w @morphapi/baseline-llm-only",
     "typecheck:hybrid": "npm run typecheck -w @morphapi/baseline-hybrid"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "pdfkit": "^0.20.2"
+  },
+  "devDependencies": {
+    "@types/pdfkit": "^0.17.6"
   }
 }

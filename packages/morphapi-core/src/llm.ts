@@ -8,6 +8,41 @@ export interface LlmMessage {
 
 export interface LlmGenerateOptions {
   messages: LlmMessage[];
+  model?: ModelProfile;
+}
+
+/** An OpenAI-compatible endpoint + model id. */
+export type ModelProfile = {
+  id: "mini" | "frontier" | string;
+  model: string;
+  baseUrl: string;
+  apiKey: string | undefined;
+  temperature: number;
+};
+
+/**
+ * `mini`: gpt-4o-mini on OPENAI_* (default).
+ * `frontier`: Claude via Anthropic's OpenAI-compatible endpoint
+ * (MORPHAPI_FRONTIER_MODEL / _BASE_URL / _API_KEY, or ANTHROPIC_API_KEY).
+ */
+export function resolveModelProfile(id: string = process.env.MORPHAPI_MODEL_PROFILE ?? "mini"): ModelProfile {
+  const temperature = Number(process.env.MORPHAPI_TEMPERATURE ?? 0.2);
+  if (id === "frontier") {
+    return {
+      id,
+      model: process.env.MORPHAPI_FRONTIER_MODEL ?? "claude-sonnet-4-5",
+      baseUrl: process.env.MORPHAPI_FRONTIER_BASE_URL ?? "https://api.anthropic.com/v1",
+      apiKey: process.env.MORPHAPI_FRONTIER_API_KEY ?? process.env.ANTHROPIC_API_KEY,
+      temperature,
+    };
+  }
+  return {
+    id: "mini",
+    model: process.env.MORPHAPI_LLM_MODEL ?? "gpt-4o-mini",
+    baseUrl: process.env.OPENAI_BASE_URL ?? process.env.MORPHAPI_LLM_BASE_URL ?? "https://api.openai.com/v1",
+    apiKey: process.env.OPENAI_API_KEY ?? process.env.MORPHAPI_LLM_API_KEY,
+    temperature,
+  };
 }
 
 function requireApiKey(): string {
@@ -27,13 +62,24 @@ export async function generateCode(options: LlmGenerateOptions): Promise<{
   code: string;
   mode: "live";
   model: string;
+  usage: { prompt: number; completion: number };
 }> {
-  const apiKey = requireApiKey();
+  const profile = options.model;
+  if (profile && !profile.apiKey) {
+    throw new Error(
+      profile.id === "frontier"
+        ? "Frontier model needs MORPHAPI_FRONTIER_API_KEY or ANTHROPIC_API_KEY in .env"
+        : "OPENAI_API_KEY (or MORPHAPI_LLM_API_KEY) is required in .env"
+    );
+  }
+  const apiKey = profile?.apiKey ?? requireApiKey();
   const baseUrl =
+    profile?.baseUrl ??
     process.env.OPENAI_BASE_URL ??
     process.env.MORPHAPI_LLM_BASE_URL ??
     "https://api.openai.com/v1";
-  const model = process.env.MORPHAPI_LLM_MODEL ?? "gpt-4o-mini";
+  const model = profile?.model ?? process.env.MORPHAPI_LLM_MODEL ?? "gpt-4o-mini";
+  const temperature = profile?.temperature ?? 0.2;
 
   let res: Response;
   try {
@@ -45,7 +91,7 @@ export async function generateCode(options: LlmGenerateOptions): Promise<{
       },
       body: JSON.stringify({
         model,
-        temperature: 0.2,
+        temperature,
         messages: options.messages,
       }),
     });
@@ -71,9 +117,15 @@ export async function generateCode(options: LlmGenerateOptions): Promise<{
 
   const json = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
   const content = json.choices?.[0]?.message?.content ?? "";
-  return { code: stripCodeFences(content), mode: "live", model };
+  return {
+    code: stripCodeFences(content),
+    mode: "live",
+    model,
+    usage: { prompt: json.usage?.prompt_tokens ?? 0, completion: json.usage?.completion_tokens ?? 0 },
+  };
 }
 
 export function stripCodeFences(text: string): string {

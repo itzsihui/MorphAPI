@@ -8,7 +8,7 @@
   "methods": {},
   "functions": ["send"],
   "allowedImports": ["mail-send-v2"],
-  "allowedSymbols": ["send", "MailPayload", "SendResult"],
-  "knownPhantoms": ["sendEmail"],
+  "allowedSymbols": ["send", "MailPayload", "SendResult", "messageId", "accepted"],
+  "knownPhantoms": ["sendEmail", "SendResult.id", ".id"],
   "expectedSites": 4
 }

@@ -1,0 +1,17 @@
+{
+  "name": "@morphapi/baseline-mail-ast",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "tsc -p tsconfig.run.json && node dist-run/run.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@morphapi/core": "*",
+    "mail-send-v2": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,26 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
+import { Workbench } from "./Workbench";
+import { CodeGraph } from "./CodeGraph";
 import { ContextBriefing } from "./ContextBriefing";
+import { Evaluation } from "./Evaluation";
 import { Landing } from "./Landing";
-import { LiveDemo } from "./LiveDemo";
 import { ScenarioCaseView } from "./ScenarioCase";
+import { WhyTypeScript } from "./WhyTypeScript";
 import {
   SCENARIOS,
   getScenario,
   type LiveScenarioId,
 } from "./scenarios/catalog";
 import type { Scenario } from "./api";
+import { useCallback, useEffect, useState } from "react";
 
-type PrimaryNav = "landing" | "taxonomy" | "live" | "context";
+type PrimaryNav =
+  | "landing"
+  | "taxonomy"
+  | "live"
+  | "graph"
+  | "evaluation"
+  | "context"
+  | "why-ts";
 
 function parseHash(): {
   primary: PrimaryNav;
   scenarioId: string;
   liveId: LiveScenarioId;
 } {
-  const raw = window.location.hash.replace(/^#/, "") || "landing";
+  const raw = (window.location.hash.replace(/^#/, "") || "landing").replace(/^gcb(\/|$)/, "graph$1");
   const [primaryRaw, rest] = raw.split("/");
   const primary = (
-    ["landing", "taxonomy", "live", "context"] as const
+    ["landing", "taxonomy", "live", "graph", "evaluation", "context", "why-ts"] as const
   ).includes(primaryRaw as PrimaryNav)
     ? (primaryRaw as PrimaryNav)
     : "landing";
@@ -33,7 +43,7 @@ function parseHash(): {
       liveId: "plaid",
     };
   }
-  if (primary === "live") {
+  if (primary === "live" || primary === "graph") {
     const liveId: LiveScenarioId =
       rest === "morphpay" ||
       rest === "plaid" ||
@@ -47,7 +57,9 @@ function parseHash(): {
       rest === "hmac" ||
       rest === "discriminator"
         ? rest
-        : "plaid";
+        : primary === "graph"
+          ? "mail"
+          : "plaid";
     return { primary, scenarioId: SCENARIOS[0].id, liveId };
   }
   return {
@@ -65,6 +77,8 @@ function setHash(
     window.location.hash = `taxonomy/${opts?.scenarioId ?? SCENARIOS[0].id}`;
   } else if (primary === "live") {
     window.location.hash = `live/${opts?.liveId ?? "plaid"}`;
+  } else if (primary === "graph") {
+    window.location.hash = `graph/${opts?.liveId ?? "mail"}`;
   } else {
     window.location.hash = primary;
   }
@@ -117,8 +131,11 @@ export function App() {
             [
               ["landing", "Landing"],
               ["taxonomy", "Failure taxonomy"],
-              ["live", "Live demos"],
+              ["live", "Workbench"],
+              ["graph", "Code Graph"],
+              ["evaluation", "Evaluation"],
               ["context", "Industry context"],
+              ["why-ts", "Why TypeScript"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -257,20 +274,33 @@ export function App() {
               HMAC auth (10)
             </button>
           </div>
-          <LiveDemo scenario={liveScenario} />
+          <Workbench scenario={liveScenario} />
         </div>
       )}
 
+      {primary === "graph" && (
+        <div className="live-layout">
+          <CodeGraph
+            scenario={liveId}
+            onScenario={(id) => go("graph", { liveId: id as LiveScenarioId })}
+          />
+        </div>
+      )}
+
+      {primary === "evaluation" && <Evaluation />}
+
       {primary === "context" && <ContextBriefing />}
+
+      {primary === "why-ts" && <WhyTypeScript />}
 
       <footer className="foot">
         MorphAPI demo UI ·{" "}
         <code>
           #{primary}
           {primary === "taxonomy" ? `/${scenarioId}` : ""}
-          {primary === "live" ? `/${liveId}` : ""}
+          {primary === "live" || primary === "graph" ? `/${liveId}` : ""}
         </code>{" "}
-        · live baselines MorphPay · Plaid · OpenAI · Stripe · Auth JWT
+        · Workbench · all 11 live scenarios
       </footer>
     </div>
   );

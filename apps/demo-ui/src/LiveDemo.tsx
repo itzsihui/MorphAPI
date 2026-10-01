@@ -1,16 +1,244 @@
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchResults,
   runDemo,
   type ResultsPayload,
+  type RepairReportDto,
   type Scenario,
 } from "./api";
 import { CodePanel } from "./CodePanel";
+import {
+  CascadeTimeline,
+  type RepairSummaryLite,
+} from "./CascadeTimeline";
 import { DiffHints } from "./DiffHints";
-import { DocsBriefing } from "./DocsBriefing";
-import { PlaidBriefing } from "./PlaidBriefing";
+import { MigrationDocs } from "./MigrationDocs";
+import { WithoutCritique } from "./WithoutCritique";
+
+function toCascadeRepair(
+  report: RepairReportDto | null | undefined
+): RepairSummaryLite | null {
+  if (!report) return null;
+  if (report.summary) {
+    return {
+      ...report.summary,
+      issues: report.issues,
+      issueEvals: report.issueEvals,
+      steps: report.steps,
+    };
+  }
+  if (!report.steps?.length) return null;
+  return {
+    issueCount: report.issues?.length ?? 0,
+    issuesPassed: report.issueEvals?.filter((e) => e.pass).length ?? 0,
+    issuesFailed: report.issueEvals?.filter((e) => !e.pass).length ?? 0,
+    cascadeEdges:
+      report.issues?.filter((i) => i.causedByIssueId || i.discoveredAt !== "initial")
+        .length ?? 0,
+    allIssuesPass: (report.issueEvals ?? []).every((e) => e.pass),
+    aggregatorMean: null,
+    narrative: "Cascade repair steps",
+    issues: report.issues,
+    issueEvals: report.issueEvals,
+    steps: report.steps,
+  };
+}
 
 type LiveTab = "compare" | "before" | "docs" | "explain";
+
+const DOCS_COPY: Record<
+  Scenario,
+  {
+    docsPath: string;
+    oraclePath: string;
+    note: ReactNode;
+    oracleBody: ReactNode;
+  }
+> = {
+  morphpay: {
+    docsPath: "docs/morphpay-v2.md",
+    oraclePath: "oracle/morphpay-v2.json",
+    note: (
+      <>
+        Vague MorphPay migration notes show the Builder pattern but never spell{" "}
+        <code>CaptureMode.AUTOMATIC</code> / <code>MANUAL</code>.
+      </>
+    ),
+    oracleBody: (
+      <>
+        lists <code>CaptureMode.Automatic</code> / <code>Manual</code> /{" "}
+        <code>IMMEDIATE</code> and <code>IntentFactory</code> as known phantoms.
+      </>
+    ),
+  },
+  plaid: {
+    docsPath: "docs/plaid-link-v2.md",
+    oraclePath: "oracle/plaid-link-v2.json",
+    note: (
+      <>
+        Vague Link docs say map <code>&quot;US&quot;</code> /{" "}
+        <code>&quot;transactions&quot;</code> to the appropriate enum members —
+        they never write <code>CountryCode.Us</code> or{" "}
+        <code>Products.Transactions</code>.
+      </>
+    ),
+    oracleBody: (
+      <>
+        lists <code>CountryCode.US</code> / <code>GB</code> and{" "}
+        <code>Products.TRANSACTIONS</code> as known phantoms (real members are{" "}
+        <code>Us</code> / <code>Gb</code> / <code>Transactions</code>).
+      </>
+    ),
+  },
+  openai: {
+    docsPath: "docs/openai-chat-v1.md",
+    oraclePath: "oracle/openai-chat-v1.json",
+    note: (
+      <>
+        Vague migration notes — they say map the old engine field but never
+        spell <code>model:</code> as the only legal key.
+      </>
+    ),
+    oracleBody: (
+      <>
+        lists <code>engine</code>, <code>ChatCompletion</code>, and{" "}
+        <code>createChatCompletion</code> as known phantoms.
+      </>
+    ),
+  },
+  stripe: {
+    docsPath: "docs/stripe-charge-v2.md",
+    oraclePath: "oracle/stripe-charge-v2.json",
+    note: (
+      <>
+        Docs say amounts are in the smallest currency unit, but the parameter is
+        still named <code>amount</code> — easy to leave dollars unscaled.
+      </>
+    ),
+    oracleBody: (
+      <>
+        plus the amount-transform gate rejects charge sites that omit{" "}
+        <code>Math.round(... * 100)</code>.
+      </>
+    ),
+  },
+  "stripe-errors": {
+    docsPath: "docs/stripe-errors-v2.md",
+    oraclePath: "oracle/stripe-errors-v2.json",
+    note: (
+      <>
+        Docs cover the happy-path create migration; catch-block error class
+        renames are easy to miss.
+      </>
+    ),
+    oracleBody: (
+      <>
+        forbids leftover <code>stripe.error.CardError</code> and requires{" "}
+        <code>Stripe.errors.StripeCardError</code> (or equivalent).
+      </>
+    ),
+  },
+  auth: {
+    docsPath: "docs/auth-jwt-v2.md",
+    oraclePath: "oracle/auth-jwt-v2.json",
+    note: (
+      <>
+        Docs describe JWKS verification vaguely — they never fully spell{" "}
+        <code>createJwksClient</code> → <code>getSigningKey</code> →{" "}
+        <code>getPublicKey</code>.
+      </>
+    ),
+    oracleBody: (
+      <>
+        plus anti-cheat flags <code>@ts-ignore</code>, <code>as any</code>,
+        empty catch, and leftover <code>JWT_SECRET</code> verify.
+      </>
+    ),
+  },
+  envelope: {
+    docsPath: "docs/users-list-v2.md",
+    oraclePath: "oracle/users-list-v2.json",
+    note: (
+      <>
+        Docs focus on pagination metadata and keep calling{" "}
+        <code>listUsers()</code> — they never say consumers must unwrap{" "}
+        <code>page.data</code> for <code>User[]</code>.
+      </>
+    ),
+    oracleBody: (
+      <>
+        plus the envelope gate requires{" "}
+        <code>(await api.listUsers()).data</code> (or equivalent) so downstream{" "}
+        <code>User[]</code> consumers stay correct.
+      </>
+    ),
+  },
+  async: {
+    docsPath: "docs/aws-s3-v2.md",
+    oraclePath: "oracle/aws-s3-v2.json",
+    note: (
+      <>
+        Docs show <code>GetObjectCommand</code> + <code>send</code> but do not
+        spell out await/async propagation across consumer files.
+      </>
+    ),
+    oracleBody: (
+      <>
+        plus the async contagion gate rejects leftover <code>.promise()</code> /{" "}
+        <code>.getObject(</code> and missing await on Promise-colored calls.
+      </>
+    ),
+  },
+  mail: {
+    docsPath: "docs/mail-send-v2.md",
+    oraclePath: "oracle/mail-send-v2.json",
+    note: (
+      <>
+        Docs show the structured <code>send({`{...}`})</code> shape —
+        incomplete multi-site edits are the failure mode.
+      </>
+    ),
+    oracleBody: (
+      <>
+        plus the completeness gate requires every <code>sendEmail</code> site to
+        migrate before the claim passes.
+      </>
+    ),
+  },
+  hmac: {
+    docsPath: "docs/webhook-auth-v2.md",
+    oraclePath: "oracle/webhook-auth-v2.json",
+    note: (
+      <>
+        Docs describe HMAC request signing at a high level — easy to invent
+        helpers or keep <code>===</code> compares.
+      </>
+    ),
+    oracleBody: (
+      <>
+        forbids static token <code>===</code> compares and requires timing-safe
+        HMAC verification.
+      </>
+    ),
+  },
+  discriminator: {
+    docsPath: "docs/events-gateway-v2.md",
+    oraclePath: "oracle/events-gateway-v2.json",
+    note: (
+      <>
+        Docs mention the new event discriminator field/value — switch/case arms
+        are easy to leave stale.
+      </>
+    ),
+    oracleBody: (
+      <>
+        plus the discriminator gate checks switch arms against the allowed event
+        value map.
+      </>
+    ),
+  },
+};
 
 export function LiveDemo({ scenario }: { scenario: Scenario }) {
   const [data, setData] = useState<ResultsPayload | null>(null);
@@ -234,7 +462,7 @@ export function LiveDemo({ scenario }: { scenario: Scenario }) {
           [
             ["compare", "1 vs 2 · Outputs"],
             ["before", "Before (legacy)"],
-            ["docs", isOpenAI ? "Docs & evidence" : isPlaid ? "Docs & evidence" : isAuth ? "Docs · anti-cheat" : "Docs · innovation"],
+            ["docs", "Docs & evidence"],
             ["explain", "Errors & pipeline"],
           ] as const
         ).map(([id, label]) => (
@@ -296,15 +524,27 @@ export function LiveDemo({ scenario }: { scenario: Scenario }) {
                 withCode={data.with.code}
                 phantoms={data.without.report?.phantoms ?? []}
                 apiLabel={
-                  isAuth
-                    ? "auth-jwt v2"
-                    : isStripe
-                      ? "stripe-charge v2"
-                      : isOpenAI
-                        ? "openai-chat v1"
-                        : isPlaid
-                          ? "Plaid Link"
-                          : "MorphPay v2"
+                  isHmac
+                    ? "webhook-auth v2"
+                    : isDiscriminator
+                      ? "events-gateway v2"
+                      : isMail
+                        ? "mail-send v2"
+                        : isStripeErrors
+                          ? "stripe-errors v2"
+                          : isAsync
+                            ? "aws-s3 v2"
+                            : isEnvelope
+                              ? "users-list v2"
+                              : isAuth
+                                ? "auth-jwt v2"
+                                : isStripe
+                                  ? "stripe-charge v2"
+                                  : isOpenAI
+                                    ? "openai-chat v1"
+                                    : isPlaid
+                                      ? "Plaid Link"
+                                      : "MorphPay v2"
                 }
               />
 
@@ -312,7 +552,19 @@ export function LiveDemo({ scenario }: { scenario: Scenario }) {
                 <CodePanel
                   title="Without MorphAPI"
                   subtitle={
-                    isAuth
+                    isHmac
+                      ? "Pure LLM — often static token === WEBHOOK_TOKEN"
+                      : isDiscriminator
+                        ? "Pure LLM — often leaves router on legacy discriminator"
+                        : isMail
+                          ? "Pure LLM — often misses cron/seed sendEmail sites"
+                          : isStripeErrors
+                            ? "Pure LLM — often leaves stripe.error.CardError"
+                            : isAsync
+                              ? "Pure LLM — often drops await / leaves .promise()"
+                              : isEnvelope
+                                ? "Pure LLM — edge-only; consumers stay User[]-blind"
+                                : isAuth
                       ? "Pure LLM + repair loop — often @ts-ignore / as any / JWT_SECRET"
                       : isStripe
                         ? "Pure LLM — often leaves amount in dollars"
@@ -323,6 +575,7 @@ export function LiveDemo({ scenario }: { scenario: Scenario }) {
                             : "Pure LLM — often CaptureMode.Automatic"
                   }
                   code={data.without.code}
+                  compareTo={data.with.code}
                   phantoms={data.without.report?.phantoms ?? []}
                   status={withoutPass ? "pass" : "fail"}
                   emptyHint='No LLM-only output yet. Click "Run … comparison".'
@@ -330,18 +583,56 @@ export function LiveDemo({ scenario }: { scenario: Scenario }) {
                 <CodePanel
                   title="With MorphAPI"
                   subtitle={
-                    isAuth
+                    isHmac
+                      ? "AST → HMAC + timingSafeEqual security gate"
+                      : isDiscriminator
+                        ? "AST switch + oracle discriminator map"
+                        : isMail
+                          ? "AST every sendEmail span → completeness checklist"
+                          : isStripeErrors
+                            ? "AST try/catch → Stripe.errors.StripeCardError"
+                            : isAsync
+                              ? "AST spans + async contagion gate"
+                              : isEnvelope
+                                ? "AST + .data edge adapter (DFG)"
+                              : isAuth
                       ? "AST → constrained LLM → anti-cheat → JWKS apply"
                       : isStripe
                         ? "AST → transform directive → ×100 gate → apply"
                         : "AST → constrained LLM → oracle → apply"
                   }
                   code={data.with.code}
+                  compareTo={data.without.code}
                   phantoms={data.with.report?.phantoms ?? []}
+                  highlightRanges={(data.with.report?.spans ?? []).map((s) => ({
+                    startLine: s.startLine,
+                    endLine: s.endLine,
+                    kind: s.kind,
+                  }))}
                   status={withPass ? "pass" : "fail"}
                   emptyHint='No hybrid output yet. Click "Run … comparison".'
                 />
               </div>
+
+              {(data.with.report?.repairReport ||
+                data.without.report?.repairReport) && (
+                <div className="cascade-pair">
+                  <CascadeTimeline
+                    title="Hybrid cascade repair (AST-explained)"
+                    repair={toCascadeRepair(data.with.report?.repairReport)}
+                  />
+                  <CascadeTimeline
+                    title="LLM-only cascade (for comparison)"
+                    repair={toCascadeRepair(data.without.report?.repairReport)}
+                  />
+                </div>
+              )}
+
+              <WithoutCritique
+                scenario={scenario}
+                report={data.without.report}
+                withoutPass={withoutPass}
+              />
             </section>
           )}
 
@@ -378,95 +669,13 @@ export function LiveDemo({ scenario }: { scenario: Scenario }) {
             </section>
           )}
 
-          {tab === "docs" && data && isAuth && (
-            <section className="docs-briefing">
-              <article>
-                <h2>Why typecheck exit code is not enough</h2>
-                <p>
-                  Under repair-loop pressure, models can force{" "}
-                  <code>tsc</code> green with <code>@ts-ignore</code>,{" "}
-                  <code>as any</code>, or empty catches — while still verifying
-                  with <code>JWT_SECRET</code> or inventing{" "}
-                  <code>Auth0.verify</code>. MorphAPI treats those as first-class
-                  phantoms.
-                </p>
-              </article>
-              <article>
-                <h2>Migration docs the model saw</h2>
-                <pre>
-                  <code>{data.docsV2 ?? "(missing docs)"}</code>
-                </pre>
-              </article>
-            </section>
-          )}
-
-          {tab === "docs" && data && isPlaid && (
-            <PlaidBriefing
-              docsV2={data.docsV2}
-              livePhantoms={data.without.report?.phantoms ?? []}
-              withoutCode={data.without.code}
-              withCode={data.with.code}
-            />
-          )}
-
-          {tab === "docs" && data && isStripe && (
-            <section className="docs-briefing">
-              <article>
-                <h2>Not a MorphAPI claim case</h2>
-                <p>
-                  Live <code>gpt-4o-mini</code> often already converts
-                  dollars→cents (helper locals or cents literals). We keep the
-                  fixture for taxonomy completeness, but do not treat Scenario 3
-                  as a MorphAPI differentiator.
-                </p>
-              </article>
-              <article>
-                <h2>Why typecheck is not enough (in theory)</h2>
-                <p>
-                  v1 and v2 both type <code>amount: number</code>. Forgetting{" "}
-                  <code>× 100</code> still compiles — and under-charges by
-                  100×. In practice, current models often catch this without
-                  MorphAPI.
-                </p>
-              </article>
-              <article>
-                <h2>Migration docs the model saw</h2>
-                <pre>
-                  <code>{data.docsV2 ?? "(missing docs)"}</code>
-                </pre>
-              </article>
-            </section>
-          )}
-
-          {tab === "docs" && data && isOpenAI && (
-            <section className="docs-briefing">
-              <article>
-                <h2>What LLM-only saw</h2>
-                <p className="doc-note">
-                  Vague migration notes — they say map the old engine field but
-                  never spell <code>model:</code> as the only legal key.
-                </p>
-                <pre className="doc-md">
-                  <code>{data.docsV2 ?? "(missing docs/openai-chat-v1.md)"}</code>
-                </pre>
-              </article>
-              <article>
-                <h2>Oracle traps</h2>
-                <p>
-                  <code>oracle/openai-chat-v1.json</code> lists{" "}
-                  <code>engine</code>, <code>ChatCompletion</code>,{" "}
-                  <code>createChatCompletion</code> as known phantoms.
-                </p>
-              </article>
-            </section>
-          )}
-
-          {tab === "docs" && data && !isPlaid && !isStripe && !isAuth && !isOpenAI && (
-            <DocsBriefing
-              docsV1={data.docsV1}
-              docsV2={data.docsV2}
-              livePhantoms={data.without.report?.phantoms ?? []}
-              beforeCode={data.before}
+          {tab === "docs" && data && (
+            <MigrationDocs
+              note={DOCS_COPY[scenario].note}
+              docs={data.docsV2}
+              docsPath={DOCS_COPY[scenario].docsPath}
+              oraclePath={DOCS_COPY[scenario].oraclePath}
+              oracleBody={DOCS_COPY[scenario].oracleBody}
             />
           )}
 

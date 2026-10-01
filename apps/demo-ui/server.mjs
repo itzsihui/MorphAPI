@@ -3,7 +3,14 @@ import { createServer as createViteServer } from "vite";
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
+import {
+  getMeta,
+  normalizeScenario,
+  LIVE_SCENARIOS,
+} from "./scenarioMeta.mjs";
+import { collectSpans } from "./spansService.mjs";
+import { buildScenarioGraph } from "./graphService.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
@@ -47,18 +54,20 @@ function readJsonMaybe(filePath) {
   }
 }
 
-function normalizeScenario(raw) {
-  if (raw === "plaid") return "plaid";
-  if (raw === "openai") return "openai";
-  if (raw === "stripe") return "stripe";
-  if (raw === "stripe-errors") return "stripe-errors";
-  if (raw === "auth") return "auth";
-  if (raw === "envelope") return "envelope";
-  if (raw === "async") return "async";
-  if (raw === "mail") return "mail";
-  if (raw === "hmac") return "hmac";
-  if (raw === "discriminator") return "discriminator";
-  return "morphpay";
+function attachRepair(report, repairPath) {
+  if (!report) return report;
+  const repair = readJsonMaybe(repairPath);
+  if (!repair) return report;
+  return { ...report, repairReport: report.repairReport ?? repair };
+}
+
+function mailProjectCode(outDir) {
+  const parts = ["notify.ts", "cron.ts", "seed.ts", "onboarding.ts"].map((f) => {
+    const body = readMaybe(path.join(outDir, f));
+    return body ? `// ===== ${f} =====\n${body}` : null;
+  });
+  const joined = parts.filter(Boolean).length >= 3 ? parts.filter(Boolean).join("\n") : null;
+  return joined ?? readMaybe(path.join(outDir, "project.ts"));
 }
 
 function getResults(scenarioInput = "morphpay") {
@@ -276,31 +285,44 @@ function getResults(scenarioInput = "morphpay") {
   }
 
   if (scenario === "mail") {
-    const beforeParts = ["notify.ts", "cron.ts", "seed.ts"].map((f) => {
-      const body = readMaybe(
-        path.join(ROOT, "fixtures/mail-client-v1/src", f)
-      );
-      return body ? `// ===== ${f} =====\n${body}` : null;
-    });
+    const beforeParts = ["notify.ts", "cron.ts", "seed.ts", "onboarding.ts"].map(
+      (f) => {
+        const body = readMaybe(
+          path.join(ROOT, "fixtures/mail-client-v1/src", f)
+        );
+        return body ? `// ===== ${f} =====\n${body}` : null;
+      }
+    );
+    const llmDir = path.join(ROOT, "baselines/mail_llm_only/out");
+    const astDir = path.join(ROOT, "baselines/mail_ast/out");
+    const hyDir = path.join(ROOT, "baselines/mail_hybrid/out");
     return {
       scenario: "mail",
-      before: beforeParts.every(Boolean) ? beforeParts.join("\n") : null,
+      before: beforeParts.filter(Boolean).length >= 3
+        ? beforeParts.filter(Boolean).join("\n")
+        : null,
       without: {
         label: "Without MorphAPI (LLM-only)",
-        code: readMaybe(
-          path.join(ROOT, "baselines/mail_llm_only/out/project.ts")
+        code: mailProjectCode(llmDir),
+        report: attachRepair(
+          readJsonMaybe(path.join(llmDir, "report.json")),
+          path.join(llmDir, "repair-report.json")
         ),
-        report: readJsonMaybe(
-          path.join(ROOT, "baselines/mail_llm_only/out/report.json")
+      },
+      ast: {
+        label: "Pure AST (notify-only recipe)",
+        code: mailProjectCode(astDir),
+        report: attachRepair(
+          readJsonMaybe(path.join(astDir, "report.json")),
+          path.join(astDir, "repair-report.json")
         ),
       },
       with: {
         label: "With MorphAPI (AI + AST completeness checklist)",
-        code: readMaybe(
-          path.join(ROOT, "baselines/mail_hybrid/out/project.ts")
-        ),
-        report: readJsonMaybe(
-          path.join(ROOT, "baselines/mail_hybrid/out/report.json")
+        code: mailProjectCode(hyDir),
+        report: attachRepair(
+          readJsonMaybe(path.join(hyDir, "report.json")),
+          path.join(hyDir, "repair-report.json")
         ),
       },
       docs: readMaybe(path.join(ROOT, "docs/mail-send-v2.md")),
@@ -492,7 +514,247 @@ async function start() {
     res.json(getResults(req.query.scenario));
   });
 
+  app.get("/api/meta", (_req, res) => {
+    res.json({
+      scenarios: LIVE_SCENARIOS.map((id) => ({ id, ...getMeta(id) })),
+    });
+  });
+
+  app.get("/api/oracle", (req, res) => {
+    const meta = getMeta(req.query.scenario);
+    const oracle = readJsonMaybe(path.join(ROOT, meta.oraclePath));
+    if (!oracle) {
+      res.status(404).json({ error: `Oracle not found: ${meta.oraclePath}` });
+      return;
+    }
+    res.json({
+      scenario: meta.id,
+      path: meta.oraclePath,
+      schemaDelta: meta.schemaDelta,
+      astAloneReason: meta.astAloneReason,
+      gateFields: meta.gateFields,
+      oracle,
+    });
+  });
+
+  app.get("/api/spans", async (req, res) => {
+    try {
+      const payload = await collectSpans(ROOT, req.query.scenario);
+      res.json(payload);
+    } catch (err) {
+      res.status(500).json({
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+
+  app.get("/api/eval", async (_req, res) => {
+    try {
+      const modPath = pathToFileURL(
+        path.join(ROOT, "scripts/eval-matrix.mjs")
+      ).href;
+      // Bust ESM cache so Evaluation picks up scorer edits without full redeploy
+      const { buildEvalMatrix } = await import(`${modPath}?t=${Date.now()}`);
+      const matrix = buildEvalMatrix(ROOT);
+      res.json(matrix);
+    } catch (err) {
+      const cached = readJsonMaybe(path.join(ROOT, "out/eval-matrix.json"));
+      if (cached) {
+        res.json(cached);
+        return;
+      }
+      res.status(500).json({
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+
   let running = false;
+
+  function sseWrite(res, event, data) {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  }
+
+  app.get("/api/graph", async (req, res) => {
+    try {
+      const start = Number(req.query.start);
+      const graph = await buildScenarioGraph(ROOT, normalizeScenario(req.query.scenario), {
+        file: typeof req.query.file === "string" ? req.query.file : undefined,
+        start: Number.isFinite(start) ? start : undefined,
+      });
+      res.json(graph);
+    } catch (err) {
+      res.status(500).json({
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+
+  async function runScenarioPipeline(scenario, onEvent) {
+    const meta = getMeta(scenario);
+    const emit = (type, payload = {}) => {
+      const evt = {
+        t: new Date().toISOString(),
+        type,
+        scenario: meta.id,
+        ...payload,
+      };
+      onEvent(evt);
+      return evt;
+    };
+
+    emit("start", { label: meta.label, message: `Workbench run · ${meta.label}` });
+
+    try {
+      const spanPayload = await collectSpans(ROOT, meta.id);
+      emit("ast_scan", {
+        message: `TypeScript AST: parsed ${spanPayload.spanCount} call site(s) across ${spanPayload.files.length} file(s)`,
+        spanCount: spanPayload.spanCount,
+        files: spanPayload.files.map((f) => ({
+          name: f.name,
+          spans: f.spans.length,
+        })),
+        engine: spanPayload.engine,
+      });
+    } catch (err) {
+      emit("ast_scan_error", {
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    const scripts = meta.scripts ?? [];
+    const logs = {};
+    let lastHybridReport = null;
+
+    for (const script of scripts) {
+      const isAst = /[-:]ast\b|_ast\b|demo:.*-ast/.test(script) || script.includes("-ast");
+      const isHybrid = script.includes("hybrid");
+      const phase = isHybrid ? "hybrid" : isAst ? "ast" : "llm_only";
+
+      emit(`${phase}_start`, {
+        message: `${phase} baseline: ${script}`,
+        script,
+      });
+      const run = await runNpmScript(script);
+      logs[phase] = (run.stdout + run.stderr).slice(-3000);
+      const resultsNow = getResults(meta.id);
+      const report =
+        phase === "hybrid"
+          ? resultsNow.with?.report
+          : phase === "ast"
+            ? resultsNow.ast?.report
+            : resultsNow.without?.report;
+
+      if (phase === "ast") {
+        const repair = report?.repairReport;
+        emit("ast_alone_done", {
+          message: `Pure AST done · typecheck=${report?.typecheckPass ? "PASS" : "FAIL"} · after primary discovered ${repair?.summary?.fixesDiscoveredAfterPrimary ?? "?"} · remaining ${repair?.summary?.fixesRemainingAfterPrimary ?? "?"}`,
+          exitCode: run.code,
+          typecheckPass: report?.typecheckPass,
+          completenessPass: report?.completenessPass,
+          fixesDiscoveredAfterPrimary:
+            repair?.summary?.fixesDiscoveredAfterPrimary,
+          fixesRemainingAfterPrimary:
+            repair?.summary?.fixesRemainingAfterPrimary,
+        });
+      } else if (phase === "llm_only") {
+        emit("llm_only_done", {
+          message: `AI-alone done · typecheck=${report?.typecheckPass ? "PASS" : "FAIL"} · phantoms=${report?.phantomCount ?? "?"}`,
+          exitCode: run.code,
+          phantoms: report?.phantoms ?? [],
+          typecheckPass: report?.typecheckPass,
+        });
+      } else {
+        lastHybridReport = report;
+        const attempts = report?.attempts ?? [];
+        for (const attempt of attempts) {
+          const rejected = (attempt.phantomCount ?? 0) > 0;
+          emit(rejected ? "inspect_reject" : "inspect_accept", {
+            message: rejected
+              ? `Inspector REJECTED span ${attempt.span} (attempt ${attempt.attempt}, source=${attempt.source}) · phantoms=${attempt.phantomCount}`
+              : `Inspector ACCEPTED span ${attempt.span} (attempt ${attempt.attempt}, source=${attempt.source})`,
+            attempt,
+          });
+        }
+        const repair = report?.repairReport;
+        emit("typecheck", {
+          message: `Hybrid gate · typecheck=${report?.typecheckPass ? "PASS" : "FAIL"} · phantoms=${report?.phantomCount ?? 0} · spansFound=${report?.spansFound ?? "?"} · cascade discovered ${repair?.summary?.fixesDiscoveredAfterPrimary ?? "?"} completed ${repair?.summary?.fixesCompletedAfterPrimary ?? "?"}`,
+          typecheckPass: report?.typecheckPass,
+          phantomCount: report?.phantomCount,
+          spansFound: report?.spansFound,
+          usedOracleFallback: report?.usedOracleFallback,
+          fixesDiscoveredAfterPrimary:
+            repair?.summary?.fixesDiscoveredAfterPrimary,
+          fixesCompletedAfterPrimary:
+            repair?.summary?.fixesCompletedAfterPrimary,
+        });
+      }
+    }
+
+    emit("done", {
+      message: "Pipeline complete",
+      ok: true,
+    });
+
+    return {
+      ok: true,
+      scenario: meta.id,
+      logs: {
+        llmOnly: logs.llm_only ?? "",
+        ast: logs.ast ?? "",
+        hybrid: logs.hybrid ?? "",
+      },
+      results: getResults(meta.id),
+      hybridReport: lastHybridReport,
+    };
+  }
+
+  app.get("/api/run/stream", async (req, res) => {
+    const scenario = normalizeScenario(req.query.scenario);
+    if (running) {
+      res.status(409).json({ error: "A demo run is already in progress." });
+      return;
+    }
+    if (!process.env.OPENAI_API_KEY && !process.env.MORPHAPI_LLM_API_KEY) {
+      res.status(400).json({
+        error: "OPENAI_API_KEY missing in .env — required for live LLM runs.",
+      });
+      return;
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    running = true;
+    try {
+      const result = await runScenarioPipeline(scenario, (evt) => {
+        sseWrite(res, evt.type, evt);
+      });
+      sseWrite(res, "results", {
+        t: new Date().toISOString(),
+        type: "results",
+        results: result.results,
+        logs: result.logs,
+      });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const friendly = /ENOTFOUND|Cannot reach|DNS\/network/i.test(raw)
+        ? "Network blocked: cannot reach api.openai.com. Run `npm run demo:ui` in your Mac terminal and try again."
+        : raw.slice(0, 1500);
+      sseWrite(res, "error", {
+        t: new Date().toISOString(),
+        type: "error",
+        message: friendly,
+        results: getResults(scenario),
+      });
+    } finally {
+      running = false;
+      res.end();
+    }
+  });
+
   app.post("/api/run", async (req, res) => {
     const scenario = normalizeScenario(req.body?.scenario);
     if (running) {
@@ -507,45 +769,8 @@ async function start() {
     }
     running = true;
     try {
-      const scripts =
-        scenario === "plaid"
-          ? ["demo:plaid-llm-only", "demo:plaid-hybrid"]
-          : scenario === "openai"
-            ? ["demo:openai-llm-only", "demo:openai-hybrid"]
-            : scenario === "stripe"
-              ? ["demo:stripe-llm-only", "demo:stripe-hybrid"]
-              : scenario === "auth"
-                ? ["demo:auth-llm-only", "demo:auth-hybrid"]
-                : scenario === "envelope"
-                  ? ["demo:envelope-llm-only", "demo:envelope-hybrid"]
-                  : scenario === "async"
-                    ? ["demo:async-llm-only", "demo:async-hybrid"]
-                    : scenario === "mail"
-                      ? ["demo:mail-llm-only", "demo:mail-hybrid"]
-                      : scenario === "hmac"
-                        ? ["demo:hmac-llm-only", "demo:hmac-hybrid"]
-                        : scenario === "discriminator"
-                          ? [
-                              "demo:discriminator-llm-only",
-                              "demo:discriminator-hybrid",
-                            ]
-                      : scenario === "stripe-errors"
-                        ? [
-                            "demo:stripe-errors-llm-only",
-                            "demo:stripe-errors-hybrid",
-                          ]
-                        : ["demo:llm-only", "demo:hybrid"];
-      const a = await runNpmScript(scripts[0]);
-      const b = await runNpmScript(scripts[1]);
-      res.json({
-        ok: true,
-        scenario,
-        logs: {
-          llmOnly: (a.stdout + a.stderr).slice(-3000),
-          hybrid: (b.stdout + b.stderr).slice(-3000),
-        },
-        results: getResults(scenario),
-      });
+      const result = await runScenarioPipeline(scenario, () => {});
+      res.json(result);
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
       const friendly = /ENOTFOUND|Cannot reach|DNS\/network/i.test(raw)
@@ -558,6 +783,11 @@ async function start() {
     } finally {
       running = false;
     }
+  });
+
+  // Never let unknown /api/* fall through to Vite SPA HTML
+  app.use("/api", (req, res) => {
+    res.status(404).json({ error: `Unknown API route: ${req.method} ${req.path}` });
   });
 
   const isProd = process.env.NODE_ENV === "production";

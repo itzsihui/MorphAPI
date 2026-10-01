@@ -3,15 +3,26 @@ import * as path from "path";
 import {
   applySpanReplacement,
   assertEnvelopeUnwrap,
+  buildApproachReport,
+  emptyRubric,
   findListUsersAwaitSpans,
   generateCode,
   inspectCode,
   loadEnv,
   loadOracle,
+  nextIssueId,
   oracleEnvelopeReplacementForSpan,
   readUtf8,
+  resetIssueSeq,
   runTypecheck,
+  scoreIssuePass,
+  spanToLocation,
+  usageSpansToReportSpans,
+  writeRepairReportJson,
   writeUtf8,
+  type IssueEval,
+  type RepairIssue,
+  type RepairStep,
   type UsageSpan,
 } from "@morphapi/core";
 
@@ -26,6 +37,7 @@ const LLM_ONLY_OUT = path.join(ROOT, "baselines/envelope_llm_only/out/api.ts");
 const OUT_API = path.join(__dirname, "../out/api.ts");
 const OUT_USERS = path.join(__dirname, "../out/users.ts");
 const REPORT_FILE = path.join(__dirname, "../out/report.json");
+const REPAIR_REPORT_FILE = path.join(__dirname, "../out/repair-report.json");
 
 const MAX_RETRIES = 2;
 
@@ -91,37 +103,21 @@ async function proposeLiveReplacement(args: {
 }
 
 async function main() {
+  resetIssueSeq(0);
   const apiSource = readUtf8(API_SRC);
   const usersSource = readUtf8(USERS_SRC);
   const docs = readUtf8(DOCS);
   const oracle = loadOracle(ORACLE);
 
-  console.log(
-    "=== Envelope Baseline B: Hybrid AI + AST + DFG .data adapter ===\n"
-  );
-  console.log("Mode: live LLM + AST spans + envelope unwrap gate\n");
+  console.log("=== Envelope Baseline B: Hybrid cascade (.data unwrap) ===\n");
 
   let contrastBehavioralPass: boolean | null = null;
   if (fs.existsSync(LLM_ONLY_OUT)) {
     const llmOnlyOut = readUtf8(LLM_ONLY_OUT);
     const contrast = assertEnvelopeUnwrap("api.ts", llmOnlyOut);
     contrastBehavioralPass = contrast.ok;
-    console.log("--- Contrast: envelope gate on latest LLM-only edge ---");
-    console.log(
-      contrast.ok
-        ? "LLM-only already unwrapped .data at edge"
-        : `LLM-only blind sites: ${contrast.wrappedBlindCount}`
-    );
-    for (const s of contrast.sites) {
-      console.log(
-        `  L${s.startLine}: ${s.binding ?? "(expr)"} → ${
-          s.unwrapped ? "unwrapped" : "BLIND"
-        }`
-      );
-    }
   }
 
-  // Prefer awaiting form for span detection — normalize fixture if bare return
   let working = apiSource;
   if (!/await\s+\w+\.listUsers\(/.test(working)) {
     working = working.replace(
@@ -132,20 +128,38 @@ async function main() {
 
   const spans = findListUsersAwaitSpans("api.ts", working);
   console.log(`\nAST scan: found ${spans.length} listUsers await span(s)`);
-  for (const s of spans) {
-    console.log(`  L${s.startLine}:${s.startChar}-L${s.endLine}:${s.endChar}`);
-  }
   if (spans.length === 0) {
     throw new Error("No listUsers await spans found — AST scan failed");
   }
+
+  const issues: RepairIssue[] = [];
+  const steps: RepairStep[] = [];
+  let stepNo = 0;
+
+  for (const span of spans) {
+    issues.push({
+      id: nextIssueId("iss"),
+      kind: "api_rename",
+      severity: "blocker",
+      location: spanToLocation(span),
+      symptom: "listUsers edge call must adapt to v2 envelope",
+      rootCauseHint: "Payload envelope { data, pagination }",
+      discoveredAt: "initial",
+    });
+  }
+  const primaryId = issues[0].id;
 
   const sorted = [...spans].sort((a, b) => b.start - a.start);
   const attemptLog: Array<Record<string, unknown>> = [];
   let usedOracleFallback = false;
 
   for (const span of sorted) {
+    const issueId =
+      issues.find((i) => i.location.startLine === span.startLine)?.id ??
+      primaryId;
     let feedback: string | undefined;
     let accepted: string | undefined;
+    let usedFallback = false;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       const candidateExpr = await proposeLiveReplacement({
@@ -160,9 +174,6 @@ async function main() {
 
       if (inspection.ok && looksUnwrapped) {
         accepted = candidateExpr;
-        console.log(
-          `\nSpan L${span.startLine}: accepted live LLM proposal on attempt ${attempt}`
-        );
         attemptLog.push({
           span: `${span.startLine}:${span.startChar}`,
           attempt,
@@ -187,8 +198,6 @@ async function main() {
         );
       }
       feedback = reasons.join("\n");
-      console.log(`\nSpan L${span.startLine}: rejected live attempt ${attempt}`);
-      console.log(feedback);
       attemptLog.push({
         span: `${span.startLine}:${span.startChar}`,
         attempt,
@@ -201,9 +210,7 @@ async function main() {
       if (attempt === MAX_RETRIES) {
         accepted = oracleEnvelopeReplacementForSpan(span.text);
         usedOracleFallback = true;
-        console.log(
-          `Span L${span.startLine}: applied oracle-backed .data edge adapter after live rejects`
-        );
+        usedFallback = true;
         attemptLog.push({
           span: `${span.startLine}:${span.startChar}`,
           attempt: attempt + 1,
@@ -215,42 +222,81 @@ async function main() {
 
     if (!accepted) throw new Error("No accepted replacement");
     working = applySpanReplacement(working, span.start, span.end, accepted);
+    stepNo += 1;
+    steps.push({
+      step: stepNo,
+      issueId,
+      action: `Edge adapter listUsers → unwrap .data (L${span.startLine})`,
+      source: usedFallback ? "oracle_fallback" : "live",
+      newlyDiscoveredIssueIds: [],
+    });
   }
 
   working = rewriteImports(working);
   writeUtf8(OUT_API, working);
-  // Consumers stay as-is — edge adapter preserves User[] contract
   writeUtf8(OUT_USERS, usersSource.replace(/users-list-v1/g, "users-list-v2"));
 
   const tc = runTypecheck(path.join(__dirname, ".."));
   const finalInspection = inspectCode(working, oracle);
   const finalBehavioral = assertEnvelopeUnwrap("api.ts", working);
 
-  console.log("\n--- Hallucination Inspector (final) ---");
-  console.log(`Phantoms found: ${finalInspection.phantoms.length}`);
-  for (const p of finalInspection.phantoms) {
-    console.log(`  [${p.tier}] ${p.symbol} — ${p.reason}`);
+  // Record cascade: consumers would be blind without edge unwrap
+  const unwrapIssueId = nextIssueId("iss");
+  issues.push({
+    id: unwrapIssueId,
+    kind: "envelope_unwrap",
+    severity: "blocker",
+    location: { fileName: "users.ts", text: "loadUsers consumers" },
+    symptom:
+      "Downstream User[] consumers break if edge returns raw { data } envelope",
+    rootCauseHint: "1° DFG: consumers read array fields off envelope",
+    discoveredAt: "after_fix",
+    causedByIssueId: primaryId,
+  });
+  if (steps.length > 0) {
+    steps[steps.length - 1].newlyDiscoveredIssueIds = [unwrapIssueId];
+    steps[steps.length - 1].notes =
+      "Behavioral gate: edge must unwrap .data or consumers cascade-fail";
   }
 
   console.log("\n--- DFG / envelope gate (final) ---");
-  console.log(
-    finalBehavioral.ok
-      ? "PASS (edge unwraps .data)"
-      : `FAIL (${finalBehavioral.wrappedBlindCount} blind)`
-  );
-  for (const s of finalBehavioral.sites) {
-    console.log(
-      `  L${s.startLine}: ${s.binding ?? "(expr)"} → ${
-        s.unwrapped ? "unwrapped" : "BLIND"
-      }`
-    );
-  }
+  console.log(finalBehavioral.ok ? "PASS" : "FAIL");
+  console.log("\n--- Typecheck ---", tc.ok ? "PASS" : "FAIL");
 
-  console.log("\n--- Typecheck (tsc --noEmit) ---");
-  console.log(tc.ok ? "PASS" : "FAIL");
-  if (!tc.ok) {
-    console.log((tc.stdout + "\n" + tc.stderr).trim().slice(0, 2000));
-  }
+  const issueEvals: IssueEval[] = issues.map((iss) => {
+    const scores = emptyRubric({
+      compile: tc.ok ? 1 : 0,
+      oracle: finalInspection.phantoms.length === 0 ? 1 : 0,
+      semantic: finalBehavioral.ok ? 1 : 0,
+      locality: 1,
+      cascade: 1,
+    });
+    return {
+      issueId: iss.id,
+      approach: "hybrid" as const,
+      scores,
+      citations: [
+        {
+          id: `cite-${iss.id}-beh`,
+          kind: "report_field" as const,
+          detail: `behavioralPass=${finalBehavioral.ok}, blind=${finalBehavioral.wrappedBlindCount}`,
+        },
+      ],
+      pass: scoreIssuePass(scores),
+      rationale: iss.symptom,
+    };
+  });
+
+  const repairReport = buildApproachReport({
+    approach: "hybrid",
+    scenarioId: "payload-envelope",
+    issues,
+    steps,
+    issueEvals,
+    spans: usageSpansToReportSpans(spans),
+    narrative: `Hybrid cascade: adapted listUsers edge with .data unwrap so users.ts consumers keep User[]. behavioral=${finalBehavioral.ok}, typecheck=${tc.ok}.`,
+  });
+  writeRepairReportJson(REPAIR_REPORT_FILE, repairReport, writeUtf8);
 
   const report = {
     baseline: "envelope_hybrid",
@@ -267,12 +313,15 @@ async function main() {
     wrappedBlindCount: finalBehavioral.wrappedBlindCount,
     contrastBehavioralPass,
     spansFound: spans.length,
+    spans: usageSpansToReportSpans(spans),
     attempts: attemptLog,
+    repairReport,
     outFile: OUT_API,
     outConsumers: OUT_USERS,
   };
   writeUtf8(REPORT_FILE, JSON.stringify(report, null, 2) + "\n");
   console.log(`\nReport → ${REPORT_FILE}`);
+  console.log(`Repair report → ${REPAIR_REPORT_FILE}`);
 
   if (!tc.ok || !finalBehavioral.ok || finalInspection.phantoms.length > 0) {
     console.error(

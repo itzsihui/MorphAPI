@@ -19,7 +19,7 @@ const ORACLE = path.join(ROOT, "oracle/mail-send-v2.json");
 const OUT_DIR = path.join(__dirname, "../out");
 const REPORT_FILE = path.join(OUT_DIR, "report.json");
 
-const FILES = ["notify.ts", "cron.ts", "seed.ts"] as const;
+const FILES = ["notify.ts", "cron.ts", "seed.ts", "onboarding.ts"] as const;
 
 function parseMultiFileOutput(raw: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -38,6 +38,7 @@ function parseMultiFileOutput(raw: string): Record<string, string> {
       if (/notifyUser|notifyPasswordReset/.test(body)) name = "notify.ts";
       else if (/runNightlyDigest/.test(body)) name = "cron.ts";
       else if (/seedWelcomeEmails/.test(body)) name = "seed.ts";
+      else if (/onboardNewUser/.test(body)) name = "onboarding.ts";
     }
     if (name) result[name] = body;
   }
@@ -144,7 +145,14 @@ async function main() {
     console.log(`  [${p.tier}] ${p.symbol} — ${p.reason}`);
   }
 
-  const completeness = assertMailMigrationComplete(outFiles, 4);
+  const completeness = assertMailMigrationComplete(
+    {
+      "notify.ts": outFiles["notify.ts"],
+      "cron.ts": outFiles["cron.ts"],
+      "seed.ts": outFiles["seed.ts"],
+    },
+    4
+  );
   console.log("\n--- Completeness gate (all sendEmail sites migrated) ---");
   console.log(
     completeness.ok

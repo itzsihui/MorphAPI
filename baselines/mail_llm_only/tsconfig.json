@@ -10,5 +10,5 @@
     "rootDir": "out",
     "types": ["node"]
   },
-  "include": ["out/notify.ts", "out/cron.ts", "out/seed.ts"]
+  "include": ["out/notify.ts", "out/cron.ts", "out/seed.ts", "out/onboarding.ts"]
 }
