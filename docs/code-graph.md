@@ -5,7 +5,7 @@ The **Code Graph** tab (`#graph/<scenario>`, e.g. `#graph/mail`) shows what Morp
 ## How it is built
 
 1. **Program.** `loadProgram()` (`packages/morphapi-core/src/program.ts`) reads the fixture's `tsconfig.json` with `ts.parseJsonConfigFileContent`, so `paths`, `baseUrl`, `types` and module resolution match what `tsc` would do. The tsconfig comes from `tsconfigPath` in `apps/demo-ui/scenarioMeta.mjs`; if that is missing, the service walks up from the first fixture file (`projectSource: "walk"`).
-2. **Spans.** The scenario's AST finders (`spanFinders`) mark the call sites to migrate — the same spans the Workbench uses.
+2. **Spans.** The scenario's AST finders (`spanFinders`) mark the call sites to migrate — the same spans the Workbench uses. The pipeline in card 6 finds its call sites generically instead (`findDeprecatedReferences`); the two agree on 8 of 11 scenarios, and the other three hand finders target non-call sites (see `npm run program:selfcheck`).
 3. **Graph.** `buildCodePropertyGraph()` (`packages/morphapi-core/src/codePropertyGraph.ts`) decorates those spans using the TypeChecker:
 
 | Node | Meaning |
@@ -26,13 +26,14 @@ The **Code Graph** tab (`#graph/<scenario>`, e.g. `#graph/mail`) shows what Morp
 
 A call is marked deprecated by, in order: an `@deprecated` JSDoc tag on the resolved declaration (`jsdoc`), the scenario's `deprecatedSymbols` list (`scenario_meta`), or simply being a finder span (`finder_match`).
 
-## The five cards
+## The six cards
 
 1. **Source + syntax tree** — the enclosing function, the finder span highlighted in red, identifiers labelled with their checker type.
 2. **Typed data-flow graph** — one lane per variable; hover a node to light up the same occurrence in the code and tree.
 3. **Code Property Graph** — one lane per file, API symbols in a shared column. Data flow, calls and resolution edges are on by default; `contains` and arguments can be toggled on. Click a node to see its properties and edges.
-4. **Slice facts** — the JSON for the selected call site: target call, resolved v1 signature, v2 successors, typed arguments with origins, data flow, how the result is consumed, the enclosing function and 1-hop callers. This is what the hybrid prompt receives instead of the whole file. Token counts are shown next to it; on these small fixtures the facts can be longer than the file, because they add information (types, signatures, callers) the file does not state.
+4. **Slice facts** — the JSON for the selected call site: target call, resolved v1 signature, v2 successors, typed arguments with origins, data flow, how the result is consumed, the enclosing function and 1-hop callers. This is what the migration prompt receives instead of the whole file. Token counts are shown next to it; on these small fixtures the facts can be longer than the file, because they add information (types, signatures, callers) the file does not state.
 5. **1-hop impact + health** — callers and result consumers, plus health checks: the rate of implicit `any` / unresolved callees, fixture files missing from the program, and tsconfig errors. Explicit `any` written in the source is listed separately, since it is not a resolution failure.
+6. **Migration pipeline** — the run that consumes these facts ([`docs/pipeline.md`](./pipeline.md)). Pick an arm and a model; the card shows the saved run from `out/pipeline/` or starts a live one. For each call site: the slice, the exact prompt, and every gate attempt with its findings and the valid options the model was given. Then the 1-hop impact findings, the repairs made for them, any remaining diagnostics, and the diff of every changed file. The call site selected at the top opens its step.
 
 ## Headless check
 

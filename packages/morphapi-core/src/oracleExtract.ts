@@ -22,6 +22,8 @@ export type ExtractedOracle = {
   members: Record<string, string[]>;
   /** Flat allow-list: names, members, and "Type.member" */
   allowed: string[];
+  /** Type name → how to get a value of it (constructor or factory signature) */
+  obtain: Record<string, string>;
 };
 
 function unwrapPromise(checker: ts.TypeChecker, t: ts.Type): ts.Type {
@@ -44,6 +46,7 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
 
   const exports: OracleExport[] = [];
   const members: Record<string, string[]> = {};
+  const obtain: Record<string, string> = {};
   const seenTypes = new Set<ts.Type>();
 
   const collectMembers = (label: string, t: ts.Type, depth: number) => {
@@ -92,7 +95,14 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
         const rs = ret.getSymbol();
         if (rs && !rs.name.startsWith("__")) collectMembers(rs.name, ret, 1);
       }
-      for (const sig of valueType.getConstructSignatures()) collectMembers(name, sig.getReturnType(), 1);
+      for (const sig of valueType.getConstructSignatures()) {
+        collectMembers(name, sig.getReturnType(), 1);
+        obtain[checker.typeToString(sig.getReturnType())] ??= `new ${name}${checker.signatureToString(sig)}`;
+      }
+      for (const sig of valueType.getCallSignatures()) {
+        const ret = checker.typeToString(unwrapPromise(checker, sig.getReturnType()));
+        obtain[ret] ??= `${name}${checker.signatureToString(sig)}`;
+      }
       if (valueType.getSymbol()?.name === "__object") collectMembers(name, valueType, 1);
     }
   }
@@ -105,7 +115,7 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
       allowed.add(`${owner}.${m}`);
     }
   }
-  return { module: moduleName, moduleFile, exports, members, allowed: [...allowed].sort() };
+  return { module: moduleName, moduleFile, exports, members, allowed: [...allowed].sort(), obtain };
 }
 
 /** Import candidates for importReconcile from an extracted oracle. */

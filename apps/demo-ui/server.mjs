@@ -11,6 +11,7 @@ import {
 } from "./scenarioMeta.mjs";
 import { collectSpans } from "./spansService.mjs";
 import { buildScenarioGraph } from "./graphService.mjs";
+import { runScenarioPipeline as runMigrationPipeline, PIPELINE_ARMS } from "./pipelineService.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
@@ -587,6 +588,51 @@ async function start() {
       res.status(500).json({
         error: err instanceof Error ? err.message : String(err),
       });
+    }
+  });
+
+  const pipelineOut = (id, arm, model) => path.join(ROOT, "out", "pipeline", `${id}.${arm}.${model}.json`);
+  const pipelineQuery = (q) => ({
+    scenario: normalizeScenario(q.scenario),
+    arm: PIPELINE_ARMS.includes(q.arm) ? q.arm : "arm1_morphapi",
+    model: q.model === "frontier" ? "frontier" : "mini",
+  });
+
+  app.get("/api/pipeline/last", (req, res) => {
+    const { scenario, arm, model } = pipelineQuery(req.query);
+    const raw = readMaybe(pipelineOut(scenario, arm, model));
+    if (raw == null) {
+      res.status(404).json({ error: `No saved run for ${scenario} · ${arm} · ${model}.` });
+      return;
+    }
+    res.type("json").send(raw);
+  });
+
+  app.get("/api/pipeline/stream", async (req, res) => {
+    const { scenario, arm, model } = pipelineQuery(req.query);
+    if (running) {
+      res.status(409).json({ error: "A run is already in progress." });
+      return;
+    }
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+    running = true;
+    try {
+      const run = await runMigrationPipeline(ROOT, scenario, {
+        arm,
+        model,
+        onEvent: (evt) => sseWrite(res, "step", evt),
+      });
+      fs.mkdirSync(path.dirname(pipelineOut(scenario, arm, model)), { recursive: true });
+      fs.writeFileSync(pipelineOut(scenario, arm, model), JSON.stringify(run, null, 2));
+      sseWrite(res, "run", run);
+    } catch (err) {
+      sseWrite(res, "error", { message: (err instanceof Error ? err.message : String(err)).slice(0, 1500) });
+    } finally {
+      running = false;
+      res.end();
     }
   });
 

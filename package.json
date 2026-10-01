@@ -50,6 +50,8 @@
     "demo:discriminator-hybrid": "npm run start -w @morphapi/baseline-discriminator-hybrid",
     "demo:ui": "npm run dev -w @morphapi/demo-ui",
     "graph:cli": "node scripts/graph-run.mjs",
+    "morph:run": "node scripts/morph-run.mjs",
+    "program:selfcheck": "node scripts/program-selfcheck.mjs",
     "eval:matrix": "node scripts/eval-matrix.mjs",
     "eval:repair-reports": "node scripts/attach-llm-repair-reports.mjs && node scripts/attach-hybrid-repair-reports.mjs && node scripts/render-repair-report.mjs --all-pilots",
     "eval:repair-pdf": "node scripts/render-repair-pdf.mjs --mail",

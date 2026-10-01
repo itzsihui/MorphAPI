@@ -58,7 +58,7 @@ for (const id of ids) {
     console.log(
       `${run.final.complete ? "complete  " : "incomplete"} ${id.padEnd(14)} spans ${m.spansMigrated}/${m.spansFound}` +
         ` attempts=${m.attempts} phantoms=${m.phantomRejections} esc=${m.escalations}` +
-        ` leftovers=${run.final.leftovers} newDiags=${run.final.newDiagnostics.length}` +
+        ` leftovers=${run.final.leftovers} v1uses=${run.final.deprecatedModuleUses} newDiags=${run.final.newDiagnostics.length}` +
         ` churn=${(m.churnRatio * 100).toFixed(0)}% tokens=${m.promptTokens}+${m.completionTokens} ${(run.ms / 1000).toFixed(1)}s`
     );
     if (verbose) for (const d of run.final.newDiagnostics) console.log(`    ${d.file}:${d.line} ${d.message}`);

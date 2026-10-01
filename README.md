@@ -146,6 +146,7 @@ npm install
 cp .env.example .env
 # set OPENAI_API_KEY=sk-...
 # optional: MORPHAPI_LLM_MODEL=gpt-4o-mini
+# optional, pipeline frontier profile: ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 Requires Node ≥ 18 and a working OpenAI-compatible key. Every CLI/UI run calls a **real** model.
@@ -162,6 +163,9 @@ Requires Node ≥ 18 and a working OpenAI-compatible key. Every CLI/UI run calls
 | `npm run demo:auth` | JWT→JWKS + anti-cheat baseline |
 | `npm run demo:openai` / `stripe` / `mail` / `hmac` / … | Other live scenarios |
 | `npm run demo:openai-ast` / `envelope-ast` / `async-ast` / `mail-ast` | Pure AST pilot recipes (cascade ceilings) |
+| `npm run morph:run -- all [--arm …] [--model mini\|frontier]` | Generic migration pipeline on every scenario ([`docs/pipeline.md`](./docs/pipeline.md)) |
+| `npm run graph:cli -- mail` | Code Property Graph for one scenario, headless |
+| `npm run program:selfcheck` | Generic finder vs hand finders, incremental session check |
 | `npm run eval:repair-reports` | Attach + render cascade repair reports for pilots |
 | `npm run eval:matrix` | Rebuild evaluation matrix markdown |
 
@@ -210,6 +214,18 @@ Latest live snapshot ([`docs/evaluation.md`](./docs/evaluation.md)):
 
 Gates are binary on the latest seed (n≈1): typecheck **plus** scenario-specific semantic / completeness / security / anti-cheat checks — not a multi-run literature %.
 
+### Generic pipeline
+
+The per-scenario baselines above each have their own run script. `npm run morph:run` runs one pipeline with no scenario-specific code on all 11: generic call-site finder, slice + facts prompt, TypeChecker gate with valid-option feedback, import reconciliation and 1-hop impact repair ([`docs/pipeline.md`](./docs/pipeline.md)). gpt-4o-mini results, complete = every call migrated, nothing left from the deprecated module, no new type errors:
+
+| Arm | Complete |
+| --- | --- |
+| MorphAPI (all mechanisms) | 11 / 11, 0% unrelated edits |
+| LLM-only, whole file | 5 / 11 |
+| No slices (whole file + gate + impact) | 10 / 11 |
+| No oracle gate / feedback | 7 / 11 |
+| No impact repair | 5 / 11 |
+
 ## What is real vs synthetic?
 
 | Piece | Real? |
@@ -223,8 +239,9 @@ Gates are binary on the latest seed (n≈1): typecheck **plus** scenario-specifi
 
 - Models are non-deterministic; a rare LLM-only “clean” run exits `2` — re-run; the claim is about failure **rate**, not a single seed.
 - Pure AST column in the eval matrix is **estimated** (no jscodeshift baseline wired yet).
-- Oracles are hand-authored JSON allow-lists, not a full OpenAPI→SDK pipeline (future work).
-- The **Code Graph** tab ([`docs/code-graph.md`](./docs/code-graph.md)) builds a Code Property Graph from each fixture's real `ts.Program` (types, data flow, calls, v1 → v2 symbol mapping) and shows the slice facts for one call site. `npm run graph:cli -- mail` prints the same graph headless. The saved repair reports do not consume these facts yet; their 1° impact (`findOneHopImpact` / `findDirectCallers`) is still AST-only.
+- The per-scenario baselines use hand-authored JSON oracles. The generic pipeline reads the oracle from the successor package's type declarations instead.
+- The **Code Graph** tab ([`docs/code-graph.md`](./docs/code-graph.md)) builds a Code Property Graph from each fixture's real `ts.Program` (types, data flow, calls, v1 → v2 symbol mapping), shows the slice facts for one call site, and in card 6 the pipeline run that consumes them. The saved repair reports under `docs/repair/` predate the pipeline; their 1° impact (`findOneHopImpact` / `findDirectCallers`) is still AST-only.
+- The pipeline's frontier profile (Claude) is configured but has not been run; it needs `ANTHROPIC_API_KEY`.
 - Demo UI needs network access to `api.openai.com` (or your `OPENAI_BASE_URL`).
 
 ---

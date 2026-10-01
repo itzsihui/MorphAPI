@@ -86,7 +86,10 @@ export function gateSpan(
         line: d.line,
         code: d.code,
         message: owners.length
-          ? `${ident.text} exists on ${owners.join(", ")} from ${oracle!.module}, but \`${ident.parent.expression.getText(sf)}\` is not one of those (its type is ${recvLabel}). Obtain a ${owners[0]} value from the successor API first.`
+          ? `${ident.text} exists on ${owners.join(", ")} from ${oracle!.module}, but \`${ident.parent.expression.getText(sf)}\` is a deprecated value (type ${recvLabel}), not a ${owners[0]}. ` +
+            `Do not use \`${ident.parent.expression.getText(sf)}\` as the receiver. Create a ${owners[0]} in your output${
+              oracle!.obtain[owners[0]] ? ` with ${oracle!.obtain[owners[0]].replace(/\):.*$/, ")")}` : ""
+            } under a new name and call ${ident.text} on it.`
           : `Symbol ${ident.text} does not exist on ${recvLabel}.`,
         suggestions: owners.length ? [] : suggestSymbols(ident.text, valid),
         receiverOwners: owners.length ? owners : undefined,

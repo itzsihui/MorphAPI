@@ -10,6 +10,7 @@ import {
   type EdgeGroup,
 } from "./GraphDiagrams";
 import { fetchGraph, type GraphPayload } from "./graphApi";
+import { PipelineRun } from "./PipelineRun";
 
 const SCENARIO_LABELS: Record<string, string> = {
   mail: "Multi-site mail (7) — recommended",
@@ -104,6 +105,7 @@ export function CodeGraph({ scenario, onScenario }: { scenario: string; onScenar
   const facts = data?.sliceFacts ?? null;
   const focus = data?.focus ?? null;
   const currentKey = focus ? `${focus.fileName}@${focus.callSiteId.split(":").pop()}` : "";
+  const focusSpan = data?.spans.find((s) => `${s.fileName}@${s.start}` === (focusKey || currentKey)) ?? null;
 
   return (
     <div className="cg">
@@ -114,8 +116,9 @@ export function CodeGraph({ scenario, onScenario }: { scenario: string; onScenar
           <p className="lede wb-lede">
             The fixture is loaded as a real <code>ts.Program</code> from its <code>tsconfig.json</code>. The AST finder
             marks each call to migrate; the TypeChecker then decorates the tree with resolved types, data flow,
-            function calls and the v1 → v2 API mapping. The hybrid prompt receives the <em>slice facts</em> from card 4,
-            not the whole file. No neural model is involved.
+            function calls and the v1 → v2 API mapping. The migration prompt receives the <em>slice facts</em> from
+            card 4, not the whole file, and card 6 shows the full run: gate attempts, impact repairs and the diff. No
+            neural model is involved in building the graph.
           </p>
         </div>
         <div className="wb-actions">
@@ -328,6 +331,14 @@ export function CodeGraph({ scenario, onScenario }: { scenario: string; onScenar
                 </p>
               </div>
             </div>
+          </Card>
+
+          <Card
+            n={6}
+            title="Migration pipeline — slice → LLM → gate → imports → impact"
+            sub="The same program drives the migration: each call site's slice and facts go to the model, the TypeChecker gates every proposal (phantoms are rejected with valid options), then 1-hop impact finds and repairs what broke elsewhere."
+          >
+            <PipelineRun scenario={scenario} focus={focusSpan ? { fileName: focusSpan.fileName, line: focusSpan.startLine } : null} />
           </Card>
         </div>
       ) : null}

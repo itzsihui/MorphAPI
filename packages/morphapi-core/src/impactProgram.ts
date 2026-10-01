@@ -15,7 +15,7 @@ import {
   type SessionDiagnostic,
 } from "./program";
 
-export type ProgramImpactReason = "same_api_leftover" | "missing_await" | "stale_import" | "new_type_error";
+export type ProgramImpactReason = "same_api_leftover" | "missing_await" | "stale_import" | "new_type_error" | "deprecated_module_use";
 
 export type ProgramImpactFinding = {
   reason: ProgramImpactReason;
@@ -182,6 +182,48 @@ export function programImpact(
       symbol: opts.deprecatedSpec,
       detail: `Still calls ${opts.deprecatedSpec.split("#")[1]}: ${left.text.slice(0, 60)}`,
     });
+  }
+
+  if (opts.deprecatedModule) {
+    const leftoverRanges = findings
+      .filter((f) => f.reason === "same_api_leftover" && f.start != null)
+      .map((f) => ({ file: f.file, start: f.start! }));
+    for (const file of changed) {
+      const sf = session.sourceFile(file);
+      if (!sf) continue;
+      const locals: ts.Identifier[] = [];
+      for (const st of sf.statements) {
+        if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier) || st.moduleSpecifier.text !== opts.deprecatedModule) continue;
+        const c = st.importClause;
+        if (c?.name) locals.push(c.name);
+        if (c?.namedBindings && ts.isNamespaceImport(c.namedBindings)) locals.push(c.namedBindings.name);
+        if (c?.namedBindings && ts.isNamedImports(c.namedBindings)) locals.push(...c.namedBindings.elements.map((e) => e.name));
+      }
+      if (!locals.length) continue;
+      const syms = new Set(locals.map((l) => checker.getSymbolAtLocation(l)).filter(Boolean));
+      const visit = (n: ts.Node) => {
+        if (ts.isImportDeclaration(n)) return;
+        if (ts.isIdentifier(n) && syms.has(checker.getSymbolAtLocation(n))) {
+          const start = n.getStart(sf);
+          const inLeftover = leftoverRanges.some((r) => r.file === file && Math.abs(r.start - start) < 2);
+          if (!inLeftover) {
+            const stmt = (function up(x: ts.Node): ts.Node {
+              return ts.isStatement(x) || !x.parent ? x : up(x.parent);
+            })(n);
+            findings.push({
+              reason: "deprecated_module_use",
+              file,
+              line: sf.getLineAndCharacterOfPosition(start).line + 1,
+              start,
+              symbol: n.text,
+              detail: `Still uses ${n.text} from ${opts.deprecatedModule}: ${stmt.getText(sf).split("\n")[0].slice(0, 80)}`,
+            });
+          }
+        }
+        ts.forEachChild(n, visit);
+      };
+      visit(sf);
+    }
   }
 
   const resolved = from ? resolveSymbolSpec(session, opts.deprecatedSpec, from) : null;

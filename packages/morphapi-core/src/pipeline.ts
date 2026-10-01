@@ -104,6 +104,7 @@ export type MigrationRun = {
   impactFixes: ImpactFix[];
   final: {
     leftovers: number;
+    deprecatedModuleUses: number;
     newDiagnostics: Array<{ file: string; line: number; message: string }>;
     phantomDiagnostics: number;
     complete: boolean;
@@ -259,20 +260,13 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   });
 
   const steps: SpanStep[] = [];
-  const allowedLines = new Map<string, Set<number>>();
-  const markLines = (file: string, from: number, to: number) => {
-    const set = allowedLines.get(file) ?? new Set<number>();
-    for (let l = from; l <= to; l++) set.add(l);
-    allowedLines.set(file, set);
-  };
+  /** Lines changed by deterministic follow-ups (async conversion, data-flow rewrites) */
+  const structural = { old: [] as string[], new: [] as string[] };
 
   if (armId === "arm0_llm_only") {
     const byFile = new Map<string, DeprecatedCallSpan[]>();
     for (const s of spans) byFile.set(s.file, [...(byFile.get(s.file) ?? []), s]);
     for (const [file, list] of byFile) {
-      for (const s of list) markLines(file, s.startLine - 1, s.endLine - 1);
-      const sf = session.sourceFile(file)!;
-      markLines(file, 0, sf.getLineAndCharacterOfPosition(lastImportEnd(sf)).line);
       const messages: LlmMessage[] = [
         { role: "system", content: "You migrate TypeScript code to a new API version. Output ONLY the complete updated file." },
         {
@@ -349,7 +343,6 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       let body = session.text(file);
       const descending = [...list].sort((a, b) => b.start - a.start);
       const hdr = lastImportEnd(session.sourceFile(file)!);
-      markLines(file, 0, session.sourceFile(file)!.getLineAndCharacterOfPosition(hdr).line);
 
       const inserted: TextEdit[] = [];
       const shiftOf = (p: number) => inserted.filter((e) => e.pos <= p).reduce((n, e) => n + e.text.length - e.del, 0);
@@ -443,6 +436,8 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             propose: (feedback) =>
               ask(promptFor(feedback ?? feedbackFor({ ok: false, findings: attempts[attempts.length - 1].findings, warnings: [] }))),
             evaluate,
+            onAttempt: (rec) =>
+              emit("attempt", { file: rel(cfg.repoRoot, file), line: span.startLine, ...rec, attempt: attempts.length + rec.attempt, sliceKind: "statement", escalated: true }),
           });
           attempts.push(...retry.attempts.map((a) => ({ ...a, attempt: attempts.length + a.attempt, sliceKind: kind, escalated: true })));
         }
@@ -451,9 +446,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         if (accepted && acceptedRange) {
           const range = acceptedRange as { start: number; end: number };
           const acceptedCode = accepted as string;
-          const sliceLine0 = bodySf.getLineAndCharacterOfPosition(slice.start).line;
-          const sliceLine1 = bodySf.getLineAndCharacterOfPosition(slice.end).line;
-          markLines(file, sliceLine0, sliceLine1);
+          const linesBefore = body.split("\n");
           if (arm.dataflow) {
             dataflow = propagateResponseShape(session, file, range, {
               files,
@@ -467,12 +460,17 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           const splicedLen = body.length - (slice.end - slice.start) + acceptedCode.length;
           const delta = withImportsLen - splicedLen;
           body = body.slice(0, hdr) + sessionText.slice(hdr + delta);
+          if (acceptedAsync.length || dataflow?.rewrites.length) {
+            const sliceText = new Set(slice.text.split("\n"));
+            const linesAfter = body.split("\n");
+            for (const h of lineHunks(linesBefore, linesAfter)) {
+              const old = linesBefore.slice(h.a1, h.a2).filter((l) => !sliceText.has(l));
+              structural.old.push(...old);
+              structural.new.push(...linesAfter.slice(h.b1, h.b2));
+            }
+          }
           if (acceptedAsync.length) {
             inserted.push(...acceptedAsync);
-            for (const e of acceptedAsync) {
-              const l = bodySf.getLineAndCharacterOfPosition(e.pos).line;
-              markLines(file, l, l);
-            }
             emit("asyncified", { file: rel(cfg.repoRoot, file), line: bodySf.getLineAndCharacterOfPosition(acceptedAsync[0].pos).line + 1 });
           }
           emit("accepted", { file: rel(cfg.repoRoot, file), line: span.startLine, code: acceptedCode, imports: acceptedImports });
@@ -519,26 +517,37 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
 
   if (armCfg?.impact) {
     impact = runImpact();
+    let current = impact;
     emit("impact", { round: 1, oneHopFiles: impact.oneHopFiles.map((f) => rel(cfg.repoRoot, f)), findings: impact.findings, changedFunctions: impact.changedFunctions });
-    for (let round = 2; round <= 3 && !impact.complete; round++) {
+    for (let round = 2; round <= 3 && !current.complete; round++) {
       let fixed = 0;
-      for (const f of impact.findings.slice(0, 6)) {
+      const repairedStatements = new Set<string>();
+      const ordered = [...current.findings].sort((a, b) => a.file.localeCompare(b.file) || (b.start ?? 0) - (a.start ?? 0));
+      for (const f of ordered.slice(0, 8)) {
         const sf = session.sourceFile(f.file);
         if (!sf || f.start == null) continue;
         if (f.reason === "missing_await") {
           const text = session.text(f.file);
           const before = session.diagnostics([f.file]).length;
-          session.update({ [f.file]: text.slice(0, f.start) + "await " + text.slice(f.start) });
+          const next = text.slice(0, f.start) + "await " + text.slice(f.start);
+          session.update({ [f.file]: next });
           if (session.diagnostics([f.file]).length > before) {
             session.update({ [f.file]: text });
             continue;
           }
+          const lineAt = (t: string, p: number) => t.slice(t.lastIndexOf("\n", p - 1) + 1, t.indexOf("\n", p) < 0 ? t.length : t.indexOf("\n", p));
+          structural.old.push(lineAt(text, f.start));
+          structural.new.push(lineAt(next, f.start));
           impactFixes.push({ reason: f.reason, file: rel(cfg.repoRoot, f.file), line: f.line, before: "", after: "await ", attempts: 0 });
           fixed++;
           continue;
         }
-        if (f.reason !== "new_type_error" && f.reason !== "same_api_leftover") continue;
+        if (f.reason !== "new_type_error" && f.reason !== "same_api_leftover" && f.reason !== "deprecated_module_use") continue;
         const slice = sliceFor(sf, { start: f.start, end: f.start + 1 }, "statement");
+        const stmtKey = `${f.file}:${slice.start}`;
+        if (repairedStatements.has(stmtKey)) continue;
+        repairedStatements.add(stmtKey);
+        const moduleUse = f.reason === "deprecated_module_use" ? new RegExp(`\\b${f.symbol}\\b`) : null;
         const text = session.text(f.file);
         const fileDiagsBefore = session.diagnostics([f.file]).length;
         let acceptedFix: string | null = null;
@@ -569,7 +578,15 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               deprecatedSpec: cfg.deprecatedSpec,
             });
             const after = session.diagnostics([f.file]);
-            if (gate.ok && after.length >= fileDiagsBefore) {
+            if (gate.ok && moduleUse) {
+              if (moduleUse.test(code)) {
+                gate.ok = false;
+                gate.findings.push({ kind: "leftover", symbol: f.symbol, message: `The replacement still uses ${f.symbol} from ${deprecatedModule}.` });
+              } else if (after.length > fileDiagsBefore) {
+                gate.ok = false;
+                gate.findings.push(...after.slice(0, 3).map((d) => ({ kind: "type_error" as const, line: d.line, code: d.code, message: `Line ${d.line}: ${d.message}` })));
+              }
+            } else if (gate.ok && after.length >= fileDiagsBefore) {
               gate.ok = false;
               gate.findings.push(
                 ...after.slice(0, 3).map((d) => ({ kind: "type_error" as const, line: d.line, code: d.code, message: `Line ${d.line}: ${d.message}` }))
@@ -586,14 +603,25 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       if (!fixed) break;
       const touched = files.filter((f) => session.text(f) !== originals[f]);
       for (const t of touched) if (!changedFiles.includes(t)) changedFiles.push(t);
-      impact = runImpact();
-      emit("impact", { round, oneHopFiles: impact.oneHopFiles.map((f) => rel(cfg.repoRoot, f)), findings: impact.findings, fixes: impactFixes });
+      current = runImpact();
+      emit("impact", { round, oneHopFiles: current.oneHopFiles.map((f) => rel(cfg.repoRoot, f)), findings: current.findings, fixes: impactFixes });
     }
+  }
+
+  if (armCfg) {
+    const cleaned: Record<string, string> = {};
+    for (const f of files) {
+      if (session.text(f) === originals[f]) continue;
+      const r = reconcileImports(session.text(f), f, { add: candidates, cleanupModules: [deprecatedModule] });
+      if (r.code !== session.text(f)) cleaned[f] = r.code;
+    }
+    if (Object.keys(cleaned).length) session.update(cleaned);
   }
 
   // ── Final verification + metrics ───────────────────────────────────────
   const finalImpact = runImpact();
   const leftovers = finalImpact.findings.filter((f) => f.reason === "same_api_leftover").length;
+  const moduleUses = finalImpact.findings.filter((f) => f.reason === "deprecated_module_use").length;
   const remaining = new Map(baseline);
   const newDiagnostics: MigrationRun["final"]["newDiagnostics"] = [];
   for (const d of session.diagnostics(files)) {
@@ -608,21 +636,53 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   let outside = 0;
   let importLines = 0;
   const patches: MigrationRun["patches"] = {};
+  // A changed line is "inside" when it belongs to a migrated span, an impact repair, or an import.
+  const linesOf = (s: string | null | undefined) => (s ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const allowedOld = new Set([
+    ...spans.flatMap((s) => linesOf(s.text)),
+    ...steps.flatMap((s) => (s.slice.text === "(whole file)" ? [] : linesOf(s.slice.text))),
+    ...impactFixes.flatMap((x) => linesOf(x.before)),
+    ...structural.old.flatMap(linesOf),
+  ]);
+  const allowedNew = new Set([
+    ...steps.flatMap((s) => (armId === "arm0_llm_only" ? [] : linesOf(s.accepted))),
+    ...impactFixes.flatMap((x) => linesOf(x.after)),
+    ...structural.new.flatMap(linesOf),
+  ]);
+  const allows = (set: Set<string>, line: string) => {
+    const t = line.trim();
+    if (/^[(){}[\];,]*$/.test(t)) return true;
+    return set.has(t) || [...set].some((x) => x.length >= 8 && t.length >= 8 && (t.includes(x) || x.includes(t)));
+  };
+  const range = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => from + i);
+  const importLineSet = (file: string, text: string) => {
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+    const set = new Set<number>();
+    for (const st of sf.statements.filter(ts.isImportDeclaration)) {
+      for (let l = sf.getLineAndCharacterOfPosition(st.getStart(sf)).line; l <= sf.getLineAndCharacterOfPosition(st.getEnd()).line; l++) set.add(l);
+    }
+    return set;
+  };
   for (const f of files) {
     const after = session.text(f);
     if (after === originals[f]) continue;
     patches[rel(cfg.repoRoot, f)] = { before: originals[f], after };
     const a = originals[f].split("\n");
     const b = after.split("\n");
-    const allowed = allowedLines.get(f) ?? new Set<number>();
-    const origSf = ts.createSourceFile(f, originals[f], ts.ScriptTarget.Latest, true);
-    const headerLine = origSf.getLineAndCharacterOfPosition(lastImportEnd(origSf)).line;
+    const impA = importLineSet(f, originals[f]);
+    const impB = importLineSet(f, after);
     for (const h of lineHunks(a, b)) {
+      const oldIdx = range(h.a1, h.a2).filter((i) => a[i].trim());
+      const newIdx = range(h.b1, h.b2).filter((i) => b[i].trim());
       const n = h.a2 - h.a1 + (h.b2 - h.b1);
       changedLines += n;
-      const lines = h.a2 > h.a1 ? Array.from({ length: h.a2 - h.a1 }, (_, i) => h.a1 + i) : [Math.max(0, h.a1 - 1), h.a1];
-      if (lines.every((l) => l <= headerLine)) importLines += n;
-      if (!lines.some((l) => allowed.has(l))) outside += n;
+      if (oldIdx.every((i) => impA.has(i)) && newIdx.every((i) => impB.has(i))) {
+        importLines += n;
+        continue;
+      }
+      const oldOk = oldIdx.every((i) => impA.has(i) || allows(allowedOld, a[i]));
+      const newOk = armId === "arm0_llm_only" ? oldIdx.length > 0 : newIdx.every((i) => impB.has(i) || allows(allowedNew, b[i]));
+      if (!(oldOk && newOk)) outside += n;
     }
   }
 
@@ -634,17 +694,23 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
     successorModule: cfg.successorModule,
     oracle: oracle ? { exports: oracle.exports.length, allowed: oracle.allowed.length } : null,
     steps,
-    impact,
+    impact: impact && {
+      ...impact,
+      oneHopFiles: impact.oneHopFiles.map((f) => rel(cfg.repoRoot, f)),
+      findings: impact.findings.map((f) => ({ ...f, file: rel(cfg.repoRoot, f.file) })),
+      changedFunctions: impact.changedFunctions.map((c) => ({ ...c, file: rel(cfg.repoRoot, c.file) })),
+    },
     impactFixes,
     final: {
       leftovers,
+      deprecatedModuleUses: moduleUses,
       newDiagnostics,
       phantomDiagnostics,
-      complete: leftovers === 0 && newDiagnostics.length === 0 && steps.every((s) => s.accepted != null),
+      complete: leftovers === 0 && moduleUses === 0 && newDiagnostics.length === 0 && steps.every((s) => s.accepted != null),
     },
     metrics: {
       spansFound: spans.length,
-      spansMigrated: steps.filter((s) => s.accepted != null).length,
+      spansMigrated: armId === "arm0_llm_only" ? Math.max(0, spans.length - leftovers) : steps.filter((s) => s.accepted != null).length,
       attempts: allAttempts.length,
       phantomRejections: allAttempts.reduce((n, a) => n + a.findings.filter((f) => f.kind === "phantom").length, 0),
       escalations: steps.filter((s) => s.escalated).length,
