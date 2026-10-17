@@ -226,6 +226,8 @@ The per-scenario baselines above each have their own run script. `npm run morph:
 | No oracle gate / feedback | 7 / 11 |
 | No impact repair | 5 / 11 |
 
+With Claude (`--model frontier`, claude-sonnet-4-5) the full pipeline also completes 11 / 11 with 0% unrelated edits.
+
 ## What is real vs synthetic?
 
 | Piece | Real? |
@@ -241,7 +243,7 @@ The per-scenario baselines above each have their own run script. `npm run morph:
 - Pure AST column in the eval matrix is **estimated** (no jscodeshift baseline wired yet).
 - The per-scenario baselines use hand-authored JSON oracles. The generic pipeline reads the oracle from the successor package's type declarations instead.
 - The **Code Graph** tab ([`docs/code-graph.md`](./docs/code-graph.md)) builds a Code Property Graph from each fixture's real `ts.Program` (types, data flow, calls, v1 → v2 symbol mapping), shows the slice facts for one call site, and in card 6 the pipeline run that consumes them. The saved repair reports under `docs/repair/` predate the pipeline; their 1° impact (`findOneHopImpact` / `findDirectCallers`) is still AST-only.
-- The pipeline's frontier profile (Claude) is configured but has not been run; it needs `ANTHROPIC_API_KEY`.
+- Only the full pipeline (`arm1_morphapi`) has been run with Claude; the ablation arms have only been run with gpt-4o-mini.
 - Demo UI needs network access to `api.openai.com` (or your `OPENAI_BASE_URL`).
 
 ---

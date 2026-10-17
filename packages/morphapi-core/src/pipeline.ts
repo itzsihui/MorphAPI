@@ -91,6 +91,7 @@ export type ImpactFix = {
   before: string;
   after: string | null;
   attempts: number;
+  tries?: AttemptRecord[];
 };
 
 export type MigrationRun = {
@@ -129,12 +130,15 @@ export type MigrationRun = {
 
 const rel = (root: string, f: string) => path.relative(root, f).split(path.sep).join("/");
 
-function cleanProposal(raw: string, kind: SliceKind, awaitBefore: boolean): string {
+function cleanProposal(raw: string, kind: SliceKind, awaitBefore: boolean, original: string): string {
   let s = raw
     .split("\n")
     .filter((l) => !/^\s*import\s.+from\s/.test(l))
     .join("\n")
     .trim();
+  // Inline-code markup around a non-template slice would type-check as a string literal.
+  const inline = /^`([^`]*)`;?$/.exec(s);
+  if (inline && !original.trim().startsWith("`")) s = inline[1].trim();
   if (kind === "expression") {
     s = s.replace(/;\s*$/, "");
     if (awaitBefore) s = s.replace(/^await\s+/, "");
@@ -384,7 +388,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         let acceptedAsync: TextEdit[] = [];
         const evaluate = (candidate: string): GateResult => {
           const awaitBefore = /await\s*$/.test(body.slice(Math.max(0, slice.start - 8), slice.start));
-          const code = reindent(cleanProposal(candidate, slice.kind, awaitBefore), body, slice.start);
+          const code = reindent(cleanProposal(candidate, slice.kind, awaitBefore, slice.text), body, slice.start);
           if (!parsesAs(code, slice.kind)) {
             return {
               ok: false,
@@ -567,7 +571,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               })
             ),
           evaluate: (candidate) => {
-            const code = reindent(cleanProposal(candidate, "statement", false), text, slice.start);
+            const code = reindent(cleanProposal(candidate, "statement", false, slice.text), text, slice.start);
             if (!parsesAs(code, "statement")) return { ok: false, findings: [{ kind: "parse", message: "Output must parse as statements." }], warnings: [] };
             const spliced = text.slice(0, slice.start) + code + text.slice(slice.end);
             const withImports = addMissingImports(spliced, f.file, candidates);
@@ -596,8 +600,17 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             else session.update({ [f.file]: text });
             return gate;
           },
+          onAttempt: (rec) => emit("repair_attempt", { file: rel(cfg.repoRoot, f.file), line: f.line, reason: f.reason, ...rec }),
         });
-        impactFixes.push({ reason: f.reason, file: rel(cfg.repoRoot, f.file), line: f.line, before: slice.text, after: acceptedFix, attempts: loop.attempts.length });
+        impactFixes.push({
+          reason: f.reason,
+          file: rel(cfg.repoRoot, f.file),
+          line: f.line,
+          before: slice.text,
+          after: acceptedFix,
+          attempts: loop.attempts.length,
+          tries: loop.attempts,
+        });
         if (acceptedFix) fixed++;
       }
       if (!fixed) break;
@@ -652,7 +665,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   const allows = (set: Set<string>, line: string) => {
     const t = line.trim();
     if (/^[(){}[\];,]*$/.test(t)) return true;
-    return set.has(t) || [...set].some((x) => x.length >= 8 && t.length >= 8 && (t.includes(x) || x.includes(t)));
+    return set.has(t) || [...set].some((x) => (x.length >= 5 && t.includes(x)) || (t.length >= 8 && x.includes(t)));
   };
   const range = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => from + i);
   const importLineSet = (file: string, text: string) => {

@@ -51,7 +51,16 @@ Churn is the share of changed lines that belong to neither a migrated call site,
 
 Token use is not lower than a whole-file prompt on these fixtures: the facts JSON and successor API list are often longer than a 30-line file. What the slice buys is locality (no unrelated edits) and information the file does not state.
 
-The frontier profile (Claude) is wired but has not been run yet; it needs an Anthropic key (see below).
+### Frontier profile (claude-sonnet-4-5, temperature 0.2)
+
+`arm1_morphapi` completes **11 / 11**, with 0% churn. The first Claude run completed 10 / 11, and its failures led to two generic fixes that the mini runs also use:
+
+- **Literal options in type errors.** On discriminator, Claude renamed `type` to `event_type` but kept the old `case "MESSAGE_CREATE"` values. The gate's TS2678 feedback only said the value was "not comparable to type 'EventType'", so both repair attempts failed the same way. Type errors on a string or number literal (case labels, assignments, arguments) now list the literal members of the target union and suggest the closest one.
+- **Inline-code markup.** Claude sometimes wraps a one-line answer in backticks. TypeScript reads `` `(await api.listUsers()).data` `` as a template literal, which type-checks as a `string`, so the gate accepted it and the breakage surfaced downstream. A single surrounding pair of backticks is now stripped unless the original slice was a template literal.
+
+Claude produces fewer phantoms than gpt-4o-mini (4 vs 10 caught by the gate across the 11 scenarios, all in stripe-errors and auth for Claude) but uses about the same number of prompt tokens, because the prompt is dominated by facts and the API list. gpt-4o-mini still completes 11 / 11 after both fixes.
+
+Every impact repair attempt (candidate and gate findings) is saved under `impactFixes[].tries` in the run JSON and streamed as a `repair_attempt` event.
 
 ## Running it
 

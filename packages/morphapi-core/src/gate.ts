@@ -45,6 +45,18 @@ function nodeAt(sf: ts.SourceFile, pos: number): ts.Node | undefined {
   return found;
 }
 
+/** Literal members of the type a literal at `node` is compared or assigned against. */
+function literalOptions(checker: ts.TypeChecker, node: ts.Node): string[] {
+  if (!ts.isStringLiteral(node) && !ts.isNumericLiteral(node)) return [];
+  const clause = ts.isCaseClause(node.parent) ? node.parent : undefined;
+  const target = clause
+    ? checker.getTypeAtLocation(clause.parent.parent.expression)
+    : checker.getContextualType(node);
+  if (!target) return [];
+  const members = target.isUnion() ? target.types : [target];
+  return members.filter((t) => t.isStringLiteral() || t.isNumberLiteral()).map((t) => checker.typeToString(t));
+}
+
 /**
  * Judge the replacement occupying `range` in the session's current version
  * of `file`. Diagnostics outside the range are left to impact analysis.
@@ -120,7 +132,14 @@ export function gateSpan(
     } else if (d.code === 7053 || d.code === 7015) {
       warnings.push({ kind: "dynamic_access", line: d.line, code: d.code, message: d.message });
     } else {
-      findings.push({ kind: "type_error", line: d.line, code: d.code, message: d.message });
+      const options = node ? literalOptions(checker, node) : [];
+      findings.push({
+        kind: "type_error",
+        line: d.line,
+        code: d.code,
+        message: options.length ? `${d.message} Allowed values: ${options.join(", ")}.` : d.message,
+        suggestions: options.length && node && ts.isStringLiteral(node) ? suggestSymbols(node.text, options.map((o) => String(JSON.parse(o)))) : undefined,
+      });
     }
   }
 
