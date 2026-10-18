@@ -171,8 +171,16 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
     if (Object.keys(changed).length) newWorld.update(changed);
     return newWorld.diagnostics(files).map((d) => ({ ...d, message: unalias(d.message) }));
   };
-  const discover = (texts: Record<string, string>) =>
+  const triedProducers = new Set<string>();
+  const accepted = () =>
+    rounds.flatMap((r) => [
+      ...r.run.steps.map((s) => ({ abs: path.resolve(cfg.repoRoot, s.file), accepted: s.accepted })),
+      ...r.run.impactFixes.map((x) => ({ abs: path.resolve(cfg.repoRoot, x.file), accepted: x.after })),
+    ]);
+  const discover = (texts: Record<string, string>, attribute = true) =>
     discoverWorkItems({
+      accepted: attribute ? accepted() : undefined,
+      triedProducers,
       bridged,
       newWorld: newWorldDiags(texts),
       baseline,
@@ -267,7 +275,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
   }
   const aliasLeft = files.reduce((n, f) => n + aliasSpecifiersIn(finalTexts[f], f, bridges).length, 0);
   const retiredLeft = files.reduce((n, f) => n + retiredImportsIn(finalTexts[f], f, retiredNames), 0);
-  const remainingItems = discover(finalTexts).length;
+  const remainingItems = discover(finalTexts, false).length;
 
   const patches: RepoMigrationRun["patches"] = {};
   let changedLines = 0;

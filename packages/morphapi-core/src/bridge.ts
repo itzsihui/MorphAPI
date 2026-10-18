@@ -124,6 +124,21 @@ export function mapPosition(edits: SpecifierEdit[], pos: number): number {
   return pos + shift;
 }
 
+/**
+ * Inverse of `mapPosition` for the edits that REVERTED a text: `edits` are in
+ * the bridged text's coordinates; `pos` is in the reverted text. Returns the
+ * matching bridged position.
+ */
+export function unmapPosition(edits: SpecifierEdit[], pos: number): number {
+  let offset = 0; // bridged - reverted
+  for (const e of edits) {
+    const revertedStart = e.pos - offset;
+    if (pos >= revertedStart + e.text.length) offset += e.del - e.text.length;
+    else break;
+  }
+  return pos + offset;
+}
+
 /** Module → alias for every bridge. */
 export function toAliasMap(bridges: Bridge[]): Record<string, string> {
   return Object.fromEntries(bridges.map((b) => [b.module, aliasOf(b.module)]));

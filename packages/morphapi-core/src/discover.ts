@@ -18,7 +18,7 @@
  */
 import * as path from "path";
 import * as ts from "typescript";
-import { mapPosition, rewriteSpecifiers, type Bridge, type SpecifierEdit } from "./bridge";
+import { fromAliasMap, rewriteSpecifiers, unmapPosition, type Bridge, type SpecifierEdit } from "./bridge";
 import { resolveAlias, type DeprecatedCallSpan, type ProjectSession, type SessionDiagnostic } from "./program";
 import { sliceFor, type SliceKind } from "./sliceMetadata";
 
@@ -89,6 +89,100 @@ function requireBindings(sf: ts.SourceFile, isTarget: (spec: string) => boolean)
   return out;
 }
 
+function isAssignment(b: ts.BinaryExpression): boolean {
+  return b.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && b.operatorToken.kind <= ts.SyntaxKind.LastAssignment;
+}
+
+/**
+ * The statement holding an accepted rewrite that feeds the statement at `pos`
+ * (one def-use hop): an identifier there is a variable whose initializer holds
+ * the rewrite, or calls a local function whose body holds it, or has a type
+ * declared by a project type alias / interface that holds it (any file).
+ */
+export function producerOf(
+  session: ProjectSession,
+  sf: ts.SourceFile,
+  pos: number,
+  steps: Array<{ abs: string; accepted: string | null }>
+): { file: string; start: number; end: number } | null {
+  const checker = session.checker;
+  const acceptedIn = (file: string) => steps.filter((s) => s.accepted && s.abs === path.resolve(file)).map((s) => s.accepted!.trim()).filter((a) => a.length >= 3);
+  if (!steps.some((s) => s.accepted)) return null;
+  let stmt: ts.Node | undefined;
+  const find = (n: ts.Node) => {
+    if (n.getStart(sf) <= pos && pos < n.getEnd()) {
+      if (ts.isStatement(n) && !ts.isBlock(n)) stmt = n;
+      ts.forEachChild(n, find);
+    }
+  };
+  find(sf);
+  if (!stmt) return null;
+  const holds = (n: ts.Node) => {
+    const t = n.getText(n.getSourceFile());
+    return acceptedIn(n.getSourceFile().fileName).some((a) => t.includes(a));
+  };
+  const innermostHolding = (root: ts.Node): ts.Node | null => {
+    let best: ts.Node | null = null;
+    const visit = (n: ts.Node) => {
+      if (!holds(n)) return;
+      if (ts.isStatement(n) && !ts.isBlock(n)) best = n;
+      ts.forEachChild(n, visit);
+    };
+    visit(root);
+    return best;
+  };
+  const projectDecl = (d: ts.Node | undefined) => {
+    const f = d?.getSourceFile().fileName ?? "";
+    return d && !f.includes(`${path.sep}node_modules${path.sep}`) && !f.endsWith(".d.ts");
+  };
+  const typeDecls = (t: ts.Type): ts.Declaration[] => {
+    const out: ts.Declaration[] = [];
+    const add = (x: ts.Type, depth: number) => {
+      if (depth > 2) return;
+      for (const sym of [x.aliasSymbol, x.getSymbol()]) for (const d of sym?.declarations ?? []) if ((ts.isTypeAliasDeclaration(d) || ts.isInterfaceDeclaration(d)) && projectDecl(d)) out.push(d);
+      for (const a of [...(x.aliasTypeArguments ?? []), ...(checker.isArrayType(x) ? checker.getTypeArguments(x as ts.TypeReference) : [])]) add(a, depth + 1);
+    };
+    add(t, 0);
+    return out;
+  };
+  let out: ts.Node | null = null;
+  const visit = (n: ts.Node) => {
+    if (out) return;
+    if (ts.isIdentifier(n)) {
+      const decl = checker.getSymbolAtLocation(n)?.valueDeclaration;
+      if (decl && decl.getSourceFile() === sf && ts.isVariableDeclaration(decl) && decl.initializer && !(decl.getStart(sf) <= pos && pos < decl.getEnd())) {
+        const init = decl.initializer;
+        if (holds(init)) out = innermostHolding(decl.parent.parent) ?? decl.parent.parent;
+        else if (ts.isCallExpression(init) && ts.isIdentifier(init.expression)) {
+          const fn = checker.getSymbolAtLocation(init.expression)?.valueDeclaration;
+          const body =
+            fn && ts.isVariableDeclaration(fn) && fn.initializer && (ts.isArrowFunction(fn.initializer) || ts.isFunctionExpression(fn.initializer))
+              ? fn.initializer.body
+              : fn && ts.isFunctionDeclaration(fn)
+                ? fn.body
+                : undefined;
+          if (body && body.getSourceFile() === sf && holds(body)) out = innermostHolding(body);
+        }
+      }
+      if (!out) {
+        // Type-level hop: the value's type is a project type that was rewritten.
+        for (const d of typeDecls(checker.getTypeAtLocation(n))) {
+          if (holds(d)) {
+            out = d;
+            break;
+          }
+        }
+      }
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(stmt);
+  if (!out) return null;
+  const o = out as ts.Node;
+  const osf = o.getSourceFile();
+  return { file: osf.fileName, start: o.getStart(osf), end: o.getEnd() };
+}
+
 /** The smallest sensible slice around `node`. */
 export function chooseSlice(sf: ts.SourceFile, node: ts.Node): { start: number; end: number; kind: SliceKind } {
   // Inside a type annotation → type slice.
@@ -110,17 +204,21 @@ export function chooseSlice(sf: ts.SourceFile, node: ts.Node): { start: number; 
   }
   // Top-level expression: climb while the parent is still an expression, but never out of a function body.
   let cur: ts.Node = node;
+  // `{ functions }` / `{ a: x }`: a property is not an expression; start from its object literal.
+  if (cur.parent && (ts.isShorthandPropertyAssignment(cur.parent) || ts.isPropertyAssignment(cur.parent)) && cur.parent.parent) cur = cur.parent.parent;
   if (ts.isExpression(cur) || ts.isIdentifier(cur)) {
     while (
       cur.parent &&
+      !(ts.isBinaryExpression(cur.parent) && isAssignment(cur.parent)) &&
       ts.isExpression(cur.parent) &&
       !ts.isArrowFunction(cur.parent) &&
       !ts.isFunctionExpression(cur.parent) &&
-      !ts.isClassExpression(cur.parent) &&
-      !ts.isObjectLiteralExpression(cur.parent)
+      !ts.isClassExpression(cur.parent)
     ) {
       cur = cur.parent;
     }
+    // `x = value` with the error on x: the value has the wrong type, so the slice is the value.
+    if (cur.parent && ts.isBinaryExpression(cur.parent) && isAssignment(cur.parent) && cur.parent.left === cur) cur = cur.parent.right;
     if (ts.isExpression(cur) && !ts.isObjectLiteralExpression(cur)) {
       const s = sliceFor(sf, { start: cur.getStart(sf), end: cur.getEnd() }, "expression");
       return { start: s.start, end: s.end, kind: "expression" };
@@ -143,6 +241,10 @@ export type DiscoverInput = {
   /** Bridged modules that are being replaced by a different package */
   retired: Bridge[];
   files: string[];
+  /** Rewrites accepted so far (absolute file + code), for def-use attribution */
+  accepted?: Array<{ abs: string; accepted: string | null }>;
+  /** Producer statements already re-opened once (`file:start`); mutated */
+  triedProducers?: Set<string>;
 };
 
 /**
@@ -236,13 +338,15 @@ export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
   const { bridged } = input;
   const checker = bridged.checker;
   const files = new Set(input.files.map((f) => path.resolve(f)));
-  const aliasMap = Object.fromEntries(input.bridges.map((b) => [b.module, `${b.module}__previous`]));
+  // Positions come from the reverted (new-world) text. Invert the exact edits that reverted the
+  // bridged text: re-aliasing would also alias imports of the NEW version added since.
+  const revertMap = fromAliasMap(input.bridges);
   const edits = new Map<string, SpecifierEdit[]>();
   const editsFor = (file: string) => {
-    if (!edits.has(file)) edits.set(file, rewriteSpecifiers(input.newWorldText(file), file, aliasMap).edits);
+    if (!edits.has(file)) edits.set(file, rewriteSpecifiers(bridged.text(file), file, revertMap).edits);
     return edits.get(file)!;
   };
-  const raw: Array<{ file: string; node: ts.Node; note: string; source: WorkItem["source"] }> = [];
+  const raw: Array<{ file: string; node: ts.Node; note: string; source: WorkItem["source"]; statement?: boolean }> = [];
   const missing: Array<{ ident: ts.Identifier; note: string; source: WorkItem["source"] }> = [];
 
   // 1 + 2: diagnostics against the new version that the old version did not have.
@@ -258,7 +362,7 @@ export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
     }
     const sf = bridged.sourceFile(file);
     if (!sf) continue;
-    const node = nodeAt(sf, mapPosition(editsFor(file), d.start));
+    const node = nodeAt(sf, unmapPosition(editsFor(file), d.start));
     const imp = inImport(node);
     if (imp) {
       if (!MISSING_IMPORT.has(d.code)) continue;
@@ -269,6 +373,22 @@ export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
       })();
       const idents = spec ? [spec.name] : bindingsOf(imp);
       for (const ident of idents) missing.push({ ident, note: `TS${d.code}: ${d.message}`, source: "missing_export" });
+      continue;
+    }
+    // Def-use attribution: a rewrite made earlier may be the cause (e.g. a hand-written type alias).
+    const prod = input.accepted?.length ? producerOf(bridged, sf, nodeAt(sf, unmapPosition(editsFor(file), d.start)).getStart(sf), input.accepted) : null;
+    const prodSf = prod ? bridged.sourceFile(prod.file) : undefined;
+    const key = prod && prodSf ? `${path.resolve(prod.file)}:${sliceFor(prodSf, prod, "statement").start}` : "";
+    if (prod && prodSf && !input.triedProducers?.has(key)) {
+      input.triedProducers?.add(key);
+      const relLine = sf.getLineAndCharacterOfPosition(d.start).line + 1;
+      raw.push({
+        file: path.resolve(prod.file),
+        node: nodeAt(prodSf, prod.start),
+        note: `This was migrated earlier, and a later use now fails (${path.basename(file)} line ${relLine}): TS${d.code}: ${d.message} Change this so the later use type-checks.`,
+        source: "diagnostic",
+        statement: true,
+      });
       continue;
     }
     raw.push({ file, node, note: `TS${d.code} (new version): ${d.message}`, source: "diagnostic" });
@@ -328,7 +448,7 @@ export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
   const bySlice = new Map<string, Acc>();
   for (const r of raw) {
     const sf = bridged.sourceFile(r.file)!;
-    const s = chooseSlice(sf, r.node);
+    const s = r.statement ? { ...sliceFor(sf, { start: r.node.getStart(sf), end: r.node.getEnd() }, "statement"), kind: "statement" as SliceKind } : chooseSlice(sf, r.node);
     const key = `${r.file}:${s.start}:${s.end}`;
     const acc = bySlice.get(key) ?? { file: r.file, ...s, notes: new Set<string>(), source: r.source };
     acc.notes.add(r.note);

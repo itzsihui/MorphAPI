@@ -17,7 +17,8 @@ import {
 } from "./impactProgram";
 import { generateCode, type LlmMessage, type ModelProfile } from "./llm";
 import { extractOracle, importCandidates, mergeOracles, type ExtractedOracle } from "./oracleExtract";
-import { ProjectSession, findDeprecatedReferences, type DeprecatedCallSpan } from "./program";
+import { ProjectSession, findDeprecatedReferences, resolveAlias, type DeprecatedCallSpan } from "./program";
+import { producerOf } from "./discover";
 import {
   buildSlicePrompt,
   needsStatementSlice,
@@ -311,67 +312,26 @@ export function lineHunks(a: string[], b: string[]): Array<{ a1: number; a2: num
   return hunks;
 }
 
-/**
- * The statement holding an accepted rewrite that feeds the statement at `pos`:
- * an identifier there is a variable whose initializer contains the rewrite, or
- * calls a local function whose body contains it. One def-use hop.
- */
-function producerOf(
-  sf: ts.SourceFile,
-  checker: ts.TypeChecker,
-  pos: number,
-  steps: Array<{ file: string; accepted: string | null }>,
-  relFile: string
-): { start: number; end: number } | null {
-  const accepted = steps.filter((s) => s.file === relFile && s.accepted).map((s) => s.accepted!.trim());
-  if (!accepted.length) return null;
-  let stmt: ts.Node | undefined;
-  const find = (n: ts.Node) => {
-    if (n.getStart(sf) <= pos && pos < n.getEnd()) {
-      if (ts.isStatement(n) && !ts.isBlock(n)) stmt = n;
-      ts.forEachChild(n, find);
-    }
-  };
-  find(sf);
-  if (!stmt) return null;
-  const holds = (n: ts.Node) => {
-    const t = n.getText(sf);
-    return accepted.some((a) => a.length >= 3 && t.includes(a));
-  };
-  const innermostHolding = (root: ts.Node): ts.Node | null => {
-    let best: ts.Node | null = null;
-    const visit = (n: ts.Node) => {
-      if (!holds(n)) return;
-      if (ts.isStatement(n) && !ts.isBlock(n)) best = n;
-      ts.forEachChild(n, visit);
-    };
-    visit(root);
-    return best;
-  };
-  let out: ts.Node | null = null;
+/** Errors that mean a binding was lost: used before assigned, cannot find name, redeclared. */
+const BINDING_ERRORS = new Set([2454, 2304, 2552, 2448, 2451, 2300]);
+
+/** Names of the project's own functions called inside `range` (declared in project files, not packages). */
+function projectCallees(session: ProjectSession, sf: ts.SourceFile, range: { start: number; end: number }, oldDirs: string[]): string[] {
+  const checker = session.checker;
+  const out = new Set<string>();
   const visit = (n: ts.Node) => {
-    if (out) return;
-    if (ts.isIdentifier(n)) {
-      const decl = checker.getSymbolAtLocation(n)?.valueDeclaration;
-      if (decl && decl.getSourceFile() === sf && ts.isVariableDeclaration(decl) && decl.initializer && !(decl.getStart(sf) <= pos && pos < decl.getEnd())) {
-        const init = decl.initializer;
-        if (holds(init)) out = innermostHolding(decl.parent.parent) ?? decl.parent.parent;
-        else if (ts.isCallExpression(init) && ts.isIdentifier(init.expression)) {
-          const fn = checker.getSymbolAtLocation(init.expression)?.valueDeclaration;
-          const body =
-            fn && ts.isVariableDeclaration(fn) && fn.initializer && (ts.isArrowFunction(fn.initializer) || ts.isFunctionExpression(fn.initializer))
-              ? fn.initializer.body
-              : fn && ts.isFunctionDeclaration(fn)
-                ? fn.body
-                : undefined;
-          if (body && body.getSourceFile() === sf && holds(body)) out = innermostHolding(body);
-        }
-      }
+    if (n.getEnd() < range.start || n.getStart(sf) > range.end) return;
+    if ((ts.isCallExpression(n) || ts.isNewExpression(n)) && n.getStart(sf) >= range.start && n.getEnd() <= range.end) {
+      const e = n.expression;
+      const id = ts.isIdentifier(e) ? e : ts.isPropertyAccessExpression(e) ? e.name : null;
+      const decl = id ? resolveAlias(checker, checker.getSymbolAtLocation(id))?.declarations?.[0] : undefined;
+      const f = decl?.getSourceFile().fileName ?? "";
+      if (id && decl && !f.includes(`${path.sep}node_modules${path.sep}`) && !f.endsWith(".d.ts") && !oldDirs.some((d) => f.startsWith(d))) out.add(id.text);
     }
     ts.forEachChild(n, visit);
   };
-  visit(stmt);
-  return out ? { start: (out as ts.Node).getStart(sf), end: (out as ts.Node).getEnd() } : null;
+  visit(sf);
+  return [...out];
 }
 
 export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> {
@@ -575,6 +535,8 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         let acceptedRange: { start: number; end: number } | null = null;
         let acceptedAsync: TextEdit[] = [];
         let originalAny = cfg.spans ? anyProfile(session.sourceFile(file)!, session.checker, slice) : undefined;
+        const bindingBefore = cfg.spans ? session.diagnostics([file]).filter((d) => BINDING_ERRORS.has(d.code)) : [];
+        let keepCalls = cfg.spans ? projectCallees(session, session.sourceFile(file)!, slice, cfg.deprecatedDirs ?? []) : undefined;
         const evaluate = (candidate: string): GateResult => {
           const awaitBefore = /await\s*$/.test(body.slice(Math.max(0, slice.start - 8), slice.start));
           const code = reindent(cleanProposal(candidate, slice.kind, awaitBefore, slice.text), body, slice.start);
@@ -593,7 +555,14 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           const delta = withImports.code.length - spliced.length;
           session.update({ [file]: withImports.code });
           const range = { start: slice.start + shift + delta, end: slice.start + shift + delta + code.length };
-          const gate = gateSpan(session, file, range, oracle, { ...gateOpts, original: slice.text, originalAny });
+          const gate = gateSpan(session, file, range, oracle, { ...gateOpts, original: slice.text, originalAny, keepCalls });
+          if (cfg.spans) {
+            // A rewrite must not break bindings outside its slice (dropped assignment or declaration).
+            const broken = session.diagnostics([file]).filter((d) => BINDING_ERRORS.has(d.code) && (d.start < range.start || d.start > range.end));
+            const fresh = broken.filter((d) => !bindingBefore.some((b) => b.code === d.code && b.message === d.message));
+            for (const d of fresh.slice(0, 3)) gate.findings.push({ kind: "type_error", line: d.line, code: d.code, message: `Your replacement breaks code outside the slice (line ${d.line}): ${d.message} Keep every assignment and declaration the slice made.` });
+            if (fresh.length) gate.ok = false;
+          }
           const result = arm.oracle ? gate : { ok: true, findings: [], warnings: [...gate.findings, ...gate.warnings] };
           if (result.ok) {
             accepted = code;
@@ -624,6 +593,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           slice = sliceFor(bodySf, span, "statement");
           escalated = true;
           if (cfg.spans) originalAny = anyProfile(session.sourceFile(file)!, session.checker, slice);
+          if (cfg.spans) keepCalls = projectCallees(session, session.sourceFile(file)!, slice, cfg.deprecatedDirs ?? []);
           emit("escalate", { file: rel(cfg.repoRoot, file), line: span.startLine, slice: slice.text });
           const retry = await repairLoop({
             maxAttempts: arm.oracle ? 2 : 1,
@@ -743,29 +713,36 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         // Def-use attribution: if the broken statement reads a value produced by a site we
         // already rewrote, repair that producer instead of patching over the symptom here.
         // Producer first; once it has been tried, later findings repair their own statement.
-        const found = f.reason === "new_type_error" && cfg.spans ? producerOf(sf, session.checker, f.start, [...(cfg.priorAccepted ?? []), ...steps], rel(cfg.repoRoot, f.file)) : null;
-        const producer = found && !repairedStatements.has(`${f.file}:${sliceFor(sf, found, "statement").start}`) ? found : null;
-        const slice = sliceFor(sf, producer ?? { start: f.start, end: f.start + 1 }, "statement");
-        if (producer) emit("attributed", { file: rel(cfg.repoRoot, f.file), line: f.line, producerLine: slice.startLine, detail: f.detail });
-        const stmtKey = `${f.file}:${slice.start}`;
+        const accepted = [...(cfg.priorAccepted ?? []), ...steps].map((x) => ({ ...x, abs: path.resolve(cfg.repoRoot, x.file) }));
+        const found = f.reason === "new_type_error" && cfg.spans ? producerOf(session, sf, f.start, accepted) : null;
+        const foundSf = found ? session.sourceFile(found.file) : undefined;
+        const producer = found && foundSf && !repairedStatements.has(`${found.file}:${sliceFor(foundSf, found, "statement").start}`) ? found : null;
+        // The statement to repair may live in another file (a rewritten type alias, say).
+        const tFile = producer?.file ?? f.file;
+        const tsf = session.sourceFile(tFile)!;
+        const slice = sliceFor(tsf, producer ?? { start: f.start, end: f.start + 1 }, "statement");
+        if (producer) emit("attributed", { file: rel(cfg.repoRoot, f.file), line: f.line, producerFile: rel(cfg.repoRoot, tFile), producerLine: slice.startLine, detail: f.detail });
+        const stmtKey = `${tFile}:${slice.start}`;
         if (repairedStatements.has(stmtKey)) continue;
         repairedStatements.add(stmtKey);
         const moduleUse = f.reason === "deprecated_module_use" ? new RegExp(`\\b${f.symbol}\\b`) : null;
-        const text = session.text(f.file);
-        const fileDiagsBefore = session.diagnostics([f.file]).length;
+        const text = session.text(tFile);
+        const checkFiles = [...new Set([tFile, f.file])];
+        const fileDiagsBefore = session.diagnostics(checkFiles).length;
         let acceptedFix: string | null = null;
         const repairFacts =
           armCfg.context === "slice" && cfg.spans
             ? sliceFactsFor(session, {
                 repoRoot: cfg.repoRoot,
                 files,
-                span: { file: f.file, start: slice.start, end: slice.end, text: slice.text },
+                span: { file: tFile, start: slice.start, end: slice.end, text: slice.text },
                 deprecatedSymbols: cfg.deprecatedSymbols,
                 successorModule: cfg.successorModule,
                 successorSymbols: cfg.successorSymbols,
               }).facts
             : null;
-        const repairAny = cfg.spans ? anyProfile(sf, session.checker, slice) : undefined;
+        const repairAny = cfg.spans ? anyProfile(tsf, session.checker, slice) : undefined;
+        const keepCalls = cfg.spans ? projectCallees(session, tsf, slice, cfg.deprecatedDirs ?? []) : undefined;
         const loop = await repairLoop({
           maxAttempts: armCfg.oracle ? 2 : 1,
           propose: (feedback) =>
@@ -778,7 +755,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
                 successorModule: cfg.successorLabel ?? (cfg.successorModules ?? [cfg.successorModule]).join(", "),
                 rules: [
                   producer
-                    ? `This statement was migrated earlier, and a later use of its value now fails at line ${f.line}: ${f.detail}. Change this statement so the later use type-checks (e.g. keep literal types precise).`
+                    ? `This statement was migrated earlier, and a later use of it now fails${tFile === f.file ? "" : ` in ${rel(cfg.repoRoot, f.file)}`} at line ${f.line}: ${f.detail}. Change this statement so the later use type-checks (e.g. keep literal types precise).`
                     : `This statement breaks after the migration: ${f.detail}`,
                   "Fix it without changing behavior.",
                   ...(cfg.rules ?? []),
@@ -791,15 +768,16 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             const code = reindent(cleanProposal(candidate, "statement", false, slice.text), text, slice.start);
             if (!parsesAs(code, "statement")) return { ok: false, findings: [{ kind: "parse", message: "Output must parse as statements." }], warnings: [] };
             const spliced = text.slice(0, slice.start) + code + text.slice(slice.end);
-            const withImports = addMissingImports(spliced, f.file, candidates);
+            const withImports = addMissingImports(spliced, tFile, candidates);
             const delta = withImports.code.length - spliced.length;
-            session.update({ [f.file]: withImports.code });
-            const gate = gateSpan(session, f.file, { start: slice.start + delta, end: slice.start + delta + code.length }, oracle, {
+            session.update({ [tFile]: withImports.code });
+            const gate = gateSpan(session, tFile, { start: slice.start + delta, end: slice.start + delta + code.length }, oracle, {
               ...gateOpts,
               original: slice.text,
               originalAny: repairAny,
+              keepCalls,
             });
-            const after = session.diagnostics([f.file]);
+            const after = session.diagnostics(checkFiles);
             if (gate.ok && moduleUse) {
               if (moduleUse.test(code)) {
                 gate.ok = false;
@@ -815,14 +793,14 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               );
             }
             if (gate.ok) acceptedFix = code;
-            else session.update({ [f.file]: text });
+            else session.update({ [tFile]: text });
             return gate;
           },
           onAttempt: (rec) => emit("repair_attempt", { file: rel(cfg.repoRoot, f.file), line: f.line, reason: f.reason, ...rec }),
         });
         impactFixes.push({
           reason: f.reason,
-          file: rel(cfg.repoRoot, f.file),
+          file: rel(cfg.repoRoot, tFile),
           line: f.line,
           before: slice.text,
           after: acceptedFix,

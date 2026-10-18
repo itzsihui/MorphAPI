@@ -75,6 +75,8 @@ export function gateSpan(
     original?: string;
     /** Untyped values in the original slice (see anyProfile); new ones are rejected. */
     originalAny?: AnyProfile;
+    /** The project's own functions the original slice calls; the replacement must still call them. */
+    keepCalls?: string[];
   } = {}
 ): GateResult {
   const sf = session.sourceFile(file);
@@ -100,6 +102,18 @@ export function gateSpan(
     }
     for (const v of now.vars.filter((x) => !opts.originalAny!.vars.includes(x))) {
       findings.push({ kind: "evasion", symbol: v, line: lineOf(range.start), message: `\`${v}\` gets type any, which hides type errors wherever it is used. Give it a value with a real type from the new API.` });
+    }
+  }
+
+  // Behaviour guard: migrating SDK usage never means bypassing the project's own helpers.
+  for (const name of opts.keepCalls ?? []) {
+    if (!new RegExp(`\\b${name.replace(/[$]/g, "\\$")}\\s*(<[^()]*>)?\\s*\\(`).test(replaced)) {
+      findings.push({
+        kind: "type_error",
+        symbol: name,
+        line: lineOf(range.start),
+        message: `The original calls the project's own ${name}(); keep calling it and adapt only what is passed to it or done with its result. Fix ${name} itself separately if needed.`,
+      });
     }
   }
 
