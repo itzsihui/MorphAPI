@@ -21,11 +21,12 @@ import {
   toAliasMap,
   type Bridge,
 } from "./bridge";
-import { diagnosticKey, discoverWorkItems, findHandoffs, orderByDataFlow, testFailureItems, type Handoff, type WorkItem } from "./discover";
+import { diagnosticKey, discoverWorkItems, findHandoffs, groupIntoUnits, orderByDataFlow, testFailureItems, type Handoff, type WorkItem } from "./discover";
 import type { LlmMessage, ModelProfile } from "./llm";
 import { lineHunks, runMigration, type ArmId, type MigrationEvent, type MigrationRun } from "./pipeline";
 import { ProjectSession, type SessionDiagnostic } from "./program";
 import { ProjectCompiler } from "./projectCompiler";
+import { RuleBook } from "./ruleBook";
 import { setInlineTypeModifiers } from "./importReconcile";
 
 export type RepoMigrationConfig = {
@@ -64,6 +65,10 @@ export type RepoMigrationConfig = {
    * ordering and error attribution). Slices, facts and the gate are unchanged.
    */
   noDefUse?: boolean;
+  /** Ablation: no bigger work units. */
+  noUnits?: boolean;
+  /** Ablation: no learned rewrite rules. */
+  noRules?: boolean;
   /** Restrict to these project files (default: every non-declaration file in the tsconfig) */
   files?: string[];
   /** Extra files to migrate and type-check that the tsconfig leaves out (e.g. tests that mock the SDK) */
@@ -95,6 +100,8 @@ export type RepoMigrationRun = {
     completionTokens: number;
     cacheWriteTokens: number;
     cacheReadTokens: number;
+    ruleApplications: number;
+    rulesLearned: number;
   };
   /** Repo-relative path → texts with the bridge reverted, ready to write to disk */
   patches: Record<string, { before: string; after: string }>;
@@ -188,6 +195,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
   const current = () => Object.fromEntries(files.map((f) => [f, revert(bridged.text(f), f, bridges)]));
   const newWorldDiags = (texts: Record<string, string>): SessionDiagnostic[] =>
     pc.diagnostics(texts, files).map((d) => ({ ...d, message: unalias(d.message) }));
+  const ruleBook = new RuleBook();
   const triedProducers = new Set<string>();
   const accepted = () =>
     rounds.flatMap((r) => [
@@ -241,6 +249,12 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       emit("discover", { round, items: [], deferred: [] });
       break;
     }
+    // Round 1 leaves single sites to learned rules; from round 2, what is left is grouped into units.
+    if (!cfg.noUnits && round >= 2) {
+      const before = found.length;
+      found = groupIntoUnits(bridged, found, { failed: (it) => rejected.has(siteKey(it.file, it.text)) });
+      if (found.length !== before) emit("units", { round, itemsBefore: before, itemsAfter: found.length });
+    }
     const ordered = cfg.noDefUse ? { ready: found, deferred: [] as WorkItem[] } : orderByDataFlow(bridged, found);
     // Defer an item at most once: a producer that keeps failing must not starve its consumers.
     const items = [...ordered.ready, ...ordered.deferred.filter((i) => deferredOnce.has(siteKey(i.file, i.text)))];
@@ -288,6 +302,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       onEvent: (e) => cfg.onEvent?.({ ...e, round }),
       noAttribution: cfg.noDefUse,
       projectParse: (text, file) => pc.parseErrors(text, file),
+      ruleBook: cfg.noRules ? undefined : ruleBook,
       priorAccepted: rounds.flatMap((r) => [
         ...r.run.steps.map((s) => ({ file: s.file, accepted: s.accepted })),
         ...r.run.impactFixes.map((x) => ({ file: x.file, accepted: x.after })),
@@ -359,6 +374,8 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       promptTokens: runs.reduce((n, r) => n + r.metrics.promptTokens, 0),
       cacheWriteTokens: runs.reduce((n, r) => n + (r.metrics.cacheWriteTokens ?? 0), 0),
       cacheReadTokens: runs.reduce((n, r) => n + (r.metrics.cacheReadTokens ?? 0), 0),
+      ruleApplications: steps.filter((s) => s.viaRule).length,
+      rulesLearned: ruleBook.size,
       completionTokens: runs.reduce((n, r) => n + r.metrics.completionTokens, 0),
     },
     patches,

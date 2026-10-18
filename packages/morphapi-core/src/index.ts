@@ -183,3 +183,6 @@ export { runRepoMigration } from "./repoMigration";
 export type { RepoMigrationConfig, RepoMigrationRun } from "./repoMigration";
 export { ProjectCompiler } from "./projectCompiler";
 export { setInlineTypeModifiers } from "./importReconcile";
+export { RuleBook } from "./ruleBook";
+export type { LearnedRule } from "./ruleBook";
+export { groupIntoUnits } from "./discover";

@@ -19,6 +19,7 @@ import { generateCode, type LlmMessage, type ModelProfile } from "./llm";
 import { extractOracle, importCandidates, mergeOracles, type ExtractedOracle } from "./oracleExtract";
 import { ProjectSession, findDeprecatedReferences, resolveAlias, type DeprecatedCallSpan } from "./program";
 import { producerOf } from "./discover";
+import type { RuleBook } from "./ruleBook";
 import {
   buildSlicePrompt,
   needsStatementSlice,
@@ -89,6 +90,8 @@ export type MigrationConfig = {
   cacheStaticContext?: boolean;
   /** Syntax errors the PROJECT's compiler reports for a file text (see ProjectCompiler). */
   projectParse?: (text: string, file: string) => string[];
+  /** Learned rewrite rules shared across rounds (learn-once, verified by the gate at every use). */
+  ruleBook?: RuleBook;
   /** Ablation: no def-use attribution in impact repair. */
   noAttribution?: boolean;
   /** Rewrites accepted in earlier rounds (repo-relative file + code), for def-use attribution. */
@@ -178,6 +181,8 @@ export type SpanStep = {
   accepted: string | null;
   imports: string[];
   dataflow: ShapeResult | null;
+  /** Accepted from a learned rule without an LLM call */
+  viaRule?: boolean;
 };
 
 export type ImpactFix = {
@@ -382,7 +387,8 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   const baseline = diagnosticKeys(baselineDiags);
   const signaturesBefore = snapshotSignatures(session, files);
   const deprecatedModule = cfg.deprecatedModules?.[0] ?? (cfg.deprecatedSpec ?? "").split("#")[0];
-  const cleanupModules = cfg.deprecatedModules ?? [deprecatedModule];
+  // Discover mode also drops successor imports that end up unused (an earlier attempt may have added them).
+  const cleanupModules = [...(cfg.deprecatedModules ?? [deprecatedModule]), ...(cfg.spans ? cfg.successorModules ?? [cfg.successorModule] : [])];
   const oracle: ExtractedOracle | null = mergeOracles(
     (cfg.successorModules ?? [cfg.successorModule])
       .map((m) => extractOracle(session, m, files[0]))
@@ -550,6 +556,9 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         let escalated = false;
 
         session.update({ [file]: body });
+        // Pre-edit program, kept for rule learning/matching (TypeScript programs are immutable).
+        const preSf = session.sourceFile(file)!;
+        const preChecker = session.checker;
         const facts = factsBySpan.get(`${file}:${span.origStart}`) ?? null;
 
         const promptFor = (feedback?: string): LlmMessage[] => {
@@ -621,16 +630,36 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         };
 
         let attempts: AttemptRecord[] = [];
-        const loop = await repairLoop({
-          maxAttempts,
-          propose: (feedback, attempt) => {
-            emit("propose", { file: rel(cfg.repoRoot, file), line: span.startLine, attempt, feedback: feedback ?? null });
-            return ask(promptFor(feedback));
-          },
-          evaluate,
-          onAttempt: (rec) => emit("attempt", { file: rel(cfg.repoRoot, file), line: span.startLine, ...rec, sliceKind: slice.kind }),
-        });
-        attempts = loop.attempts.map((a) => ({ ...a, sliceKind: slice.kind }));
+        // Learned rule first: no LLM call if the gate accepts it.
+        const ruleAttempts: AttemptRecord[] = [];
+        let viaRule = false;
+        const suggestion = cfg.ruleBook?.suggest(preSf, preChecker, slice) ?? null;
+        if (suggestion) {
+          const r = evaluate(suggestion.text);
+          ruleAttempts.push({ attempt: 0, candidate: suggestion.text, ok: r.ok, findings: r.findings, warnings: r.warnings, sliceKind: slice.kind });
+          if (r.ok) suggestion.rule.uses++;
+          else suggestion.rule.fails++;
+          viaRule = r.ok;
+          emit(r.ok ? "rule_applied" : "rule_rejected", {
+            file: rel(cfg.repoRoot, file),
+            line: span.startLine,
+            rule: suggestion.rule.kind,
+            from: `${rel(cfg.repoRoot, suggestion.rule.from.file)}:${suggestion.rule.from.line}`,
+            findings: r.findings.slice(0, 2).map((f) => f.message.slice(0, 200)),
+          });
+        }
+        const loop = viaRule
+          ? { accepted: suggestion!.text, attempts: [] as AttemptRecord[] }
+          : await repairLoop({
+              maxAttempts,
+              propose: (feedback, attempt) => {
+                emit("propose", { file: rel(cfg.repoRoot, file), line: span.startLine, attempt, feedback: feedback ?? null });
+                return ask(promptFor(feedback));
+              },
+              evaluate,
+              onAttempt: (rec) => emit("attempt", { file: rel(cfg.repoRoot, file), line: span.startLine, ...rec, sliceKind: slice.kind }),
+            });
+        attempts = [...ruleAttempts, ...loop.attempts.map((a) => ({ ...a, sliceKind: slice.kind }))];
 
         const needsStatements = (fs: GateResult["findings"]) => fs.some((f) => f.kind === "parse" || f.receiverOwners?.length);
         if (!accepted && slice.kind !== "statement" && attempts.some((a) => needsStatements(a.findings) || slice.kind === "type")) {
@@ -683,6 +712,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             emit("asyncified", { file: rel(cfg.repoRoot, file), line: bodySf.getLineAndCharacterOfPosition(acceptedAsync[0].pos).line + 1 });
           }
           consumedFrom = Math.min(consumedFrom, slice.start);
+          if (cfg.ruleBook && !viaRule) cfg.ruleBook.learn(preSf, preChecker, slice, acceptedCode);
           emit("accepted", { file: rel(cfg.repoRoot, file), line: span.startLine, code: acceptedCode, imports: acceptedImports });
         } else {
           session.update({ [file]: addMissingImports(body, file, []).code });
@@ -701,6 +731,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           accepted,
           imports: acceptedImports,
           dataflow,
+          viaRule,
         });
       }
 

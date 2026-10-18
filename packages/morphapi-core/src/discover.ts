@@ -189,6 +189,69 @@ export function producersOf(
     .filter((p) => !seen.has(`${p.file}:${p.start}`) && Boolean(seen.add(`${p.file}:${p.start}`)));
 }
 
+/**
+ * Bigger work units. When one top-level statement (a function, hook, class or
+ * declaration) holds many items, or several where an earlier attempt already
+ * failed, migrate it in one step: API-wide style changes (methods becoming free
+ * functions) touch every line, and slice-by-slice edits then stall or break
+ * each other. Units over `maxLines` stay split.
+ */
+export function groupIntoUnits(
+  session: ProjectSession,
+  items: WorkItem[],
+  opts: { minItems?: number; minFailedItems?: number; maxLines?: number; failed?: (it: WorkItem) => boolean } = {}
+): WorkItem[] {
+  const minItems = opts.minItems ?? 4;
+  const minFailed = opts.minFailedItems ?? 2;
+  const maxLines = opts.maxLines ?? 150;
+  const topOf = (it: WorkItem): ts.Node | null => {
+    const sf = session.sourceFile(it.file);
+    if (!sf) return null;
+    for (const st of sf.statements) if (st.getStart(sf) <= it.start && it.end <= st.getEnd()) return ts.isImportDeclaration(st) ? null : st;
+    return null;
+  };
+  const groups = new Map<ts.Node, WorkItem[]>();
+  const loose: WorkItem[] = [];
+  for (const it of items) {
+    const top = topOf(it);
+    if (top) groups.set(top, [...(groups.get(top) ?? []), it]);
+    else loose.push(it);
+  }
+  const out: WorkItem[] = [...loose];
+  for (const [top, its] of groups) {
+    const sf = top.getSourceFile();
+    const start = top.getStart(sf);
+    const end = top.getEnd();
+    const a = sf.getLineAndCharacterOfPosition(start);
+    const b = sf.getLineAndCharacterOfPosition(end);
+    const failed = opts.failed ? its.filter(opts.failed).length : 0;
+    const big = its.length >= minItems || (failed >= 1 && its.length >= minFailed);
+    if (!big || b.line - a.line + 1 > maxLines || its.length < 2) {
+      out.push(...its);
+      continue;
+    }
+    out.push({
+      fileName: path.basename(sf.fileName),
+      file: path.resolve(sf.fileName),
+      start,
+      end,
+      startLine: a.line + 1,
+      startChar: a.character,
+      endLine: b.line + 1,
+      endChar: b.character,
+      text: sf.text.slice(start, end),
+      kind: `unit:statement`,
+      sliceKind: "statement",
+      notes: [
+        `This whole unit is migrated in one step (${its.length} broken sites inside it).`,
+        ...[...new Set(its.flatMap((i) => i.notes))].slice(0, 10),
+      ],
+      source: its[0].source,
+    });
+  }
+  return out;
+}
+
 /** The smallest sensible slice around `node`. */
 export function chooseSlice(sf: ts.SourceFile, node: ts.Node): { start: number; end: number; kind: SliceKind } {
   // Inside a type annotation → type slice.
