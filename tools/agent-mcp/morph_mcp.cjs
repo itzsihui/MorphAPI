@@ -84,14 +84,27 @@ function checkEdit() {
   const texts = current();
   const findings = [];
   for (const e of newErrors(texts)) findings.push(`compiler (project's TypeScript ${pc.version}): ${e}`);
+  const importSpec = (l) => {
+    const m = /from\s+['"]([^'"]+)['"]|require\(\s*['"]([^'"]+)['"]\s*\)|import\s+['"]([^'"]+)['"]/.exec(l);
+    return m && (m[1] || m[2] || m[3]);
+  };
   for (const f of start.files) {
-    const before = new Set(start.text[f].split("\n").map((l) => l.trim()));
-    texts[f].split("\n").forEach((l, i) => {
-      if (before.has(l.trim())) return;
-      for (const re of EVASION) if (re.test(l)) findings.push(`evasion: ${rel(f)}:${i + 1} adds \`${l.trim().slice(0, 120)}\` (hides type errors; use real types)`);
-      const m = /from\s+['"]([^'"]+)['"]|require\(\s*['"]([^'"]+)['"]\s*\)/.exec(l);
-      const spec = m && (m[1] || m[2]);
-      if (spec && /\/compat(\/|$)/.test(spec)) findings.push(`compatibility layer: ${rel(f)}:${i + 1} imports ${spec}; migrate to the new API instead of the temporary compat layer`);
+    const a = start.text[f].split("\n");
+    const b = texts[f].split("\n");
+    // Added lines from a real line diff (not "text seen somewhere in the old file").
+    if (texts[f] !== start.text[f]) {
+      for (const h of core.lineHunks(a, b)) {
+        for (let i = h.b1; i < h.b2; i++) {
+          const l = b[i];
+          for (const re of EVASION) if (re.test(l)) findings.push(`evasion: ${rel(f)}:${i + 1} adds \`${l.trim().slice(0, 120)}\` (hides type errors; use real types)`);
+          const spec = importSpec(l);
+          if (spec && /\/compat(\/|$)/.test(spec)) findings.push(`compatibility layer: ${rel(f)}:${i + 1} imports ${spec}; migrate to the new API instead of the temporary compat layer`);
+        }
+      }
+    }
+    // Imports of a replaced package anywhere in the project, edited or not.
+    b.forEach((l, i) => {
+      const spec = importSpec(l);
       if (spec && retired.some((r) => spec === r || spec.startsWith(r + "/"))) findings.push(`retired package: ${rel(f)}:${i + 1} still imports ${spec}`);
     });
   }
