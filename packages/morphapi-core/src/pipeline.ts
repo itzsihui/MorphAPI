@@ -82,6 +82,8 @@ export type MigrationConfig = {
   impactLimit?: number;
   /** Scan every file (not only changed ones) for uses of the retired modules. */
   impactAllFiles?: boolean;
+  /** Ablation: no def-use attribution in impact repair. */
+  noAttribution?: boolean;
   /** Rewrites accepted in earlier rounds (repo-relative file + code), for def-use attribution. */
   priorAccepted?: Array<{ file: string; accepted: string | null }>;
   successorKind?: SuccessorKind;
@@ -714,7 +716,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         // already rewrote, repair that producer instead of patching over the symptom here.
         // Producer first; once it has been tried, later findings repair their own statement.
         const accepted = [...(cfg.priorAccepted ?? []), ...steps].map((x) => ({ ...x, abs: path.resolve(cfg.repoRoot, x.file) }));
-        const found = f.reason === "new_type_error" && cfg.spans ? producerOf(session, sf, f.start, accepted) : null;
+        const found = f.reason === "new_type_error" && cfg.spans && !cfg.noAttribution ? producerOf(session, sf, f.start, accepted) : null;
         const foundSf = found ? session.sourceFile(found.file) : undefined;
         const producer = found && foundSf && !repairedStatements.has(`${found.file}:${sliceFor(foundSf, found, "statement").start}`) ? found : null;
         // The statement to repair may live in another file (a rewritten type alias, say).

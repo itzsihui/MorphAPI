@@ -55,6 +55,11 @@ export type RepoMigrationConfig = {
   verify?: (texts: Record<string, string>) => Promise<{ ok: boolean; output: string }>;
   /** Test-driven rounds after the type checker is satisfied (default 2) */
   testRounds?: number;
+  /**
+   * Ablation: switch off the code property graph's def-use features (producer-first
+   * ordering and error attribution). Slices, facts and the gate are unchanged.
+   */
+  noDefUse?: boolean;
   /** Restrict to these project files (default: every non-declaration file in the tsconfig) */
   files?: string[];
   /** Extra files to migrate and type-check that the tsconfig leaves out (e.g. tests that mock the SDK) */
@@ -184,7 +189,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
     ]);
   const discover = (texts: Record<string, string>, attribute = true) =>
     discoverWorkItems({
-      accepted: attribute ? accepted() : undefined,
+      accepted: attribute && !cfg.noDefUse ? accepted() : undefined,
       triedProducers,
       bridged,
       newWorld: newWorldDiags(texts),
@@ -229,7 +234,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       emit("discover", { round, items: [], deferred: [] });
       break;
     }
-    const ordered = orderByDataFlow(bridged, found);
+    const ordered = cfg.noDefUse ? { ready: found, deferred: [] as WorkItem[] } : orderByDataFlow(bridged, found);
     // Defer an item at most once: a producer that keeps failing must not starve its consumers.
     const items = [...ordered.ready, ...ordered.deferred.filter((i) => deferredOnce.has(siteKey(i.file, i.text)))];
     const deferred = ordered.deferred.filter((i) => !deferredOnce.has(siteKey(i.file, i.text)));
@@ -273,6 +278,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       model: cfg.model,
       propose: cfg.propose,
       onEvent: (e) => cfg.onEvent?.({ ...e, round }),
+      noAttribution: cfg.noDefUse,
       priorAccepted: rounds.flatMap((r) => [
         ...r.run.steps.map((s) => ({ file: s.file, accepted: s.accepted })),
         ...r.run.impactFixes.map((x) => ({ file: x.file, accepted: x.after })),

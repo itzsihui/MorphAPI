@@ -476,13 +476,18 @@ export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
       const psf = bridged.sourceFile(p.file);
       return psf ? `${path.resolve(p.file)}:${sliceFor(psf, p, "statement").start}` : "";
     };
-    const prod = input.accepted?.length
-      ? producersOf(bridged, sf, nodeAt(sf, unmapPosition(editsFor(file), d.start)).getStart(sf), input.accepted).find((p) => keyOf(p) && !input.triedProducers?.has(keyOf(p))) ?? null
-      : null;
+    // Attribute each downstream error once, keyed by its identity (offsets shift between rounds).
+    const consumerStmt = sliceFor(sf, { start: node.getStart(sf), end: node.getEnd() }, "statement").text.trim();
+    const errKey = `${file}|${d.code}|${d.message}|${consumerStmt}`;
+    const prod =
+      input.accepted?.length && !input.triedProducers?.has(errKey)
+        ? producersOf(bridged, sf, node.getStart(sf), input.accepted).find((p) => keyOf(p) && !input.triedProducers?.has(keyOf(p))) ?? null
+        : null;
     const prodSf = prod ? bridged.sourceFile(prod.file) : undefined;
     const key = prod ? keyOf(prod) : "";
     if (prod && prodSf && key) {
       input.triedProducers?.add(key);
+      input.triedProducers?.add(errKey);
       const relLine = sf.getLineAndCharacterOfPosition(d.start).line + 1;
       raw.push({
         file: path.resolve(prod.file),
