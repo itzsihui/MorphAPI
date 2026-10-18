@@ -165,7 +165,7 @@ export type BuildCpgInput = {
   repoRoot: string;
   /** Absolute fixture file paths */
   files: string[];
-  /** Scenario finder spans (fileName = basename) */
+  /** Finder spans; fileName is the repo-relative path */
   spans: UsageSpan[];
   deprecatedSymbols: string[];
   /** Export names in `successorModule`; `Type.member` selects a member */
@@ -239,7 +239,7 @@ function isReferencePosition(id: ts.Identifier): boolean {
   return true;
 }
 
-function calleeIdentifier(call: ts.CallExpression): ts.Identifier | null {
+function calleeIdentifier(call: ts.CallExpression | ts.NewExpression): ts.Identifier | null {
   const e = call.expression;
   if (ts.isIdentifier(e)) return e;
   if (ts.isPropertyAccessExpression(e) && ts.isIdentifier(e.name)) return e.name;
@@ -313,7 +313,8 @@ export function buildCodePropertyGraph(input: BuildCpgInput): CodePropertyGraph 
     if (sf) sfs.push(sf);
     else health.missingFiles.push(rel(f));
   }
-  const baseOf = (sf: ts.SourceFile) => path.basename(sf.fileName);
+  // Repo-relative path, not basename: real repos have many files called index.ts.
+  const baseOf = (sf: ts.SourceFile) => rel(sf.fileName);
   const lineOf = (sf: ts.SourceFile, pos: number) =>
     sf.getLineAndCharacterOfPosition(pos).line + 1;
 
@@ -561,7 +562,7 @@ export function buildCodePropertyGraph(input: BuildCpgInput): CodePropertyGraph 
     node: CpgNode;
     sf: ts.SourceFile;
     spanNode: ts.Node;
-    call: ts.CallExpression | null;
+    call: ts.CallExpression | ts.NewExpression | null;
     apiNode: CpgNode | null;
     resultBinding: string | null;
     resultType: string | null;
@@ -583,12 +584,12 @@ export function buildCodePropertyGraph(input: BuildCpgInput): CodePropertyGraph 
     visit(sf);
     return found;
   };
-  const findTargetCall = (root: ts.Node): ts.CallExpression | null => {
+  const findTargetCall = (root: ts.Node): ts.CallExpression | ts.NewExpression | null => {
     const queue: ts.Node[] = [root];
-    let firstCall: ts.CallExpression | null = null;
+    let firstCall: ts.CallExpression | ts.NewExpression | null = null;
     while (queue.length) {
       const n = queue.shift() as ts.Node;
-      if (ts.isCallExpression(n)) {
+      if (ts.isCallExpression(n) || ts.isNewExpression(n)) {
         firstCall ??= n;
         const idn = calleeIdentifier(n);
         if (idn && deprecated.has(idn.text)) return n;
@@ -775,7 +776,7 @@ export function buildCodePropertyGraph(input: BuildCpgInput): CodePropertyGraph 
         id: o.id,
         kind: "variable",
         label: o.name,
-        fileName: path.basename(fnNodeById.get(fnId)?.sf.fileName ?? ""),
+        fileName: rel(fnNodeById.get(fnId)?.sf.fileName ?? ""),
         line: o.line,
         start: o.start,
         end: o.end,
@@ -905,7 +906,7 @@ export function buildCodePropertyGraph(input: BuildCpgInput): CodePropertyGraph 
     };
 
     const argFacts = (focusSite.node.args ?? []).map((a, i) => {
-      const argNode = focusSite.call?.arguments[i];
+      const argNode = focusSite.call?.arguments?.[i];
       const firstId = argNode && ts.isIdentifier(argNode) ? argNode : null;
       return { ...a, origin: firstId ? originOf(firstId) : null };
     });

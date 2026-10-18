@@ -163,3 +163,20 @@ export type {
   FocusDfgNode,
   SliceFacts,
 } from "./codePropertyGraph";
+export { boundApi, lineHunks } from "./pipeline";
+export type { WorkSpan } from "./pipeline";
+export { mergeOracles } from "./oracleExtract";
+export {
+  ALIAS_SUFFIX,
+  aliasOf,
+  aliasSpecifiersIn,
+  bridgePaths,
+  installPreviousVersion,
+  mapPosition,
+  rewriteSpecifiers,
+} from "./bridge";
+export type { Bridge, SpecifierEdit } from "./bridge";
+export { chooseSlice, discoverWorkItems } from "./discover";
+export type { DiscoverInput, WorkItem } from "./discover";
+export { runRepoMigration } from "./repoMigration";
+export type { RepoMigrationConfig, RepoMigrationRun } from "./repoMigration";

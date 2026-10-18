@@ -142,13 +142,17 @@ export class ProjectSession {
   private host: ts.CompilerHost;
   private builder: ts.EmitAndSemanticDiagnosticsBuilderProgram;
 
-  private constructor(configPath: string, opts: { extraRootFiles?: string[] }) {
+  private constructor(configPath: string, opts: { extraRootFiles?: string[]; paths?: Record<string, string[]> }) {
     this.configPath = path.resolve(configPath);
     this.projectDir = path.dirname(this.configPath);
     const read = ts.readConfigFile(this.configPath, ts.sys.readFile);
     if (read.error) throw new Error(`Cannot read ${this.configPath}: ${formatDiagnostic(read.error)}`);
     const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, this.projectDir, undefined, this.configPath);
     this.options = { ...parsed.options, noEmit: true };
+    if (opts.paths && Object.keys(opts.paths).length) {
+      // Extra module aliases (the version bridge). Targets are absolute, so they do not depend on baseUrl.
+      this.options.paths = { ...(parsed.options.paths ?? {}), ...opts.paths };
+    }
     this.configErrors = parsed.errors.map(formatDiagnostic);
     this.roots = [...parsed.fileNames, ...(opts.extraRootFiles ?? []).map((f) => path.resolve(f))];
 
@@ -186,7 +190,7 @@ export class ProjectSession {
 
   static open(
     tsconfigPath: string,
-    opts: { extraRootFiles?: string[]; requireDeps?: boolean } = {}
+    opts: { extraRootFiles?: string[]; requireDeps?: boolean; paths?: Record<string, string[]> } = {}
   ): ProjectSession {
     const dir = path.dirname(path.resolve(tsconfigPath));
     if (opts.requireDeps && !hasNodeModules(dir)) throw new DepsNotInstalledError(dir);
@@ -254,9 +258,11 @@ export class ProjectSession {
     for (const f of files) {
       const sf = this.sourceFile(f);
       if (!sf) continue;
+      // Ask the current Program, not the builder: the builder's per-file cache can
+      // return diagnostics computed before a dependency of `sf` was patched.
       const diags = [
-        ...this.builder.getSyntacticDiagnostics(sf),
-        ...this.builder.getSemanticDiagnostics(sf),
+        ...this.program.getSyntacticDiagnostics(sf),
+        ...this.program.getSemanticDiagnostics(sf),
       ];
       for (const d of diags) {
         out.push({

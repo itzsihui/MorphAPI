@@ -24,6 +24,10 @@ export type ExtractedOracle = {
   allowed: string[];
   /** Type name → how to get a value of it (constructor or factory signature) */
   obtain: Record<string, string>;
+  /** Set when this oracle merges several successor modules */
+  parts?: ExtractedOracle[];
+  /** Export name → its static members (class statics, namespace members), kept apart from instance members */
+  statics?: Record<string, string[]>;
 };
 
 function unwrapPromise(checker: ts.TypeChecker, t: ts.Type): ts.Type {
@@ -46,11 +50,20 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
 
   const exports: OracleExport[] = [];
   const members: Record<string, string[]> = {};
+  const staticsOf: Record<string, string[]> = {};
   const obtain: Record<string, string> = {};
   const seenTypes = new Set<ts.Type>();
 
+  // Built-in types (Uint8Array, Response, Blob, …) are not part of the SDK's API.
+  const builtIn = (t: ts.Type) => {
+    const decls = (t.aliasSymbol ?? t.getSymbol())?.declarations ?? [];
+    return decls.length > 0 && decls.every((d) => {
+      const f = d.getSourceFile();
+      return session.program.isSourceFileDefaultLibrary(f) || /[\\/]node_modules[\\/]@types[\\/]/.test(f.fileName);
+    });
+  };
   const collectMembers = (label: string, t: ts.Type, depth: number) => {
-    if (depth > 2 || seenTypes.has(t)) return;
+    if (depth > 2 || seenTypes.has(t) || builtIn(t)) return;
     seenTypes.add(t);
     const props = t.getProperties();
     if (!props.length) return;
@@ -66,6 +79,8 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
       }
       const ps = pt.getSymbol();
       if (ps && ps.name === "__object") collectMembers(`${label}.${p.name}`, pt, depth + 1);
+      // Nested SDK classes reached through a property (client.chat: Chat → chat.completions: Completions).
+      else if (ps && ps.flags & (ts.SymbolFlags.Class | ts.SymbolFlags.Interface) && !ps.name.startsWith("__")) collectMembers(ps.name, pt, depth + 1);
     }
   };
 
@@ -89,7 +104,37 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
     }
     if (valueType) {
       const statics = valueType.getProperties().map((p) => p.name).filter((n) => n !== "prototype");
-      if (statics.length && !(sym.flags & ts.SymbolFlags.Enum)) members[name] = [...new Set([...(members[name] ?? []), ...statics])];
+
+      // Enum members are statics of the enum object (e.g. CountryCode.US); keep them.
+      if (statics.length) {
+        members[name] = [...new Set([...(members[name] ?? []), ...statics])];
+        if (sym.flags & (ts.SymbolFlags.Class | ts.SymbolFlags.Function)) staticsOf[name] = statics;
+      }
+      // Classes nested as statics (OpenAI.Chat, OpenAI.Chat.Completions): record their own statics.
+      const ownStatic = (p: ts.Symbol) =>
+        p.name !== "prototype" &&
+        !(p.declarations ?? []).every((d) => session.program.isSourceFileDefaultLibrary(d.getSourceFile()) || /[\\/]node_modules[\\/]@types[\\/]/.test(d.getSourceFile().fileName));
+      const visited = new Set<ts.Type>([valueType]);
+      const nested = (owner: string, t: ts.Type, depth: number) => {
+        if (depth > 2) return;
+        for (const sp of t.getProperties()) {
+          if (!ownStatic(sp)) continue;
+          const d = sp.valueDeclaration ?? sp.declarations?.[0];
+          if (!d) continue;
+          const spt = checker.getTypeOfSymbolAtLocation(sp, d);
+          // Skip self/alias references (OpenAI.OpenAI) and anything already listed.
+          if (!spt.getConstructSignatures().length || visited.has(spt)) continue;
+          visited.add(spt);
+          const label = `${owner}.${sp.name}`;
+          const st = spt.getProperties().filter(ownStatic).map((p) => p.name);
+          if (st.length) {
+            staticsOf[label] = st;
+            members[label] = [...new Set([...(members[label] ?? []), ...st])];
+          }
+          nested(label, spt, depth + 1);
+        }
+      };
+      if (sym.flags & ts.SymbolFlags.Class) nested(name, valueType, 1);
       for (const sig of valueType.getCallSignatures()) {
         const ret = unwrapPromise(checker, sig.getReturnType());
         const rs = ret.getSymbol();
@@ -115,15 +160,52 @@ export function extractOracle(session: ProjectSession, moduleName: string, fromF
       allowed.add(`${owner}.${m}`);
     }
   }
-  return { module: moduleName, moduleFile, exports, members, allowed: [...allowed].sort(), obtain };
+  return { module: moduleName, moduleFile, exports, members, allowed: [...allowed].sort(), obtain, statics: staticsOf };
 }
 
 /** Import candidates for importReconcile from an extracted oracle. */
 export function importCandidates(oracle: ExtractedOracle): ImportCandidate[] {
+  if (oracle.parts?.length) {
+    // Merged oracle: each name is imported from the first module that exports it.
+    const seen = new Set<string>();
+    return oracle.parts.flatMap(importCandidates).filter((c) => !seen.has(c.name) && Boolean(seen.add(c.name)));
+  }
   const named = new Set(oracle.exports.filter((e) => e.kind === "named").map((e) => e.name));
   return oracle.exports
     .filter((e) => e.name !== "default" && (e.kind === "named" || !named.has(e.name)))
     .map((e) => ({ module: oracle.module, name: e.name, kind: e.kind, typeOnly: e.typeOnly }));
+}
+
+/**
+ * One oracle over several successor modules (e.g. firebase/app + firebase/auth).
+ * Exports keep their first owner; members and allow-lists are unioned.
+ */
+export function mergeOracles(oracles: ExtractedOracle[]): ExtractedOracle | null {
+  if (!oracles.length) return null;
+  if (oracles.length === 1) return oracles[0];
+  const exports: OracleExport[] = [];
+  const seen = new Set<string>();
+  const members: Record<string, string[]> = {};
+  const obtain: Record<string, string> = {};
+  const statics: Record<string, string[]> = {};
+  const allowed = new Set<string>();
+  for (const o of oracles) {
+    for (const e of o.exports) if (!seen.has(e.name)) (seen.add(e.name), exports.push(e));
+    for (const [k, v] of Object.entries(o.members)) members[k] = [...new Set([...(members[k] ?? []), ...v])];
+    for (const [k, v] of Object.entries(o.obtain)) obtain[k] ??= v;
+    for (const [k, v] of Object.entries(o.statics ?? {})) statics[k] ??= v;
+    for (const a of o.allowed) allowed.add(a);
+  }
+  return {
+    module: oracles.map((o) => o.module).join(", "),
+    moduleFile: oracles[0].moduleFile,
+    exports,
+    members,
+    allowed: [...allowed].sort(),
+    obtain,
+    statics,
+    parts: oracles,
+  };
 }
 
 function levenshtein(a: string, b: string): number {
