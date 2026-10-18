@@ -135,6 +135,12 @@ export function removeUnusedImports(code: string, fileName: string, modules: str
   return { code: applyEdits(code, edits), removed };
 }
 
+let inlineTypeModifiers = true;
+/** `import { type X }` needs TypeScript 4.5; turn it off for projects on older compilers. */
+export function setInlineTypeModifiers(on: boolean): void {
+  inlineTypeModifiers = on;
+}
+
 /** Add imports for candidates the code references but does not bind. */
 export function addMissingImports(code: string, fileName: string, candidates: ImportCandidate[]): { code: string; added: string[] } {
   const sf = parse(code, fileName);
@@ -156,7 +162,7 @@ export function addMissingImports(code: string, fileName: string, candidates: Im
     const decl = imports.find((d) => moduleOf(d) === mod && d.importClause && !d.importClause.isTypeOnly);
     const named = list.filter((c) => c.kind === "named");
     const def = list.find((c) => c.kind === "default");
-    const spec = (c: ImportCandidate) => (c.typeOnly ? `type ${c.name}` : c.name);
+    const spec = (c: ImportCandidate) => (c.typeOnly && inlineTypeModifiers ? `type ${c.name}` : c.name);
     const nb = decl?.importClause?.namedBindings;
     if (decl && nb && ts.isNamedImports(nb) && named.length) {
       const last = nb.elements[nb.elements.length - 1];

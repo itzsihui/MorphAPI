@@ -82,6 +82,13 @@ export type MigrationConfig = {
   impactLimit?: number;
   /** Scan every file (not only changed ones) for uses of the retired modules. */
   impactAllFiles?: boolean;
+  /**
+   * Put the guide and a large successor-API list into one prompt-cached system block shared by every
+   * call (Anthropic native API); each call then carries only a short relevant-symbol excerpt.
+   */
+  cacheStaticContext?: boolean;
+  /** Syntax errors the PROJECT's compiler reports for a file text (see ProjectCompiler). */
+  projectParse?: (text: string, file: string) => string[];
   /** Ablation: no def-use attribution in impact repair. */
   noAttribution?: boolean;
   /** Rewrites accepted in earlier rounds (repo-relative file + code), for def-use attribution. */
@@ -212,6 +219,9 @@ export type MigrationRun = {
     churnRatio: number;
     promptTokens: number;
     completionTokens: number;
+    /** Prompt-cache writes and reads (Anthropic native API); not included in promptTokens */
+    cacheWriteTokens: number;
+    cacheReadTokens: number;
   };
   patches: Record<string, { before: string; after: string }>;
   ms: number;
@@ -314,6 +324,19 @@ export function lineHunks(a: string[], b: string[]): Array<{ a1: number; a2: num
   return hunks;
 }
 
+/** Reject an edit the project's own compiler cannot parse (e.g. syntax newer than its TypeScript). */
+function projectSyntaxCheck(cfg: MigrationConfig, gate: GateResult, before: string, after: string, file: string): void {
+  if (!cfg.projectParse) return;
+  const old = new Set(cfg.projectParse(before, file));
+  const fresh = cfg.projectParse(after, file).filter((e) => !old.has(e));
+  if (!fresh.length) return;
+  gate.ok = false;
+  gate.findings.push({
+    kind: "parse",
+    message: `This project's TypeScript compiler cannot parse the result (${fresh.slice(0, 2).join("; ")}). Use only syntax it supports.`,
+  });
+}
+
 /** Errors that mean a binding was lost: used before assigned, cannot find name, redeclared. */
 const BINDING_ERRORS = new Set([2454, 2304, 2552, 2448, 2451, 2300]);
 
@@ -340,12 +363,14 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   const t0 = Date.now();
   const armId: ArmId = cfg.arm ?? "arm1_morphapi";
   const emit = (type: string, payload: Record<string, unknown> = {}) => cfg.onEvent?.({ type, ...payload });
-  const usage = { prompt: 0, completion: 0 };
+  const usage = { prompt: 0, completion: 0, cacheWrite: 0, cacheRead: 0 };
   const ask = async (messages: LlmMessage[]) => {
     if (cfg.propose) return cfg.propose(messages);
     const r = await generateCode({ messages, model: cfg.model });
     usage.prompt += r.usage.prompt;
     usage.completion += r.usage.completion;
+    usage.cacheWrite += r.usage.cacheWrite ?? 0;
+    usage.cacheRead += r.usage.cacheRead ?? 0;
     return r.code;
   };
 
@@ -377,6 +402,23 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       if (inst.length) successorApi.push({ symbol: `${owner} instance members (new ${owner}(…).x)`, signature: inst.join(", ") });
     } else successorApi.push({ symbol: `${owner} members`, signature: ms.join(", ") });
   }
+
+  // Static context, identical across calls so the provider can cache it.
+  const staticContext = cfg.cacheStaticContext
+    ? [
+        `## Successor API (${(cfg.successorModules ?? [cfg.successorModule]).join(", ")}, read from its declarations)\n` +
+          boundApi(successorApi, "", cfg.guide ?? "", 40000)
+            .map((a) => `- ${a.symbol}${a.signature ? `: ${a.signature}` : ""}`)
+            .join("\n"),
+        cfg.guide ? `## Migration guide (prose; the Successor API list wins on conflicts)\n${cfg.guide.slice(0, 60000)}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n")
+    : null;
+  /** Insert the cached static block after the system instructions. */
+  const withStatic = (msgs: LlmMessage[]): LlmMessage[] =>
+    staticContext ? [msgs[0], { role: "system", content: staticContext, cache: true }, ...msgs.slice(1)] : msgs;
+  const apiExcerpt = (mention: string) => boundApi(successorApi, mention, cfg.guide ?? "", staticContext ? 3000 : cfg.apiBudget);
 
   const spans: WorkSpan[] = cfg.spans ?? (cfg.deprecatedSpec ? findDeprecatedReferences(session, cfg.deprecatedSpec, { files }) : []);
   emit("start", {
@@ -514,11 +556,11 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           const msgs = buildSlicePrompt({
             slice,
             facts,
-            successorApi: boundApi(successorApi, `${slice.text}\n${spanRules.join("\n")}\n${feedback ?? ""}`, cfg.guide ?? "", cfg.apiBudget),
+            successorApi: apiExcerpt(`${slice.text}\n${spanRules.join("\n")}\n${feedback ?? ""}`),
             deprecatedSpec: label,
             successorModule: cfg.successorLabel ?? (cfg.successorModules ?? [cfg.successorModule]).join(", "),
             rules: spanRules,
-            guide: boundGuide(cfg.guide, `${slice.text}\n${spanRules.join("\n")}`, cfg.guideBudget),
+            guide: staticContext ? undefined : boundGuide(cfg.guide, `${slice.text}\n${spanRules.join("\n")}`, cfg.guideBudget),
             feedback,
           });
           if (arm.context === "file") {
@@ -527,9 +569,9 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               `## File ${path.basename(file)}\n\`\`\`ts\n${body}\n\`\`\``
             );
           }
-          return msgs;
+          return withStatic(msgs);
         };
-        const firstPrompt = promptFor()[1].content;
+        const firstPrompt = promptFor().slice(-1)[0].content;
         emit("span", { file: rel(cfg.repoRoot, file), line: span.startLine, slice: slice.text, kind, prompt: firstPrompt, facts });
 
         let accepted: string | null = null;
@@ -558,6 +600,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           session.update({ [file]: withImports.code });
           const range = { start: slice.start + shift + delta, end: slice.start + shift + delta + code.length };
           const gate = gateSpan(session, file, range, oracle, { ...gateOpts, original: slice.text, originalAny, keepCalls });
+          projectSyntaxCheck(cfg, gate, body, withImports.code, file);
           if (cfg.spans) {
             // A rewrite must not break bindings outside its slice (dropped assignment or declaration).
             const broken = session.diagnostics([file]).filter((d) => BINDING_ERRORS.has(d.code) && (d.start < range.start || d.start > range.end));
@@ -749,10 +792,10 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           maxAttempts: armCfg.oracle ? 2 : 1,
           propose: (feedback) =>
             ask(
-              buildSlicePrompt({
+              withStatic(buildSlicePrompt({
                 slice,
                 facts: repairFacts,
-                successorApi: boundApi(successorApi, `${slice.text}\n${f.detail}\n${feedback ?? ""}`, cfg.guide ?? "", cfg.apiBudget),
+                successorApi: apiExcerpt(`${slice.text}\n${f.detail}\n${feedback ?? ""}`),
                 deprecatedSpec: label,
                 successorModule: cfg.successorLabel ?? (cfg.successorModules ?? [cfg.successorModule]).join(", "),
                 rules: [
@@ -762,9 +805,9 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
                   "Fix it without changing behavior.",
                   ...(cfg.rules ?? []),
                 ],
-                guide: boundGuide(cfg.guide, `${slice.text}\n${f.detail}`, cfg.guideBudget),
+                guide: staticContext ? undefined : boundGuide(cfg.guide, `${slice.text}\n${f.detail}`, cfg.guideBudget),
                 feedback,
-              })
+              }))
             ),
           evaluate: (candidate) => {
             const code = reindent(cleanProposal(candidate, "statement", false, slice.text), text, slice.start);
@@ -779,6 +822,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               originalAny: repairAny,
               keepCalls,
             });
+            projectSyntaxCheck(cfg, gate, text, withImports.code, tFile);
             const after = session.diagnostics(checkFiles);
             if (gate.ok && moduleUse) {
               if (moduleUse.test(code)) {
@@ -932,6 +976,8 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       churnRatio: changedLines ? outside / changedLines : 0,
       promptTokens: usage.prompt,
       completionTokens: usage.completion,
+      cacheWriteTokens: usage.cacheWrite,
+      cacheReadTokens: usage.cacheRead,
     },
     patches,
     ms: Date.now() - t0,

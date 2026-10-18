@@ -25,6 +25,8 @@ import { diagnosticKey, discoverWorkItems, findHandoffs, orderByDataFlow, testFa
 import type { LlmMessage, ModelProfile } from "./llm";
 import { lineHunks, runMigration, type ArmId, type MigrationEvent, type MigrationRun } from "./pipeline";
 import { ProjectSession, type SessionDiagnostic } from "./program";
+import { ProjectCompiler } from "./projectCompiler";
+import { setInlineTypeModifiers } from "./importReconcile";
 
 export type RepoMigrationConfig = {
   repoRoot: string;
@@ -46,6 +48,8 @@ export type RepoMigrationConfig = {
   rounds?: number;
   /** Successor API budget per prompt, in characters (default 12000) */
   apiBudget?: number;
+  /** Prompt-cache the guide and API list (default true; Anthropic native API) */
+  cacheStaticContext?: boolean;
   /** Migration-guide budget per prompt, in characters (default 10000) */
   guideBudget?: number;
   /**
@@ -89,6 +93,8 @@ export type RepoMigrationRun = {
     changedLines: number;
     promptTokens: number;
     completionTokens: number;
+    cacheWriteTokens: number;
+    cacheReadTokens: number;
   };
   /** Repo-relative path → texts with the bridge reverted, ready to write to disk */
   patches: Record<string, { before: string; after: string }>;
@@ -156,7 +162,10 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
   }
   bridged.update(rewritten);
   const unalias = (m: string) => bridges.reduce((s, b) => s.split(aliasOf(b.module)).join(b.module), m);
-  const oldDiags = bridged.diagnostics(files);
+  // Verdicts come from the PROJECT's own TypeScript (its version may be older than ours).
+  const pc = ProjectCompiler.load(cfg.tsconfigPath, { extraRootFiles, aliases: bridgeAliases(bridges) });
+  setInlineTypeModifiers(pc.supportsInlineTypeModifiers);
+  const oldDiags = pc.diagnostics(Object.fromEntries(files.map((f) => [f, bridged.text(f)])), files);
   const baseline = new Map<string, number>();
   for (const d of oldDiags) {
     const k = diagnosticKey({ ...d, message: unalias(d.message) });
@@ -168,19 +177,17 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
     files: files.length,
     rewrittenFiles: Object.keys(rewritten).map((f) => rel(cfg.repoRoot, f)),
     oldWorldDiagnostics: oldDiags.length,
+    projectTypeScript: `${pc.version} (${pc.source})`,
   });
 
   const handoffs: Handoff[] = retired.length ? findHandoffs(bridged, files, retired.map((b) => b.previousDir)) : [];
   if (handoffs.length) emit("handoffs", { items: handoffs.map((h) => ({ file: rel(cfg.repoRoot, h.file), line: h.startLine, pkg: h.pkg })) });
 
   // New world: the project against the upgraded node_modules only.
-  const newWorld = ProjectSession.open(cfg.tsconfigPath, { requireDeps: true, extraRootFiles });
+
   const current = () => Object.fromEntries(files.map((f) => [f, revert(bridged.text(f), f, bridges)]));
-  const newWorldDiags = (texts: Record<string, string>): SessionDiagnostic[] => {
-    const changed = Object.fromEntries(Object.entries(texts).filter(([f, t]) => t !== newWorld.text(f)));
-    if (Object.keys(changed).length) newWorld.update(changed);
-    return newWorld.diagnostics(files).map((d) => ({ ...d, message: unalias(d.message) }));
-  };
+  const newWorldDiags = (texts: Record<string, string>): SessionDiagnostic[] =>
+    pc.diagnostics(texts, files).map((d) => ({ ...d, message: unalias(d.message) }));
   const triedProducers = new Set<string>();
   const accepted = () =>
     rounds.flatMap((r) => [
@@ -194,7 +201,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       bridged,
       newWorld: newWorldDiags(texts),
       baseline,
-      newWorldText: (f) => texts[path.resolve(f)] ?? newWorld.text(f),
+      newWorldText: (f) => texts[path.resolve(f)] ?? revert(bridged.text(f), f, bridges),
       bridges,
       retired,
       files,
@@ -267,6 +274,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       migrationLabel: bridges.map((b) => `${b.module} (previous version)`).join(", "),
       successorLabel: `${cfg.successorModules.join(", ")} (new version)`,
       apiBudget: cfg.apiBudget ?? 12000,
+      cacheStaticContext: cfg.cacheStaticContext ?? true,
       guideBudget: cfg.guideBudget ?? 10000,
       impactAllFiles: true,
       impactRounds: 2,
@@ -279,6 +287,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       propose: cfg.propose,
       onEvent: (e) => cfg.onEvent?.({ ...e, round }),
       noAttribution: cfg.noDefUse,
+      projectParse: (text, file) => pc.parseErrors(text, file),
       priorAccepted: rounds.flatMap((r) => [
         ...r.run.steps.map((s) => ({ file: s.file, accepted: s.accepted })),
         ...r.run.impactFixes.map((x) => ({ file: x.file, accepted: x.after })),
@@ -348,6 +357,8 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       impactFixes: runs.reduce((n, r) => n + r.impactFixes.filter((x) => x.after != null).length, 0),
       changedLines,
       promptTokens: runs.reduce((n, r) => n + r.metrics.promptTokens, 0),
+      cacheWriteTokens: runs.reduce((n, r) => n + (r.metrics.cacheWriteTokens ?? 0), 0),
+      cacheReadTokens: runs.reduce((n, r) => n + (r.metrics.cacheReadTokens ?? 0), 0),
       completionTokens: runs.reduce((n, r) => n + r.metrics.completionTokens, 0),
     },
     patches,

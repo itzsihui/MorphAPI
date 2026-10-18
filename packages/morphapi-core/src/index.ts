@@ -181,3 +181,5 @@ export { chooseSlice, discoverWorkItems, findHandoffs, orderByDataFlow, producer
 export type { DiscoverInput, Handoff, WorkItem } from "./discover";
 export { runRepoMigration } from "./repoMigration";
 export type { RepoMigrationConfig, RepoMigrationRun } from "./repoMigration";
+export { ProjectCompiler } from "./projectCompiler";
+export { setInlineTypeModifiers } from "./importReconcile";
