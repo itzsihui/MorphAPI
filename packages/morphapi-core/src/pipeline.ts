@@ -362,7 +362,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       .filter((o): o is ExtractedOracle => o != null)
   );
   const candidates: ImportCandidate[] = oracle ? importCandidates(oracle) : [];
-  const gateOpts = { deprecatedNames: cfg.deprecatedSymbols, deprecatedSpec: cfg.deprecatedSpec, deprecatedDirs: cfg.deprecatedDirs };
+  const gateOpts = { deprecatedNames: cfg.deprecatedSymbols, deprecatedSpec: cfg.deprecatedSpec, deprecatedDirs: cfg.deprecatedDirs, keepReceivers: Boolean(cfg.spans) };
   const successorApi: Array<{ symbol: string; signature: string | null }> = oracle
     ? oracle.exports.map((e) => ({ symbol: e.name, signature: e.signature }))
     : cfg.successorSymbols.map((s) => ({ symbol: s, signature: null }));

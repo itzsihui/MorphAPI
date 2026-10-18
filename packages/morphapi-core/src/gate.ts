@@ -77,6 +77,8 @@ export function gateSpan(
     originalAny?: AnyProfile;
     /** The project's own functions the original slice calls; the replacement must still call them. */
     keepCalls?: string[];
+    /** Discover mode: never advise constructing a new client in place of an existing receiver. */
+    keepReceivers?: boolean;
   } = {}
 ): GateResult {
   const sf = session.sourceFile(file);
@@ -91,6 +93,15 @@ export function gateSpan(
   for (const ev of detectEvasionTactics(replaced)) {
     if (preexisting.has(ev.symbol)) continue;
     findings.push({ kind: "evasion", symbol: ev.symbol, message: ev.reason, line: lineOf(range.start) });
+  }
+
+  // A type slice that turns an instance type into `typeof X` now denotes the class, not its instances.
+  if (opts.original != null && /^\s*typeof\s/.test(replaced) && !/^\s*typeof\s/.test(opts.original) && ts.isTypeNode(nodeAtRange(sf, range) ?? sf)) {
+    findings.push({
+      kind: "type_error",
+      line: lineOf(range.start),
+      message: `\`${replaced.trim()}\` is the type of the class itself, but the original \`${opts.original.trim()}\` is the type of its instances. Use the instance type (the class name without typeof).`,
+    });
   }
 
   // An `any` the original did not have silences every error downstream of it
@@ -134,7 +145,10 @@ export function gateSpan(
         symbol: `${recvLabel}.${ident.text}`,
         line: d.line,
         code: d.code,
-        message: owners.length
+        message: owners.length && opts.keepReceivers
+          ? `${ident.text} exists on ${owners.join(", ")} from ${oracle!.module}, but \`${ident.parent.expression.getText(sf)}\` still has the previous version's type (${recvLabel}). ` +
+            `Keep using \`${ident.parent.expression.getText(sf)}\` (do not create a new ${owners[0]}: that would drop its configuration); its declaration is migrated separately.`
+          : owners.length
           ? `${ident.text} exists on ${owners.join(", ")} from ${oracle!.module}, but \`${ident.parent.expression.getText(sf)}\` is a deprecated value (type ${recvLabel}), not a ${owners[0]}. ` +
             `Do not use \`${ident.parent.expression.getText(sf)}\` as the receiver. Create a ${owners[0]} in your output${
               oracle!.obtain[owners[0]] ? ` with ${oracle!.obtain[owners[0]].replace(/\):.*$/, ")")}` : ""
@@ -228,7 +242,9 @@ export function gateSpan(
           message: `Dynamic access ["${n.argumentExpression.text}"] is not checked against the oracle.`,
         });
       }
-      if (ts.isIdentifier(n) && dirs.length && !isDeprecated(n) && fromOldVersion(n)) {
+      // Any direct reference into the previous version is a leftover, including type references
+      // and names on the deprecated list (that branch below only covers calls).
+      if (ts.isIdentifier(n) && dirs.length && fromOldVersion(n)) {
         findings.push({
           kind: "leftover",
           symbol: n.text,
@@ -254,6 +270,18 @@ export function gateSpan(
   visit(sf);
 
   return { ok: findings.length === 0, findings, warnings };
+}
+
+function nodeAtRange(sf: ts.SourceFile, range: { start: number; end: number }): ts.Node | undefined {
+  let found: ts.Node | undefined;
+  const visit = (n: ts.Node) => {
+    if (n.getStart(sf) <= range.start && n.getEnd() >= range.end) {
+      if (n.getStart(sf) === range.start && n.getEnd() === range.end) found ??= n;
+      ts.forEachChild(n, visit);
+    }
+  };
+  visit(sf);
+  return found;
 }
 
 export type AnyProfile = { value: boolean; vars: string[] };

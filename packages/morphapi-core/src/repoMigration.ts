@@ -15,13 +15,13 @@ import * as ts from "typescript";
 import {
   aliasOf,
   aliasSpecifiersIn,
-  bridgePaths,
+  bridgeAliases,
   fromAliasMap,
   rewriteSpecifiers,
   toAliasMap,
   type Bridge,
 } from "./bridge";
-import { diagnosticKey, discoverWorkItems, orderByDataFlow, testFailureItems, type WorkItem } from "./discover";
+import { diagnosticKey, discoverWorkItems, findHandoffs, orderByDataFlow, testFailureItems, type Handoff, type WorkItem } from "./discover";
 import type { LlmMessage, ModelProfile } from "./llm";
 import { lineHunks, runMigration, type ArmId, type MigrationEvent, type MigrationRun } from "./pipeline";
 import { ProjectSession, type SessionDiagnostic } from "./program";
@@ -42,7 +42,7 @@ export type RepoMigrationConfig = {
   model?: ModelProfile;
   propose?: (messages: LlmMessage[]) => Promise<string>;
   onEvent?: (evt: MigrationEvent) => void;
-  /** Discover → migrate rounds (default 4) */
+  /** Discover → migrate rounds (default 6) */
   rounds?: number;
   /** Successor API budget per prompt, in characters (default 12000) */
   apiBudget?: number;
@@ -70,6 +70,8 @@ export type RepoMigrationRun = {
     aliasSpecifiersLeft: number;
     retiredImportsLeft: number;
     remainingItems: number;
+    /** Untyped hand-offs to packages built for the retired SDK that are still in use */
+    handoffsLeft: Array<{ file: string; line: number; pkg: string }>;
   };
   metrics: {
     itemsFound: number;
@@ -138,7 +140,7 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
 
   // Old world: the project as it was, with the previous version under its alias.
   const extraRootFiles = (cfg.extraFiles ?? []).map((f) => path.resolve(f));
-  const bridged = ProjectSession.open(cfg.tsconfigPath, { requireDeps: true, paths: bridgePaths(bridges), extraRootFiles });
+  const bridged = ProjectSession.open(cfg.tsconfigPath, { requireDeps: true, aliases: bridgeAliases(bridges), extraRootFiles });
   const files = [...new Set([...(cfg.files ?? bridged.projectFiles), ...extraRootFiles].map((f) => path.resolve(f)))];
   const originals = Object.fromEntries(files.map((f) => [f, bridged.text(f)]));
   const toAlias = toAliasMap(bridges);
@@ -162,6 +164,9 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
     rewrittenFiles: Object.keys(rewritten).map((f) => rel(cfg.repoRoot, f)),
     oldWorldDiagnostics: oldDiags.length,
   });
+
+  const handoffs: Handoff[] = retired.length ? findHandoffs(bridged, files, retired.map((b) => b.previousDir)) : [];
+  if (handoffs.length) emit("handoffs", { items: handoffs.map((h) => ({ file: rel(cfg.repoRoot, h.file), line: h.startLine, pkg: h.pkg })) });
 
   // New world: the project against the upgraded node_modules only.
   const newWorld = ProjectSession.open(cfg.tsconfigPath, { requireDeps: true, extraRootFiles });
@@ -192,11 +197,19 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
 
   const rounds: RepoMigrationRun["rounds"] = [];
   const tests: RepoMigrationRun["tests"] = [];
-  const maxRounds = cfg.rounds ?? 4;
+  const maxRounds = cfg.rounds ?? 6;
+  const deferredOnce = new Set<string>();
+  /** file|slice text → rejected attempts there in earlier rounds */
+  const rejected = new Map<string, string[]>();
+  const siteKey = (file: string, text: string) => `${path.resolve(file)}|${text.trim()}`;
   let testBudget = cfg.verify ? cfg.testRounds ?? 2 : 0;
   const totalRounds = maxRounds + testBudget;
   for (let round = 1; round <= totalRounds; round++) {
     let found = discover(current());
+    if (round === 1 && handoffs.length) {
+      const taken = new Set(found.map((i) => `${i.file}:${i.start}`));
+      found = [...found, ...handoffs.filter((h) => !taken.has(`${h.file}:${h.start}`))];
+    }
     if (!found.length && testBudget > 0 && cfg.verify) {
       // Type checker satisfied: ask the tests.
       const res = await cfg.verify(current());
@@ -216,7 +229,15 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       emit("discover", { round, items: [], deferred: [] });
       break;
     }
-    const { ready: items, deferred } = orderByDataFlow(bridged, found);
+    const ordered = orderByDataFlow(bridged, found);
+    // Defer an item at most once: a producer that keeps failing must not starve its consumers.
+    const items = [...ordered.ready, ...ordered.deferred.filter((i) => deferredOnce.has(siteKey(i.file, i.text)))];
+    const deferred = ordered.deferred.filter((i) => !deferredOnce.has(siteKey(i.file, i.text)));
+    for (const i of deferred) deferredOnce.add(siteKey(i.file, i.text));
+    for (const i of items) {
+      const prev = rejected.get(siteKey(i.file, i.text));
+      if (prev?.length) i.notes.push(`Earlier attempts here were rejected (do not repeat them): ${prev.slice(-3).join(" || ")}`);
+    }
     emit("discover", {
       round,
       items: items.map((i) => ({ file: rel(cfg.repoRoot, i.file), line: i.startLine, kind: i.sliceKind, source: i.source, notes: i.notes })),
@@ -258,6 +279,12 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
       ]),
     });
     rounds.push({ round, items, run });
+    for (const s of run.steps) {
+      if (s.accepted) continue;
+      const last = s.attempts.slice(-2).map((a) => `${a.candidate.trim().slice(0, 300)} → ${a.findings[0]?.message.slice(0, 160) ?? "rejected"}`);
+      const k = siteKey(path.resolve(cfg.repoRoot, s.file), s.text);
+      rejected.set(k, [...(rejected.get(k) ?? []), ...last]);
+    }
     const progress = run.steps.some((s) => s.accepted != null) || run.impactFixes.some((x) => x.after != null);
     if (!progress && !deferred.length) break;
   }
@@ -276,6 +303,13 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
   const aliasLeft = files.reduce((n, f) => n + aliasSpecifiersIn(finalTexts[f], f, bridges).length, 0);
   const retiredLeft = files.reduce((n, f) => n + retiredImportsIn(finalTexts[f], f, retiredNames), 0);
   const remainingItems = discover(finalTexts, false).length;
+  const importsPkg = (text: string, file: string, pkg: string) =>
+    ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true).statements.some(
+      (st) => ts.isImportDeclaration(st) && ts.isStringLiteral(st.moduleSpecifier) && st.moduleSpecifier.text === pkg
+    );
+  const handoffsLeft = handoffs
+    .filter((h) => importsPkg(finalTexts[h.file] ?? "", h.file, h.pkg))
+    .map((h) => ({ file: rel(cfg.repoRoot, h.file), line: h.startLine, pkg: h.pkg }));
 
   const patches: RepoMigrationRun["patches"] = {};
   let changedLines = 0;
@@ -291,11 +325,12 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
     rounds,
     tests,
     final: {
-      complete: newDiagnostics.length === 0 && aliasLeft === 0 && retiredLeft === 0 && remainingItems === 0,
+      complete: newDiagnostics.length === 0 && aliasLeft === 0 && retiredLeft === 0 && remainingItems === 0 && handoffsLeft.length === 0,
       newDiagnostics,
       aliasSpecifiersLeft: aliasLeft,
       retiredImportsLeft: retiredLeft,
       remainingItems,
+      handoffsLeft,
     },
     metrics: {
       itemsFound: rounds.reduce((n, r) => n + r.items.length, 0),

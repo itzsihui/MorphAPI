@@ -105,9 +105,19 @@ export function producerOf(
   pos: number,
   steps: Array<{ abs: string; accepted: string | null }>
 ): { file: string; start: number; end: number } | null {
+  return producersOf(session, sf, pos, steps)[0] ?? null;
+}
+
+/** Every candidate producer (see producerOf), nearest first, without duplicates. */
+export function producersOf(
+  session: ProjectSession,
+  sf: ts.SourceFile,
+  pos: number,
+  steps: Array<{ abs: string; accepted: string | null }>
+): Array<{ file: string; start: number; end: number }> {
   const checker = session.checker;
   const acceptedIn = (file: string) => steps.filter((s) => s.accepted && s.abs === path.resolve(file)).map((s) => s.accepted!.trim()).filter((a) => a.length >= 3);
-  if (!steps.some((s) => s.accepted)) return null;
+  if (!steps.some((s) => s.accepted)) return [];
   let stmt: ts.Node | undefined;
   const find = (n: ts.Node) => {
     if (n.getStart(sf) <= pos && pos < n.getEnd()) {
@@ -116,7 +126,7 @@ export function producerOf(
     }
   };
   find(sf);
-  if (!stmt) return null;
+  if (!stmt) return [];
   const holds = (n: ts.Node) => {
     const t = n.getText(n.getSourceFile());
     return acceptedIn(n.getSourceFile().fileName).some((a) => t.includes(a));
@@ -145,14 +155,13 @@ export function producerOf(
     add(t, 0);
     return out;
   };
-  let out: ts.Node | null = null;
+  const found: ts.Node[] = [];
   const visit = (n: ts.Node) => {
-    if (out) return;
     if (ts.isIdentifier(n)) {
       const decl = checker.getSymbolAtLocation(n)?.valueDeclaration;
       if (decl && decl.getSourceFile() === sf && ts.isVariableDeclaration(decl) && decl.initializer && !(decl.getStart(sf) <= pos && pos < decl.getEnd())) {
         const init = decl.initializer;
-        if (holds(init)) out = innermostHolding(decl.parent.parent) ?? decl.parent.parent;
+        if (holds(init)) found.push(innermostHolding(decl.parent.parent) ?? decl.parent.parent);
         else if (ts.isCallExpression(init) && ts.isIdentifier(init.expression)) {
           const fn = checker.getSymbolAtLocation(init.expression)?.valueDeclaration;
           const body =
@@ -161,26 +170,23 @@ export function producerOf(
               : fn && ts.isFunctionDeclaration(fn)
                 ? fn.body
                 : undefined;
-          if (body && body.getSourceFile() === sf && holds(body)) out = innermostHolding(body);
+          const inner = body && body.getSourceFile() === sf && holds(body) ? innermostHolding(body) : null;
+          if (inner) found.push(inner);
         }
       }
-      if (!out) {
-        // Type-level hop: the value's type is a project type that was rewritten.
-        for (const d of typeDecls(checker.getTypeAtLocation(n))) {
-          if (holds(d)) {
-            out = d;
-            break;
-          }
-        }
-      }
+      // Type-level hop: the value's type is a project type that was rewritten.
+      for (const d of typeDecls(checker.getTypeAtLocation(n))) if (holds(d)) found.push(d);
     }
     ts.forEachChild(n, visit);
   };
   visit(stmt);
-  if (!out) return null;
-  const o = out as ts.Node;
-  const osf = o.getSourceFile();
-  return { file: osf.fileName, start: o.getStart(osf), end: o.getEnd() };
+  const seen = new Set<string>();
+  return found
+    .map((o) => {
+      const osf = o.getSourceFile();
+      return { file: osf.fileName, start: o.getStart(osf), end: o.getEnd() };
+    })
+    .filter((p) => !seen.has(`${p.file}:${p.start}`) && Boolean(seen.add(`${p.file}:${p.start}`)));
 }
 
 /** The smallest sensible slice around `node`. */
@@ -267,13 +273,16 @@ export function orderByDataFlow(session: ProjectSession, items: WorkItem[]): { r
     const visit = (n: ts.Node) => {
       if (dependsOn || n.getEnd() < it.start || n.getStart(sf) > it.end) return;
       if (ts.isIdentifier(n) && n.getStart(sf) >= it.start && n.getEnd() <= it.end) {
+        // Any declaration the item reads — variable (initializer or annotation), class field,
+        // parameter — that contains another pending item makes this item wait for that one.
         const decl = checker.getSymbolAtLocation(n)?.valueDeclaration;
-        const init = decl && ts.isVariableDeclaration(decl) ? decl.initializer : undefined;
-        if (init) {
-          const f = path.resolve(decl!.getSourceFile().fileName);
-          dependsOn = items.find(
-            (o) => o !== it && path.resolve(o.file) === f && o.start >= init.getStart(decl!.getSourceFile()) && o.end <= init.getEnd()
-          );
+        if (decl && (ts.isVariableDeclaration(decl) || ts.isPropertyDeclaration(decl) || ts.isParameter(decl))) {
+          const dsf = decl.getSourceFile();
+          const f = path.resolve(dsf.fileName);
+          const ds = decl.getStart(dsf);
+          const de = decl.getEnd();
+          const insideSelf = f === path.resolve(it.file) && ds >= it.start && de <= it.end;
+          if (!insideSelf) dependsOn = items.find((o) => o !== it && path.resolve(o.file) === f && o.start >= ds && o.end <= de);
         }
       }
       ts.forEachChild(n, visit);
@@ -334,6 +343,92 @@ export function testFailureItems(session: ProjectSession, output: string, files:
   return items;
 }
 
+export type Handoff = WorkItem & { pkg: string };
+
+/**
+ * Untyped hand-offs: a value typed by a RETIRED SDK is passed (directly or as an
+ * object-literal property) into a third-party package whose parameter is untyped.
+ * Such a package was written for the old SDK; after the switch nothing errors at
+ * compile time, it just fails at runtime. Found in the bridged (old) world, before
+ * any rewrite, and they block "complete" while the package is still imported.
+ */
+export function findHandoffs(session: ProjectSession, files: string[], retiredDirs: string[]): Handoff[] {
+  const checker = session.checker;
+  const dirs = retiredDirs.map((d) => path.resolve(d) + path.sep);
+  const fromRetired = (t: ts.Type) => {
+    const d = (t.aliasSymbol ?? t.getSymbol())?.declarations?.[0];
+    return Boolean(d && dirs.some((x) => d.getSourceFile().fileName.startsWith(x)));
+  };
+  const out: Handoff[] = [];
+  for (const file of files) {
+    const sf = session.sourceFile(file);
+    if (!sf) continue;
+    const importOf = new Map<string, string>();
+    for (const st of sf.statements) {
+      if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier)) continue;
+      const spec = st.moduleSpecifier.text;
+      if (spec.startsWith(".") || spec.includes("__previous")) continue;
+      for (const b of bindingsOf(st)) importOf.set(b.text, spec);
+    }
+    const visit = (n: ts.Node) => {
+      if ((ts.isCallExpression(n) || ts.isNewExpression(n)) && n.arguments?.length) {
+        const root = (() => {
+          let e: ts.Expression = n.expression;
+          while (ts.isPropertyAccessExpression(e)) e = e.expression;
+          return ts.isIdentifier(e) ? e.text : null;
+        })();
+        const pkg = root ? importOf.get(root) : undefined;
+        if (pkg) {
+          const sig = checker.getResolvedSignature(n as ts.CallLikeExpression);
+          const values: Array<{ v: ts.Expression; i: number }> = [];
+          n.arguments.forEach((a, i) => {
+            if (ts.isObjectLiteralExpression(a)) {
+              for (const p of a.properties) {
+                if (ts.isShorthandPropertyAssignment(p)) values.push({ v: p.name, i });
+                else if (ts.isPropertyAssignment(p)) values.push({ v: p.initializer, i });
+              }
+            } else values.push({ v: a, i });
+          });
+          const untypedParam = (i: number) => {
+            const p = sig?.parameters[i];
+            if (!p) return true;
+            const pt = checker.getTypeOfSymbolAtLocation(p, n);
+            return Boolean(pt.flags & ts.TypeFlags.Any);
+          };
+          const hit = values.find(({ v, i }) => untypedParam(i) && fromRetired(checker.getTypeAtLocation(v)));
+          if (hit) {
+            const s = sliceFor(sf, { start: n.getStart(sf), end: n.getEnd() }, "statement");
+            const a = sf.getLineAndCharacterOfPosition(s.start);
+            const b = sf.getLineAndCharacterOfPosition(s.end);
+            out.push({
+              fileName: path.basename(file),
+              file: path.resolve(file),
+              start: s.start,
+              end: s.end,
+              startLine: a.line + 1,
+              startChar: a.character,
+              endLine: b.line + 1,
+              endChar: b.character,
+              text: s.text,
+              kind: "retired_module:statement",
+              sliceKind: "statement",
+              notes: [
+                `\`${hit.v.getText(sf)}\` (a previous-SDK object) is handed to the untyped package "${pkg}", which was written for the previous SDK. ` +
+                  `After the upgrade nothing errors at compile time but it breaks at runtime. Replace this use of "${pkg}" with the new SDK's own API (see the migration guide).`,
+              ],
+              source: "retired_module",
+              pkg,
+            });
+          }
+        }
+      }
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+  }
+  return out;
+}
+
 export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
   const { bridged } = input;
   const checker = bridged.checker;
@@ -376,10 +471,17 @@ export function discoverWorkItems(input: DiscoverInput): WorkItem[] {
       continue;
     }
     // Def-use attribution: a rewrite made earlier may be the cause (e.g. a hand-written type alias).
-    const prod = input.accepted?.length ? producerOf(bridged, sf, nodeAt(sf, unmapPosition(editsFor(file), d.start)).getStart(sf), input.accepted) : null;
+    // First producer not re-opened yet.
+    const keyOf = (p: { file: string; start: number; end: number }) => {
+      const psf = bridged.sourceFile(p.file);
+      return psf ? `${path.resolve(p.file)}:${sliceFor(psf, p, "statement").start}` : "";
+    };
+    const prod = input.accepted?.length
+      ? producersOf(bridged, sf, nodeAt(sf, unmapPosition(editsFor(file), d.start)).getStart(sf), input.accepted).find((p) => keyOf(p) && !input.triedProducers?.has(keyOf(p))) ?? null
+      : null;
     const prodSf = prod ? bridged.sourceFile(prod.file) : undefined;
-    const key = prod && prodSf ? `${path.resolve(prod.file)}:${sliceFor(prodSf, prod, "statement").start}` : "";
-    if (prod && prodSf && !input.triedProducers?.has(key)) {
+    const key = prod ? keyOf(prod) : "";
+    if (prod && prodSf && key) {
       input.triedProducers?.add(key);
       const relLine = sf.getLineAndCharacterOfPosition(d.start).line + 1;
       raw.push({

@@ -27,6 +27,17 @@ export function aliasOf(moduleName: string): string {
   return `${moduleName}${ALIAS_SUFFIX}`;
 }
 
+/** Alias records for ProjectSession (resolve `alias` as `module` from the previous version's install folder). */
+export function bridgeAliases(bridges: Bridge[]): Array<{ alias: string; module: string; fromFile: string }> {
+  return bridges.map((b) => {
+    const dir = path.resolve(b.previousDir);
+    const segs = dir.split(path.sep);
+    const nm = segs.lastIndexOf("node_modules");
+    const slot = nm > 0 ? segs.slice(0, nm).join(path.sep) : path.dirname(dir);
+    return { alias: aliasOf(b.module), module: b.module, fromFile: path.join(slot, "__morphapi_bridge__.ts") };
+  });
+}
+
 /** compilerOptions.paths entries mapping each alias to the previous version. */
 export function bridgePaths(bridges: Bridge[]): Record<string, string[]> {
   const out: Record<string, string[]> = {};

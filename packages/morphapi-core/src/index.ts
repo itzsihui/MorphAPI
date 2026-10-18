@@ -170,13 +170,14 @@ export {
   ALIAS_SUFFIX,
   aliasOf,
   aliasSpecifiersIn,
+  bridgeAliases,
   bridgePaths,
   installPreviousVersion,
   mapPosition,
   rewriteSpecifiers,
 } from "./bridge";
 export type { Bridge, SpecifierEdit } from "./bridge";
-export { chooseSlice, discoverWorkItems } from "./discover";
-export type { DiscoverInput, WorkItem } from "./discover";
+export { chooseSlice, discoverWorkItems, findHandoffs, orderByDataFlow, producerOf, testFailureItems } from "./discover";
+export type { DiscoverInput, Handoff, WorkItem } from "./discover";
 export { runRepoMigration } from "./repoMigration";
 export type { RepoMigrationConfig, RepoMigrationRun } from "./repoMigration";
