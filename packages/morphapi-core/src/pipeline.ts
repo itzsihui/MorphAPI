@@ -19,7 +19,7 @@ import { generateCode, type LlmMessage, type ModelProfile } from "./llm";
 import { extractOracle, importCandidates, mergeOracles, type ExtractedOracle } from "./oracleExtract";
 import { ProjectSession, findDeprecatedReferences, resolveAlias, type DeprecatedCallSpan } from "./program";
 import { producerOf } from "./discover";
-import type { RuleBook } from "./ruleBook";
+import { bindingsIn, type RuleBook } from "./ruleBook";
 import {
   buildSlicePrompt,
   needsStatementSlice,
@@ -587,6 +587,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         let acceptedImports: string[] = [];
         let acceptedRange: { start: number; end: number } | null = null;
         let acceptedAsync: TextEdit[] = [];
+        let acceptedBindings = "";
         let originalAny = cfg.spans ? anyProfile(session.sourceFile(file)!, session.checker, slice) : undefined;
         const bindingBefore = cfg.spans ? session.diagnostics([file]).filter((d) => BINDING_ERRORS.has(d.code)) : [];
         let keepCalls = cfg.spans ? projectCallees(session, session.sourceFile(file)!, slice, cfg.deprecatedDirs ?? []) : undefined;
@@ -623,6 +624,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             acceptedImports = withImports.added;
             acceptedRange = range;
             acceptedAsync = asyncEdits;
+            acceptedBindings = cfg.ruleBook ? bindingsIn(session.sourceFile(file)!, session.checker, range.start, range.end) : "";
           } else {
             session.update({ [file]: addMissingImports(body, file, []).code });
           }
@@ -630,12 +632,22 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         };
 
         let attempts: AttemptRecord[] = [];
-        // Learned rule first: no LLM call if the gate accepts it.
+        // Learned rule first: no LLM call if the gate accepts it and its names resolve as where it was learned.
         const ruleAttempts: AttemptRecord[] = [];
         let viaRule = false;
         const suggestion = cfg.ruleBook?.suggest(preSf, preChecker, slice) ?? null;
         if (suggestion) {
           const r = evaluate(suggestion.text);
+          if (r.ok && suggestion.rule.newBindings != null && acceptedBindings !== suggestion.rule.newBindings) {
+            // Same text, different meaning here (e.g. a local class shadowing the SDK type): undo.
+            r.ok = false;
+            r.findings.push({ kind: "type_error", message: `Learned rule resolves differently here (${acceptedBindings} vs ${suggestion.rule.newBindings}).` });
+            accepted = null;
+            acceptedRange = null;
+            acceptedImports = [];
+            acceptedAsync = [];
+            session.update({ [file]: addMissingImports(body, file, []).code });
+          }
           ruleAttempts.push({ attempt: 0, candidate: suggestion.text, ok: r.ok, findings: r.findings, warnings: r.warnings, sliceKind: slice.kind });
           if (r.ok) suggestion.rule.uses++;
           else suggestion.rule.fails++;
@@ -712,7 +724,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             emit("asyncified", { file: rel(cfg.repoRoot, file), line: bodySf.getLineAndCharacterOfPosition(acceptedAsync[0].pos).line + 1 });
           }
           consumedFrom = Math.min(consumedFrom, slice.start);
-          if (cfg.ruleBook && !viaRule) cfg.ruleBook.learn(preSf, preChecker, slice, acceptedCode);
+          if (cfg.ruleBook && !viaRule) cfg.ruleBook.learn(preSf, preChecker, slice, acceptedCode, acceptedBindings);
           emit("accepted", { file: rel(cfg.repoRoot, file), line: span.startLine, code: acceptedCode, imports: acceptedImports });
         } else {
           session.update({ [file]: addMissingImports(body, file, []).code });

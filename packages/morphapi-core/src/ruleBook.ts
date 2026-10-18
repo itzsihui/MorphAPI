@@ -31,12 +31,39 @@ export type LearnedRule = {
   kind: "exact" | "shape";
   key: string;
   template: string;
+  /** What the replacement's names resolved to where the rule was learned; must match at every use. */
+  newBindings?: string;
   from: { file: string; line: number };
   uses: number;
   fails: number;
 };
 
 const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+
+/**
+ * What each name in [start, end) resolves to: `name@package-file` for declarations in packages,
+ * `name@project` for the project's own declarations. Equal text with different bindings (a local class
+ * shadowing an SDK type of the same name) must not share a rule.
+ */
+export function bindingsIn(sf: ts.SourceFile, checker: ts.TypeChecker, start: number, end: number): string {
+  const out = new Set<string>();
+  const visit = (n: ts.Node) => {
+    if (n.getEnd() < start || n.getStart(sf) > end) return;
+    if (ts.isIdentifier(n) && n.getStart(sf) >= start && n.getEnd() <= end) {
+      const p = n.parent;
+      const isMemberName = (ts.isPropertyAccessExpression(p) && p.name === n) || (ts.isQualifiedName(p) && p.right === n) || (ts.isPropertyAssignment(p) && p.name === n);
+      if (!isMemberName) {
+        const decl = resolveAlias(checker, checker.getSymbolAtLocation(n))?.declarations?.[0];
+        const f = decl?.getSourceFile().fileName ?? "?";
+        const nm = f.lastIndexOf("node_modules");
+        out.add(`${n.text}@${nm >= 0 ? f.slice(nm) : "project"}`);
+      }
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return [...out].sort().join(",");
+}
 
 function nodeExactly(sf: ts.SourceFile, start: number, end: number): ts.Node | undefined {
   let found: ts.Node | undefined;
@@ -102,26 +129,32 @@ export class RuleBook {
   }
 
   /** Learn from a gate-accepted replacement of the slice [start, end) in `sf` (the pre-edit text). */
-  learn(sf: ts.SourceFile, checker: ts.TypeChecker, slice: { start: number; end: number; kind: SliceKind }, replacement: string): void {
+  learn(
+    sf: ts.SourceFile,
+    checker: ts.TypeChecker,
+    slice: { start: number; end: number; kind: SliceKind },
+    replacement: string,
+    newBindings?: string
+  ): void {
     const old = sf.text.slice(slice.start, slice.end);
     if (norm(old) === norm(replacement)) return;
     const line = sf.getLineAndCharacterOfPosition(slice.start).line + 1;
     const from = { file: sf.fileName, line };
-    const ek = `${slice.kind}|${norm(old)}`;
-    if (!this.exact.has(ek)) this.exact.set(ek, { kind: "exact", key: ek, template: replacement, from, uses: 0, fails: 0 });
+    const ek = `${slice.kind}|${norm(old)}|${bindingsIn(sf, checker, slice.start, slice.end)}`;
+    if (!this.exact.has(ek)) this.exact.set(ek, { kind: "exact", key: ek, template: replacement, newBindings, from, uses: 0, fails: 0 });
     if (slice.kind !== "expression") return;
     const shape = callShape(sf, checker, slice.start, slice.end);
     if (!shape || this.shape.has(shape.key)) return;
     const holes = [shape.receiver ?? "", ...shape.args];
     const template = abstractHoles(replacement, holes);
     if (template == null) return;
-    this.shape.set(shape.key, { kind: "shape", key: shape.key, template, from, uses: 0, fails: 0 });
+    this.shape.set(shape.key, { kind: "shape", key: shape.key, template, newBindings: undefined, from, uses: 0, fails: 0 });
   }
 
   /** A proposal for the slice from a learned rule, or null. */
   suggest(sf: ts.SourceFile, checker: ts.TypeChecker, slice: { start: number; end: number; kind: SliceKind }): { text: string; rule: LearnedRule } | null {
     const old = sf.text.slice(slice.start, slice.end);
-    const ex = this.exact.get(`${slice.kind}|${norm(old)}`);
+    const ex = this.exact.get(`${slice.kind}|${norm(old)}|${bindingsIn(sf, checker, slice.start, slice.end)}`);
     if (ex && ex.fails < 3) return { text: ex.template, rule: ex };
     if (slice.kind !== "expression") return null;
     const shape = callShape(sf, checker, slice.start, slice.end);
