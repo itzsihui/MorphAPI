@@ -212,7 +212,10 @@ function cleanToken(t: string): string | null {
 
 /** Guide sentences that retire an API, with the old names they mention. */
 export function guideItems(guide: string): GuideItem[] {
-  const noCode = guide.replace(/```[\s\S]*?```/g, " ");
+  const noCode = guide
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\]\([^)\s]*\)/g, "]") // markdown link targets (`#strictquery-is-removed-...` anchors are not prose)
+    .replace(/\{#[^}]*\}/g, " "); // heading ids
   const blocks = noCode.split(/\n\s*\n|\n(?=\s*(?:[-*+]|\d+\.)\s)|\n(?=#+\s)/);
   const items: GuideItem[] = [];
   for (const block of blocks) {

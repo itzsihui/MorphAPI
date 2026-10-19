@@ -63,7 +63,13 @@ const startAll = allTexts(sd);
 const upgraded = [...new Set([...successors, ...bridges.map((b) => b.module)])];
 const guideText = (() => { try { return fs.readFileSync(path.join(sd, "MIGRATION_GUIDE.md"), "utf8"); } catch { return ""; } })();
 const guide = core.guideItems(guideText);
-const pc = core.ProjectCompiler.load(tsconfig, { extraRootFiles: extra, aliases: core.bridgeAliases(bridges) });
+let pc = core.ProjectCompiler.load(tsconfig, { extraRootFiles: extra, aliases: core.bridgeAliases(bridges) });
+// The edits may change tsconfig (e.g. skipLibCheck): reload the project's compiler options when it changes.
+let tsconfigText = (() => { try { return fs.readFileSync(tsconfig, "utf8"); } catch { return ""; } })();
+const freshCompiler = () => {
+  let t = ""; try { t = fs.readFileSync(tsconfig, "utf8"); } catch {}
+  if (t !== tsconfigText) { tsconfigText = t; pc = core.ProjectCompiler.load(tsconfig, { extraRootFiles: extra, aliases: core.bridgeAliases(bridges) }); }
+};
 const baseline = (() => {
   const bridged = Object.fromEntries(start.files.map((f) => [f, core.rewriteSpecifiers(start.text[f], f, aliasMap).text]));
   const m = new Map();
@@ -190,6 +196,7 @@ function migrationStatus() {
 
 const EVASION = [/\bas\s+any\b/, /:\s*any\b/, /@ts-ignore/, /@ts-expect-error/, /@ts-nocheck/, /eslint-disable/];
 function checkEditFindings() {
+  freshCompiler();
   const texts = current();
   const findings = [];
   for (const e of newErrors(texts)) findings.push(`compiler (project's TypeScript ${pc.version}): ${e}`);
