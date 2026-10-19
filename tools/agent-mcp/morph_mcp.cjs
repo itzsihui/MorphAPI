@@ -30,6 +30,28 @@ const start = (() => {
   const files = [...new Set([...s.projectFiles, ...extra].map((f) => path.resolve(f)))];
   return { files, text: Object.fromEntries(files.map((f) => [f, s.text(f)])) };
 })();
+// All text files of the workspace at the start (for the behaviour checks: dangling references, dropped uses).
+const SKIP_DIRS = new Set(["node_modules", ".git", "coverage", ".next", "dist", "out", ".vitest-cache", ".nyc_output"]);
+const TEXT_EXT = /\.(m|c)?[jt]sx?$|\.(json|ya?ml|html)$/;
+function allTexts() {
+  const out = {};
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      if (e.isSymbolicLink()) continue;
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name)) walk(p); }
+      else if (TEXT_EXT.test(e.name) && !/\.d\.ts$/.test(e.name)) {
+        try { const st = fs.statSync(p); if (st.size < 1e6) out[rel(p)] = fs.readFileSync(p, "utf8"); } catch {}
+      }
+    }
+  };
+  walk(ws);
+  return out;
+}
+const startAll = allTexts();
+const upgraded = [...new Set([...successors, ...bridges.map((b) => b.module)])];
+const guideText = (() => { try { return fs.readFileSync(path.join(ws, "MIGRATION_GUIDE.md"), "utf8"); } catch { return ""; } })();
+const guide = core.guideItems(guideText);
 const pc = core.ProjectCompiler.load(tsconfig, { extraRootFiles: extra, aliases: core.bridgeAliases(bridges) });
 const baseline = (() => {
   const bridged = Object.fromEntries(start.files.map((f) => [f, core.rewriteSpecifiers(start.text[f], f, aliasMap).text]));
@@ -58,11 +80,41 @@ const libraryErrors = (texts) => {
   }
   return out;
 };
+// Names the new version no longer exports (new-version diagnostics on the untouched code).
+const missingInNew = core.namesMissingInNewVersion(pc.diagnostics(start.text, start.files).map((d) => d.message));
+// The project's own exported surface at the start, typed against the previous SDK (version bridge).
+const entryFiles = core.packageEntryFiles(ws, start.files);
+const surfaceBefore = (() => {
+  try {
+    const s = core.ProjectSession.open(tsconfig, { aliases: core.bridgeAliases(bridges), extraRootFiles: extra });
+    const upd = {};
+    for (const f of start.files) upd[f] = core.rewriteSpecifiers(start.text[f], f, aliasMap).text;
+    s.update(upd);
+    return core.exportedSurface(s.program, start.files, rel, entryFiles);
+  } catch (e) { return null; }
+})();
+function behaviourFindings() {
+  const nowAll = allTexts();
+  const out = [];
+  for (const f of core.droppedUses(startAll, nowAll, upgraded, missingInNew)) out.push(f.message);
+  for (const f of core.danglingRefs(startAll, nowAll)) out.push(f.message);
+  const g = core.guideChecklist(guide, startAll, nowAll);
+  for (const o of g.open) out.push(`migration guide: "${o.item.text.slice(0, 220)}" — still present: ${o.sites.slice(0, 5).join(", ")}`);
+  if (surfaceBefore) {
+    try {
+      const s = core.ProjectSession.open(tsconfig, { extraRootFiles: extra });
+      const files = start.files.filter((f) => fs.existsSync(f));
+      for (const f of core.publicApiChanges(surfaceBefore, core.exportedSurface(s.program, files, rel, entryFiles))) out.push(`public API: ${f.message}`);
+    } catch {}
+  }
+  return out;
+}
 const current = () => Object.fromEntries(start.files.map((f) => [f, fs.existsSync(f) ? fs.readFileSync(f, "utf8") : ""]));
 const newErrors = (texts) => {
   const rem = new Map(baseline);
   const out = [];
   for (const d of pc.diagnostics(texts, start.files)) {
+    if (!fs.existsSync(d.file)) continue; // a file the edits deleted is not compiled by tsc
     const k = `${d.file}|${d.code}|${d.message}`;
     const n = rem.get(k) || 0;
     if (n > 0) rem.set(k, n - 1);
@@ -88,11 +140,17 @@ function migrationStatus() {
     files: start.files,
   });
   const handoffs = retiredBridges.length ? core.findHandoffs(bridged, start.files, retiredBridges.map((b) => b.previousDir)) : [];
+  const g = core.guideChecklist(guide, startAll, allTexts());
+  const guideLines = g.applies.map((it) => {
+    const open = g.open.find((o) => o.item === it);
+    return `- [${open ? "open" : "done"}] "${it.text.slice(0, 260)}"${open ? `\n    still present: ${open.sites.slice(0, 5).join(", ")}` : ""}`;
+  });
   const lines = items.map((i) => `- ${rel(i.file)}:${i.startLine} [${i.source}] ${i.text.split("\n")[0].slice(0, 100)}\n    ${i.notes.slice(0, 2).join(" | ").slice(0, 300)}`);
   const ho = handoffs.map((h) => `- ${rel(h.file)}:${h.startLine} ${h.notes[0].slice(0, 300)}`);
   return [
     `${items.length} site(s) still broken by the upgrade (found with the previous version loaded beside the new one; includes uses of exports the new version dropped, which the compiler does not report at each use).`,
     ...lines,
+    guideLines.length ? `\nMigration-guide instructions that apply to this project (they name APIs your code used at the start):\n${guideLines.join("\n")}` : "",
     ho.length ? `\nUntyped hand-offs to packages written for the replaced SDK (they compile but fail at runtime):\n${ho.join("\n")}` : "",
   ].filter(Boolean).join("\n");
 }
@@ -150,12 +208,17 @@ function checkEdit() {
     };
     visit(sf);
   }
-  return findings.length ? `${findings.length} problem(s):\n${findings.map((x) => `- ${x}`).join("\n")}` : "No problems found: no new compiler errors with the project's TypeScript, no evasion, no compat-layer or retired-package imports.";
+  const confirm = behaviourFindings();
+  const head = findings.length ? `${findings.length} problem(s):\n${findings.map((x) => `- ${x}`).join("\n")}` : "No problems found: no new compiler errors with the project's TypeScript, no evasion, no compat-layer or retired-package imports.";
+  const tail = confirm.length
+    ? `\n\n${confirm.length} behaviour change(s) to confirm (the compiler cannot see these; each may be intended, but decide each one):\n${confirm.map((x) => `- ${x}`).join("\n")}`
+    : "\n\nNo behaviour changes to confirm (dropped uses of still-existing APIs, references to deleted files or routes, open migration-guide instructions, changes to the project's exported API).";
+  return head + tail;
 }
 
 const TOOLS = [
-  { name: "migration_status", description: "List every site in the project that the dependency upgrade still breaks, found by MorphAPI with the previous SDK version loaded beside the new one. Includes uses of exports the new version dropped (the compiler does not flag each use) and untyped hand-offs. Call it first and again as you go.", inputSchema: { type: "object", properties: {} } },
-  { name: "check_edit", description: "Check the current edits with MorphAPI's gate: new errors under the project's own TypeScript compiler, added any-casts or ts-ignore, imports of a compatibility layer or a replaced package, and X.prototype.instanceProperty (undefined at runtime). Run before finishing and fix everything it reports.", inputSchema: { type: "object", properties: {} } },
+  { name: "migration_status", description: "List every site in the project that the dependency upgrade still breaks, found by MorphAPI with the previous SDK version loaded beside the new one. Includes uses of exports the new version dropped (the compiler does not flag each use), untyped hand-offs, and the migration-guide instructions that apply to this project. Call it first and again as you go.", inputSchema: { type: "object", properties: {} } },
+  { name: "check_edit", description: "Check the current edits with MorphAPI's gate. Problems: new errors under the project's own TypeScript compiler (incl. library type errors), any-casts or ts-ignore, imports of a compatibility layer or a replaced package, X.prototype.instanceProperty. Behaviour changes to confirm (invisible to the compiler): removed uses of APIs that still exist (e.g. a dropped auth wrapper), references to deleted files or routes, migration-guide instructions still open, changes to the project's exported API. Run before finishing; fix every problem and decide every behaviour change.", inputSchema: { type: "object", properties: {} } },
 ];
 
 const send = (msg) => process.stdout.write(JSON.stringify(msg) + "\n");

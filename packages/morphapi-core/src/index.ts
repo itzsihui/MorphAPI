@@ -186,3 +186,17 @@ export { setInlineTypeModifiers } from "./importReconcile";
 export { RuleBook } from "./ruleBook";
 export type { LearnedRule } from "./ruleBook";
 export { groupIntoUnits } from "./discover";
+export {
+  danglingRefs,
+  droppedUses,
+  exportedSurface,
+  guideChecklist,
+  guideItems,
+  importedUses,
+  namesMissingInNewVersion,
+  packageEntryFiles,
+  publicApiChanges,
+  routeOf,
+  tokenSites,
+} from "./behaviourChecks";
+export type { BehaviourFinding, GuideItem } from "./behaviourChecks";
