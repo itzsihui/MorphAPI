@@ -40,6 +40,24 @@ const baseline = (() => {
   }
   return m;
 })();
+// Errors inside installed packages' declaration files (tsc reports them unless skipLibCheck), start-state baseline.
+const libKey = (d) => `${d.file.slice(d.file.lastIndexOf("node_modules"))}|${d.code}|${unalias(d.message)}`;
+const libBaseline = (() => {
+  const bridged = Object.fromEntries(start.files.map((f) => [f, core.rewriteSpecifiers(start.text[f], f, aliasMap).text]));
+  const m = new Map();
+  for (const d of pc.diagnostics(bridged, [], { libraries: true })) m.set(libKey(d), (m.get(libKey(d)) || 0) + 1);
+  return m;
+})();
+const libraryErrors = (texts) => {
+  const rem = new Map(libBaseline);
+  const out = [];
+  for (const d of pc.diagnostics(texts, [], { libraries: true })) {
+    const n = rem.get(libKey(d)) || 0;
+    if (n > 0) rem.set(libKey(d), n - 1);
+    else out.push(`${d.file.slice(d.file.lastIndexOf("node_modules"))}:${d.line} TS${d.code}: ${d.message.split("\n")[0]}`);
+  }
+  return out;
+};
 const current = () => Object.fromEntries(start.files.map((f) => [f, fs.existsSync(f) ? fs.readFileSync(f, "utf8") : ""]));
 const newErrors = (texts) => {
   const rem = new Map(baseline);
@@ -84,6 +102,7 @@ function checkEdit() {
   const texts = current();
   const findings = [];
   for (const e of newErrors(texts)) findings.push(`compiler (project's TypeScript ${pc.version}): ${e}`);
+  for (const e of libraryErrors(texts)) findings.push(`library type error (tsc reports it): ${e}`);
   const importSpec = (l) => {
     const m = /from\s+['"]([^'"]+)['"]|require\(\s*['"]([^'"]+)['"]\s*\)|import\s+['"]([^'"]+)['"]/.exec(l);
     return m && (m[1] || m[2] || m[3]);
@@ -101,6 +120,11 @@ function checkEdit() {
           if (spec && /\/compat(\/|$)/.test(spec)) findings.push(`compatibility layer: ${rel(f)}:${i + 1} imports ${spec}; migrate to the new API instead of the temporary compat layer`);
         }
       }
+    }
+    // \`any\` written inside types (\`options as { type: any }\`), which the line patterns miss.
+    if (texts[f] !== start.text[f]) {
+      const added = core.countAnyKeywords(texts[f]) - core.countAnyKeywords(start.text[f]);
+      if (added > 0) findings.push(`evasion: ${rel(f)} now writes the type \`any\` ${added} more time(s) than before (hides type errors; use real types)`);
     }
     // Imports of a replaced package anywhere in the project, edited or not.
     b.forEach((l, i) => {

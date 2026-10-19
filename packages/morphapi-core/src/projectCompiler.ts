@@ -84,7 +84,7 @@ export class ProjectCompiler {
    * Full diagnostics of `files` with `texts` overriding disk contents, from the
    * project's compiler. Alias specifiers (the version bridge) resolve as their module from the alias's folder.
    */
-  diagnostics(texts: Record<string, string>, files: string[]): SessionDiagnostic[] {
+  diagnostics(texts: Record<string, string>, files: string[], opts: { libraries?: boolean } = {}): SessionDiagnostic[] {
     const ts = this.ts;
     const overrides = new Map(Object.entries(texts).map(([f, t]) => [path.resolve(f), t]));
     const base = ts.createCompilerHost(this.options, true);
@@ -113,9 +113,15 @@ export class ProjectCompiler {
     const program = ts.createProgram({ rootNames: this.roots, options: this.options, host, oldProgram: this.oldProgram });
     this.oldProgram = program;
     const out: SessionDiagnostic[] = [];
-    for (const f of files) {
-      const sf = program.getSourceFile(path.resolve(f));
-      if (!sf) continue;
+    const targets: AnyTs[] = files.map((f) => program.getSourceFile(path.resolve(f))).filter(Boolean);
+    if (opts.libraries && !this.options.skipLibCheck) {
+      // Errors inside installed packages' declaration files, as tsc reports them without skipLibCheck.
+      const own = new Set(targets);
+      for (const sf of program.getSourceFiles()) {
+        if (!own.has(sf) && !program.isSourceFileDefaultLibrary(sf) && /[\\/]node_modules[\\/]/.test(sf.fileName)) targets.push(sf);
+      }
+    }
+    for (const sf of targets) {
       for (const d of [...program.getSyntacticDiagnostics(sf), ...program.getSemanticDiagnostics(sf)]) {
         out.push({
           file: sf.fileName,

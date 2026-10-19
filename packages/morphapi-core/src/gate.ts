@@ -95,6 +95,15 @@ export function gateSpan(
     findings.push({ kind: "evasion", symbol: ev.symbol, message: ev.reason, line: lineOf(range.start) });
   }
 
+  // `any` written anywhere in the replacement (`options as { type: any }`, `Array<any>`, `(x: any) =>`),
+  // which the pattern list above does not catch when it is nested inside a type.
+  if (opts.original != null && !findings.some((f) => f.kind === "evasion")) {
+    const added = countAnyKeywords(replaced) - countAnyKeywords(opts.original);
+    if (added > 0) {
+      findings.push({ kind: "evasion", symbol: "any", line: lineOf(range.start), message: `The replacement writes the type \`any\` ${added} more time(s) than the original, which hides type errors. Use the real types from the new API.` });
+    }
+  }
+
   // A type slice that turns an instance type into `typeof X` now denotes the class, not its instances.
   if (opts.original != null && /^\s*typeof\s/.test(replaced) && !/^\s*typeof\s/.test(opts.original) && ts.isTypeNode(nodeAtRange(sf, range) ?? sf)) {
     findings.push({
@@ -349,4 +358,25 @@ export async function repairLoop(opts: {
     feedback = `Your previous output was:\n\`\`\`ts\n${shown.trim()}\n\`\`\`\nIt was rejected because:\n${feedbackFor(res)}`;
   }
   return { accepted: null, attempts };
+}
+
+/** Number of `any` type keywords in a code fragment (parsed as statements; comments and strings ignored). */
+export function countAnyKeywords(code: string): number {
+  const sf = ts.createSourceFile("__any.tsx", code, ts.ScriptTarget.Latest, false, ts.ScriptKind.TSX);
+  let n = 0;
+  const visit = (node: ts.Node) => {
+    if (node.kind === ts.SyntaxKind.AnyKeyword) n++;
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  // A type-only fragment (a type slice) may not parse as statements; fall back to parsing it as a type alias.
+  if (n === 0 && /\bany\b/.test(code)) {
+    const t = ts.createSourceFile("__any.ts", `type __T = ${code};`, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
+    const v2 = (node: ts.Node) => {
+      if (node.kind === ts.SyntaxKind.AnyKeyword) n++;
+      ts.forEachChild(node, v2);
+    };
+    v2(t);
+  }
+  return n;
 }

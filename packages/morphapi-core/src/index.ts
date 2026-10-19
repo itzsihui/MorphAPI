@@ -141,7 +141,7 @@ export { addMissingImports, reconcileImports, removeUnusedImports } from "./impo
 export type { ImportCandidate, ImportEdits } from "./importReconcile";
 export { extractOracle, importCandidates, suggestSymbols } from "./oracleExtract";
 export type { ExtractedOracle, OracleExport } from "./oracleExtract";
-export { feedbackFor, gateSpan, repairLoop } from "./gate";
+export { countAnyKeywords, feedbackFor, gateSpan, repairLoop } from "./gate";
 export type { AttemptRecord, GateFinding, GateFindingKind, GateResult } from "./gate";
 export { propagateResponseShape } from "./dataflow";
 export type { ShapeResult, ShapeRewrite } from "./dataflow";

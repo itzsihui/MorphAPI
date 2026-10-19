@@ -86,6 +86,8 @@ export type RepoMigrationRun = {
     remainingItems: number;
     /** Untyped hand-offs to packages built for the retired SDK that are still in use */
     handoffsLeft: Array<{ file: string; line: number; pkg: string }>;
+    /** New errors inside installed packages' declaration files (tsc reports them unless skipLibCheck) */
+    libraryDiagnostics: Array<{ file: string; line: number; message: string }>;
   };
   metrics: {
     itemsFound: number;
@@ -322,6 +324,18 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
   // Final verdict, against the new version only.
   const finalTexts = current();
   const finalDiags = newWorldDiags(finalTexts);
+  // Library declaration errors count too: tsc fails on them, and source edits alone cannot fix them.
+  const libKey = (d: SessionDiagnostic) => `${d.file.slice(d.file.lastIndexOf("node_modules"))}|${d.code}|${unalias(d.message)}`;
+  const libBase = new Map<string, number>();
+  for (const d of pc.diagnostics(Object.fromEntries(files.map((f) => [f, rewriteSpecifiers(originals[f], f, toAlias).text])), [], { libraries: true })) {
+    libBase.set(libKey(d), (libBase.get(libKey(d)) ?? 0) + 1);
+  }
+  const libraryDiagnostics: RepoMigrationRun["final"]["libraryDiagnostics"] = [];
+  for (const d of pc.diagnostics(finalTexts, [], { libraries: true })) {
+    const n = libBase.get(libKey(d)) ?? 0;
+    if (n > 0) libBase.set(libKey(d), n - 1);
+    else libraryDiagnostics.push({ file: d.file.slice(d.file.lastIndexOf("node_modules")), line: d.line, message: `TS${d.code}: ${d.message.split("\n")[0]}` });
+  }
   const remaining = new Map(baseline);
   const newDiagnostics: RepoMigrationRun["final"]["newDiagnostics"] = [];
   for (const d of finalDiags) {
@@ -355,12 +369,14 @@ export async function runRepoMigration(cfg: RepoMigrationConfig): Promise<RepoMi
     rounds,
     tests,
     final: {
-      complete: newDiagnostics.length === 0 && aliasLeft === 0 && retiredLeft === 0 && remainingItems === 0 && handoffsLeft.length === 0,
+      complete:
+        newDiagnostics.length === 0 && aliasLeft === 0 && retiredLeft === 0 && remainingItems === 0 && handoffsLeft.length === 0 && libraryDiagnostics.length === 0,
       newDiagnostics,
       aliasSpecifiersLeft: aliasLeft,
       retiredImportsLeft: retiredLeft,
       remainingItems,
       handoffsLeft,
+      libraryDiagnostics,
     },
     metrics: {
       itemsFound: rounds.reduce((n, r) => n + r.items.length, 0),
