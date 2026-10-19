@@ -8,7 +8,7 @@ import * as ts from "typescript";
 import { detectEvasionTactics } from "./inspector";
 import type { ExtractedOracle } from "./oracleExtract";
 import { suggestSymbols } from "./oracleExtract";
-import { resolveSymbolSpec, sameSymbol, type ProjectSession } from "./program";
+import { resolveAlias, resolveSymbolSpec, sameSymbol, type ProjectSession } from "./program";
 
 export type GateFindingKind = "phantom" | "type_error" | "dynamic_access" | "parse" | "evasion" | "leftover";
 
@@ -66,7 +66,20 @@ export function gateSpan(
   file: string,
   range: { start: number; end: number },
   oracle: ExtractedOracle | null,
-  opts: { deprecatedNames?: string[]; deprecatedSpec?: string } = {}
+  opts: {
+    deprecatedNames?: string[];
+    deprecatedSpec?: string;
+    /** Folders of the previous SDK version: any reference that resolves into them is a leftover. */
+    deprecatedDirs?: string[];
+    /** Text the replacement stands in for; evasion patterns already in it are not the model's doing. */
+    original?: string;
+    /** Untyped values in the original slice (see anyProfile); new ones are rejected. */
+    originalAny?: AnyProfile;
+    /** The project's own functions the original slice calls; the replacement must still call them. */
+    keepCalls?: string[];
+    /** Discover mode: never advise constructing a new client in place of an existing receiver. */
+    keepReceivers?: boolean;
+  } = {}
 ): GateResult {
   const sf = session.sourceFile(file);
   if (!sf) return { ok: false, findings: [{ kind: "parse", message: `File not in program: ${file}` }], warnings: [] };
@@ -76,8 +89,52 @@ export function gateSpan(
   const lineOf = (pos: number) => sf.getLineAndCharacterOfPosition(pos).line + 1;
   const replaced = sf.text.slice(range.start, range.end);
 
+  const preexisting = new Set(opts.original ? detectEvasionTactics(opts.original).map((e) => e.symbol) : []);
   for (const ev of detectEvasionTactics(replaced)) {
+    if (preexisting.has(ev.symbol)) continue;
     findings.push({ kind: "evasion", symbol: ev.symbol, message: ev.reason, line: lineOf(range.start) });
+  }
+
+  // `any` written anywhere in the replacement (`options as { type: any }`, `Array<any>`, `(x: any) =>`),
+  // which the pattern list above does not catch when it is nested inside a type.
+  if (opts.original != null && !findings.some((f) => f.kind === "evasion")) {
+    const added = countAnyKeywords(replaced) - countAnyKeywords(opts.original);
+    if (added > 0) {
+      findings.push({ kind: "evasion", symbol: "any", line: lineOf(range.start), message: `The replacement writes the type \`any\` ${added} more time(s) than the original, which hides type errors. Use the real types from the new API.` });
+    }
+  }
+
+  // A type slice that turns an instance type into `typeof X` now denotes the class, not its instances.
+  if (opts.original != null && /^\s*typeof\s/.test(replaced) && !/^\s*typeof\s/.test(opts.original) && ts.isTypeNode(nodeAtRange(sf, range) ?? sf)) {
+    findings.push({
+      kind: "type_error",
+      line: lineOf(range.start),
+      message: `\`${replaced.trim()}\` is the type of the class itself, but the original \`${opts.original.trim()}\` is the type of its instances. Use the instance type (the class name without typeof).`,
+    });
+  }
+
+  // An `any` the original did not have silences every error downstream of it
+  // (e.g. `const openai = client.httpAgent` where httpAgent is typed any).
+  if (opts.originalAny) {
+    const now = anyProfile(sf, checker, range);
+    if (now.value && !opts.originalAny.value) {
+      findings.push({ kind: "evasion", line: lineOf(range.start), message: "The replacement has type any, which hides type errors wherever its value is used. Produce a value with a real type from the new API." });
+    }
+    for (const v of now.vars.filter((x) => !opts.originalAny!.vars.includes(x))) {
+      findings.push({ kind: "evasion", symbol: v, line: lineOf(range.start), message: `\`${v}\` gets type any, which hides type errors wherever it is used. Give it a value with a real type from the new API.` });
+    }
+  }
+
+  // Behaviour guard: migrating SDK usage never means bypassing the project's own helpers.
+  for (const name of opts.keepCalls ?? []) {
+    if (!new RegExp(`\\b${name.replace(/[$]/g, "\\$")}\\s*(<[^()]*>)?\\s*\\(`).test(replaced)) {
+      findings.push({
+        kind: "type_error",
+        symbol: name,
+        line: lineOf(range.start),
+        message: `The original calls the project's own ${name}(); keep calling it and adapt only what is passed to it or done with its result. Fix ${name} itself separately if needed.`,
+      });
+    }
   }
 
   for (const d of session.diagnostics([file])) {
@@ -97,7 +154,10 @@ export function gateSpan(
         symbol: `${recvLabel}.${ident.text}`,
         line: d.line,
         code: d.code,
-        message: owners.length
+        message: owners.length && opts.keepReceivers
+          ? `${ident.text} exists on ${owners.join(", ")} from ${oracle!.module}, but \`${ident.parent.expression.getText(sf)}\` still has the previous version's type (${recvLabel}). ` +
+            `Keep using \`${ident.parent.expression.getText(sf)}\` (do not create a new ${owners[0]}: that would drop its configuration); its declaration is migrated separately.`
+          : owners.length
           ? `${ident.text} exists on ${owners.join(", ")} from ${oracle!.module}, but \`${ident.parent.expression.getText(sf)}\` is a deprecated value (type ${recvLabel}), not a ${owners[0]}. ` +
             `Do not use \`${ident.parent.expression.getText(sf)}\` as the receiver. Create a ${owners[0]} in your output${
               oracle!.obtain[owners[0]] ? ` with ${oracle!.obtain[owners[0]].replace(/\):.*$/, ")")}` : ""
@@ -148,14 +208,57 @@ export function gateSpan(
   if (target) deprecated.add(target.name);
   const isDeprecated = (n: ts.Identifier) =>
     deprecated.has(n.text) && (!target || sameSymbol(checker, checker.getSymbolAtLocation(n), target));
+  const dirs = (opts.deprecatedDirs ?? []).map((d) => d.replace(/\/+$/, "") + "/");
+  const fromOldVersion = (n: ts.Identifier): boolean => {
+    // Only direct references (OpenAIApi, firebase, AWS). Member names such as `user.uid` stay
+    // legal: their receiver may be declared outside the slice and migrated separately.
+    const p = n.parent;
+    if ((ts.isPropertyAccessExpression(p) && p.name === n) || (ts.isQualifiedName(p) && p.right === n)) return false;
+    if ((ts.isPropertyAssignment(p) || ts.isPropertySignature(p) || ts.isBindingElement(p)) && p.name === n) return false;
+    const sym = resolveAlias(checker, checker.getSymbolAtLocation(n));
+    const decls = sym?.declarations ?? [];
+    return decls.length > 0 && decls.every((d) => dirs.some((dir) => d.getSourceFile().fileName.startsWith(dir)));
+  };
   const visit = (n: ts.Node) => {
     if (n.getStart(sf) >= range.start && n.getEnd() <= range.end) {
+      // `X.prototype.p` type-checks for an instance PROPERTY p, but p only exists on
+      // constructed objects, so this is undefined at runtime (TypeScript unsoundness).
+      if (
+        ts.isPropertyAccessExpression(n) &&
+        ts.isPropertyAccessExpression(n.expression) &&
+        n.expression.name.text === "prototype"
+      ) {
+        const member = checker.getSymbolAtLocation(n.name);
+        const decls = member?.declarations ?? [];
+        if (decls.length && decls.every((d) => ts.isPropertyDeclaration(d) || ts.isParameter(d))) {
+          const cls = n.expression.expression.getText(sf);
+          const t = checker.typeToString(checker.getTypeAtLocation(n));
+          findings.push({
+            kind: "type_error",
+            symbol: `${cls}.prototype.${n.name.text}`,
+            line: lineOf(n.getStart(sf)),
+            message:
+              `\`${cls}.prototype.${n.name.text}\` is undefined at runtime: ${n.name.text} is an instance property assigned in the constructor, not a prototype member. ` +
+              `To reach methods of ${t} for every instance, use the prototype of the class that declares them (look for it among the static members), not ${cls}.prototype.`,
+          });
+        }
+      }
       if (ts.isElementAccessExpression(n) && ts.isStringLiteralLike(n.argumentExpression)) {
         warnings.push({
           kind: "dynamic_access",
           symbol: n.argumentExpression.text,
           line: lineOf(n.getStart(sf)),
           message: `Dynamic access ["${n.argumentExpression.text}"] is not checked against the oracle.`,
+        });
+      }
+      // Any direct reference into the previous version is a leftover, including type references
+      // and names on the deprecated list (that branch below only covers calls).
+      if (ts.isIdentifier(n) && dirs.length && fromOldVersion(n)) {
+        findings.push({
+          kind: "leftover",
+          symbol: n.text,
+          line: lineOf(n.getStart(sf)),
+          message: `The replacement still uses ${n.text} from the previous version of the SDK. Use the new version's API instead.`,
         });
       }
       if (ts.isIdentifier(n) && isDeprecated(n)) {
@@ -178,6 +281,38 @@ export function gateSpan(
   return { ok: findings.length === 0, findings, warnings };
 }
 
+function nodeAtRange(sf: ts.SourceFile, range: { start: number; end: number }): ts.Node | undefined {
+  let found: ts.Node | undefined;
+  const visit = (n: ts.Node) => {
+    if (n.getStart(sf) <= range.start && n.getEnd() >= range.end) {
+      if (n.getStart(sf) === range.start && n.getEnd() === range.end) found ??= n;
+      ts.forEachChild(n, visit);
+    }
+  };
+  visit(sf);
+  return found;
+}
+
+export type AnyProfile = { value: boolean; vars: string[] };
+
+/** Whether the node spanning `range` has type any, and which variables declared in it do. */
+export function anyProfile(sf: ts.SourceFile, checker: ts.TypeChecker, range: { start: number; end: number }): AnyProfile {
+  let whole: ts.Node | undefined;
+  const vars: string[] = [];
+  const visit = (n: ts.Node) => {
+    if (n.getEnd() < range.start || n.getStart(sf) > range.end) return;
+    const inside = n.getStart(sf) >= range.start && n.getEnd() <= range.end;
+    if (inside && !whole && ts.isExpression(n)) whole = n;
+    if (inside && ts.isVariableDeclaration(n) && !n.type && ts.isIdentifier(n.name)) {
+      if (checker.getTypeAtLocation(n.name).flags & ts.TypeFlags.Any) vars.push(n.name.text);
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  const exact = whole && whole.getStart(sf) === range.start && whole.getEnd() === range.end;
+  return { value: Boolean(exact && checker.getTypeAtLocation(whole!).flags & ts.TypeFlags.Any), vars };
+}
+
 /** Targeted feedback text for the next attempt. */
 export function feedbackFor(result: GateResult): string {
   return result.findings
@@ -195,7 +330,7 @@ export type AttemptRecord = {
   findings: GateFinding[];
   warnings: GateFinding[];
   feedbackSent?: string;
-  sliceKind?: "expression" | "statement";
+  sliceKind?: "expression" | "statement" | "type";
   escalated?: boolean;
 };
 
@@ -218,7 +353,30 @@ export async function repairLoop(opts: {
     attempts.push(rec);
     opts.onAttempt?.(rec);
     if (res.ok) return { accepted: candidate, attempts };
-    feedback = feedbackFor(res);
+    // Show the rejected output too: without it a stateless model tends to repeat it verbatim.
+    const shown = candidate.length > 1500 ? `${candidate.slice(0, 1500)}\n…` : candidate;
+    feedback = `Your previous output was:\n\`\`\`ts\n${shown.trim()}\n\`\`\`\nIt was rejected because:\n${feedbackFor(res)}`;
   }
   return { accepted: null, attempts };
+}
+
+/** Number of `any` type keywords in a code fragment (parsed as statements; comments and strings ignored). */
+export function countAnyKeywords(code: string): number {
+  const sf = ts.createSourceFile("__any.tsx", code, ts.ScriptTarget.Latest, false, ts.ScriptKind.TSX);
+  let n = 0;
+  const visit = (node: ts.Node) => {
+    if (node.kind === ts.SyntaxKind.AnyKeyword) n++;
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  // A type-only fragment (a type slice) may not parse as statements; fall back to parsing it as a type alias.
+  if (n === 0 && /\bany\b/.test(code)) {
+    const t = ts.createSourceFile("__any.ts", `type __T = ${code};`, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
+    const v2 = (node: ts.Node) => {
+      if (node.kind === ts.SyntaxKind.AnyKeyword) n++;
+      ts.forEachChild(node, v2);
+    };
+    v2(t);
+  }
+  return n;
 }

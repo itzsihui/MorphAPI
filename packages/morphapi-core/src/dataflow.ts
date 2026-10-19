@@ -65,10 +65,12 @@ export function propagateResponseShape(
   const old = opts.oldResultType ? stripType(opts.oldResultType) : null;
   const props = awaited
     .getProperties()
-    .map((p) => {
+    .flatMap((p) => {
       const decl = p.valueDeclaration ?? p.declarations?.[0];
-      const pt = decl ? checker.typeToString(checker.getTypeOfSymbolAtLocation(p, decl)) : "";
-      return { name: p.name, type: pt };
+      const ptype = decl ? checker.getTypeOfSymbolAtLocation(p, decl) : undefined;
+      // An any/unknown property would "fix" every downstream error by switching type checking off.
+      if (!ptype || ptype.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) return [];
+      return [{ name: p.name, type: checker.typeToString(ptype) }];
     })
     .sort((a, b) => Number(b.type === old) - Number(a.type === old));
   if (!props.length) return { ...none, mode: "unresolved" };

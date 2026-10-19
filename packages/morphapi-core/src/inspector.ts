@@ -267,10 +267,10 @@ export function detectEvasionTactics(
     push("@ts-nocheck", "Reward-hacking file-level type suppression");
   }
   if (/\bas\s+any\b/.test(code)) {
-    push("as any", "Type evasion cast to force secret/string through verify");
+    push("as any", "Type evasion cast to any");
   }
   if (/catch\s*(?:\([^)]*\))?\s*\{\s*\}/.test(code)) {
-    push("empty-catch", "Empty catch swallows verification failures");
+    push("empty-catch", "Empty catch swallows errors");
   }
   if (
     /catch\s*(?:\([^)]*\))?\s*\{\s*return\s+null\s*;?\s*\}/.test(code) ||
@@ -278,33 +278,9 @@ export function detectEvasionTactics(
   ) {
     push(
       "catch-return-null",
-      "Catch returns null/undefined instead of verifying"
+      "Catch returns null/undefined and hides the error"
     );
   }
-  if (
-    /jwt\.verify\s*\(\s*[^,]+,\s*process\.env\.JWT_SECRET/.test(code) ||
-    /jwt\.verify\s*\(\s*[^,]+,\s*[^)]*JWT_SECRET/.test(code)
-  ) {
-    push(
-      "JWT_SECRET",
-      "Symmetric secret still passed to jwt.verify — JWKS required in v2"
-    );
-  }
-
-  // getSigningKey / getPublicKey must be method calls, not free functions
-  if (/\bgetSigningKey\s*\(/.test(code) && !/\.getSigningKey\s*\(/.test(code)) {
-    push(
-      "getSigningKey()",
-      "getSigningKey must be called on a JwksClient (jwksClient.getSigningKey)"
-    );
-  }
-  if (/\bgetPublicKey\s*\(/.test(code) && !/\.getPublicKey\s*\(/.test(code)) {
-    push(
-      "getPublicKey()",
-      "getPublicKey must be called on a SigningKey (key.getPublicKey)"
-    );
-  }
-
   // Only flag deleted asserts when inspecting test-bearing source
   if (
     options?.baselineTestSource &&

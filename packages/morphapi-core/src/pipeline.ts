@@ -6,7 +6,7 @@
  */
 import * as path from "path";
 import * as ts from "typescript";
-import { feedbackFor, gateSpan, repairLoop, type AttemptRecord, type GateResult } from "./gate";
+import { anyProfile, feedbackFor, gateSpan, repairLoop, type AttemptRecord, type GateResult } from "./gate";
 import { propagateResponseShape, type ShapeResult } from "./dataflow";
 import { reconcileImports, addMissingImports, swapSharedImports, type ImportCandidate } from "./importReconcile";
 import {
@@ -16,8 +16,10 @@ import {
   type ProgramImpactResult,
 } from "./impactProgram";
 import { generateCode, type LlmMessage, type ModelProfile } from "./llm";
-import { extractOracle, importCandidates, type ExtractedOracle } from "./oracleExtract";
-import { ProjectSession, findDeprecatedReferences, type DeprecatedCallSpan } from "./program";
+import { extractOracle, importCandidates, mergeOracles, type ExtractedOracle } from "./oracleExtract";
+import { ProjectSession, findDeprecatedReferences, resolveAlias, type DeprecatedCallSpan } from "./program";
+import { producerOf } from "./discover";
+import { bindingsIn, type RuleBook } from "./ruleBook";
 import {
   buildSlicePrompt,
   needsStatementSlice,
@@ -51,10 +53,49 @@ export type MigrationConfig = {
   tsconfigPath: string;
   /** Absolute paths of project files to migrate / check */
   files: string[];
-  deprecatedSpec: string;
+  /** `module#Export.member`. Optional when `spans` are supplied (discover mode). */
+  deprecatedSpec?: string;
   deprecatedSymbols: string[];
   successorModule: string;
   successorSymbols: string[];
+  /** Several successor modules (e.g. firebase/app, firebase/auth); merged into one oracle. */
+  successorModules?: string[];
+  /** Reuse an open (e.g. bridged) session instead of opening tsconfigPath. */
+  session?: ProjectSession;
+  /** Work items to migrate instead of calls to `deprecatedSpec`. */
+  spans?: WorkSpan[];
+  /** Modules whose leftover imports are cleaned up / reported (default: the spec's module). */
+  deprecatedModules?: string[];
+  /** Folders of the previous SDK version; references into them are leftovers. */
+  deprecatedDirs?: string[];
+  /** Shared-import swaps to try (default: deprecated module → successor module). */
+  swapPairs?: Array<{ from: string; to: string }>;
+  /** Text after "## Migration" in prompts (default: the spec). */
+  migrationLabel?: string;
+  /** Character budget for the Successor API list in each prompt (default: unbounded). */
+  apiBudget?: number;
+  /** Character budget for the migration guide in each prompt: most relevant sections first (default: whole guide). */
+  guideBudget?: number;
+  /** Text for the successor side of "## Migration" (default: the successor module names). */
+  successorLabel?: string;
+  /** Impact repair: extra rounds and findings repaired per round (defaults 2 and 8). */
+  impactRounds?: number;
+  impactLimit?: number;
+  /** Scan every file (not only changed ones) for uses of the retired modules. */
+  impactAllFiles?: boolean;
+  /**
+   * Put the guide and a large successor-API list into one prompt-cached system block shared by every
+   * call (Anthropic native API); each call then carries only a short relevant-symbol excerpt.
+   */
+  cacheStaticContext?: boolean;
+  /** Syntax errors the PROJECT's compiler reports for a file text (see ProjectCompiler). */
+  projectParse?: (text: string, file: string) => string[];
+  /** Learned rewrite rules shared across rounds (learn-once, verified by the gate at every use). */
+  ruleBook?: RuleBook;
+  /** Ablation: no def-use attribution in impact repair. */
+  noAttribution?: boolean;
+  /** Rewrites accepted in earlier rounds (repo-relative file + code), for def-use attribution. */
+  priorAccepted?: Array<{ file: string; accepted: string | null }>;
   successorKind?: SuccessorKind;
   rules?: string[];
   /** Prose migration guide given to every arm */
@@ -70,6 +111,64 @@ export type MigrationConfig = {
 
 export type MigrationEvent = { type: string; [k: string]: unknown };
 
+/** A site to migrate: a call to the deprecated API, or a discovered work item. */
+export type WorkSpan = DeprecatedCallSpan & { sliceKind?: SliceKind; notes?: string[] };
+
+/**
+ * Keep the Successor API list inside `budget` characters: entries named in
+ * `mention` (slice, compiler errors) first, then entries named in the guide,
+ * then the rest in declaration order.
+ */
+/**
+ * The guide sections most relevant to `mention`, within `budget` characters,
+ * kept in their original order. Sections are split at markdown headings.
+ */
+export function boundGuide(guide: string | undefined, mention: string, budget?: number): string | undefined {
+  if (!guide || !budget || guide.length <= budget) return guide;
+  const sections = guide.split(/\n(?=#{1,4} )/);
+  const words = new Set((mention.match(/[A-Za-z_$][\w$]{2,}/g) ?? []).map((w) => w.toLowerCase()));
+  const scored = sections.map((text, i) => {
+    const toks = text.match(/[A-Za-z_$][\w$]{2,}/g) ?? [];
+    const hits = new Set(toks.map((t) => t.toLowerCase()).filter((t) => words.has(t)));
+    return { text, i, score: hits.size };
+  });
+  const picked: typeof scored = [];
+  let used = 0;
+  for (const s of [...scored].sort((a, b) => b.score - a.score || a.i - b.i)) {
+    if (s.score === 0 && picked.length) break;
+    if (used + s.text.length > budget) continue;
+    picked.push(s);
+    used += s.text.length;
+  }
+  return picked.sort((a, b) => a.i - b.i).map((s) => s.text).join("\n\n[…]\n\n");
+}
+
+export function boundApi(
+  api: Array<{ symbol: string; signature: string | null }>,
+  mention: string,
+  guide: string,
+  budget?: number
+): Array<{ symbol: string; signature: string | null }> {
+  if (!budget) return api;
+  const size = (a: { symbol: string; signature: string | null }) => a.symbol.length + (a.signature?.length ?? 0) + 6;
+  if (api.reduce((n, a) => n + size(a), 0) <= budget) return api;
+  const words = (t: string) => new Set(t.match(/[A-Za-z_$][\w$]*/g) ?? []);
+  const m = words(mention);
+  const g = words(guide);
+  const owner = (a: { symbol: string }) => a.symbol.replace(/ members$/, "").split(".")[0];
+  const score = (a: { symbol: string }) => (m.has(owner(a)) ? 2 : g.has(owner(a)) ? 1 : 0);
+  const ranked = api.map((a, i) => ({ a, i, s: score(a) })).sort((x, y) => y.s - x.s || x.i - y.i);
+  const out: typeof ranked = [];
+  let used = 0;
+  for (const r of ranked) {
+    const entry = r.a.signature && r.a.signature.length > 400 ? { ...r.a, signature: `${r.a.signature.slice(0, 397)}...` } : r.a;
+    if (used + size(entry) > budget) continue;
+    used += size(entry);
+    out.push({ ...r, a: entry });
+  }
+  return out.sort((x, y) => x.i - y.i).map((r) => r.a);
+}
+
 export type SpanStep = {
   file: string;
   line: number;
@@ -82,6 +181,8 @@ export type SpanStep = {
   accepted: string | null;
   imports: string[];
   dataflow: ShapeResult | null;
+  /** Accepted from a learned rule without an LLM call */
+  viaRule?: boolean;
 };
 
 export type ImpactFix = {
@@ -123,6 +224,9 @@ export type MigrationRun = {
     churnRatio: number;
     promptTokens: number;
     completionTokens: number;
+    /** Prompt-cache writes and reads (Anthropic native API); not included in promptTokens */
+    cacheWriteTokens: number;
+    cacheReadTokens: number;
   };
   patches: Record<string, { before: string; after: string }>;
   ms: number;
@@ -139,7 +243,7 @@ function cleanProposal(raw: string, kind: SliceKind, awaitBefore: boolean, origi
   // Inline-code markup around a non-template slice would type-check as a string literal.
   const inline = /^`([^`]*)`;?$/.exec(s);
   if (inline && !original.trim().startsWith("`")) s = inline[1].trim();
-  if (kind === "expression") {
+  if (kind === "expression" || kind === "type") {
     s = s.replace(/;\s*$/, "");
     if (awaitBefore) s = s.replace(/^await\s+/, "");
   }
@@ -195,7 +299,7 @@ function lastImportEnd(sf: ts.SourceFile): number {
 }
 
 /** Line-level diff hunks (LCS). Ranges are 0-based [start, end). */
-function lineHunks(a: string[], b: string[]): Array<{ a1: number; a2: number; b1: number; b2: number }> {
+export function lineHunks(a: string[], b: string[]): Array<{ a1: number; a2: number; b1: number; b2: number }> {
   const n = a.length;
   const m = b.length;
   const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
@@ -225,36 +329,104 @@ function lineHunks(a: string[], b: string[]): Array<{ a1: number; a2: number; b1
   return hunks;
 }
 
+/** Reject an edit the project's own compiler cannot parse (e.g. syntax newer than its TypeScript). */
+function projectSyntaxCheck(cfg: MigrationConfig, gate: GateResult, before: string, after: string, file: string): void {
+  if (!cfg.projectParse) return;
+  const old = new Set(cfg.projectParse(before, file));
+  const fresh = cfg.projectParse(after, file).filter((e) => !old.has(e));
+  if (!fresh.length) return;
+  gate.ok = false;
+  gate.findings.push({
+    kind: "parse",
+    message: `This project's TypeScript compiler cannot parse the result (${fresh.slice(0, 2).join("; ")}). Use only syntax it supports.`,
+  });
+}
+
+/** Errors that mean a binding was lost: used before assigned, cannot find name, redeclared. */
+const BINDING_ERRORS = new Set([2454, 2304, 2552, 2448, 2451, 2300]);
+
+/** Names of the project's own functions called inside `range` (declared in project files, not packages). */
+function projectCallees(session: ProjectSession, sf: ts.SourceFile, range: { start: number; end: number }, oldDirs: string[]): string[] {
+  const checker = session.checker;
+  const out = new Set<string>();
+  const visit = (n: ts.Node) => {
+    if (n.getEnd() < range.start || n.getStart(sf) > range.end) return;
+    if ((ts.isCallExpression(n) || ts.isNewExpression(n)) && n.getStart(sf) >= range.start && n.getEnd() <= range.end) {
+      const e = n.expression;
+      const id = ts.isIdentifier(e) ? e : ts.isPropertyAccessExpression(e) ? e.name : null;
+      const decl = id ? resolveAlias(checker, checker.getSymbolAtLocation(id))?.declarations?.[0] : undefined;
+      const f = decl?.getSourceFile().fileName ?? "";
+      if (id && decl && !f.includes(`${path.sep}node_modules${path.sep}`) && !f.endsWith(".d.ts") && !oldDirs.some((d) => f.startsWith(d))) out.add(id.text);
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+  return [...out];
+}
+
 export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> {
   const t0 = Date.now();
   const armId: ArmId = cfg.arm ?? "arm1_morphapi";
   const emit = (type: string, payload: Record<string, unknown> = {}) => cfg.onEvent?.({ type, ...payload });
-  const usage = { prompt: 0, completion: 0 };
+  const usage = { prompt: 0, completion: 0, cacheWrite: 0, cacheRead: 0 };
   const ask = async (messages: LlmMessage[]) => {
     if (cfg.propose) return cfg.propose(messages);
     const r = await generateCode({ messages, model: cfg.model });
     usage.prompt += r.usage.prompt;
     usage.completion += r.usage.completion;
+    usage.cacheWrite += r.usage.cacheWrite ?? 0;
+    usage.cacheRead += r.usage.cacheRead ?? 0;
     return r.code;
   };
 
-  const session = ProjectSession.open(cfg.tsconfigPath, { requireDeps: true });
+  const session = cfg.session ?? ProjectSession.open(cfg.tsconfigPath, { requireDeps: true });
+  const label = cfg.migrationLabel ?? cfg.deprecatedSpec ?? `${cfg.deprecatedModules?.join(", ") ?? "previous version"} → ${cfg.successorModule}`;
   const files = cfg.files.map((f) => path.resolve(f));
   const originals = Object.fromEntries(files.map((f) => [f, session.text(f)]));
   const baselineDiags = session.diagnostics(files);
   const baseline = diagnosticKeys(baselineDiags);
   const signaturesBefore = snapshotSignatures(session, files);
-  const deprecatedModule = cfg.deprecatedSpec.split("#")[0];
-  const oracle: ExtractedOracle | null = extractOracle(session, cfg.successorModule, files[0]);
+  const deprecatedModule = cfg.deprecatedModules?.[0] ?? (cfg.deprecatedSpec ?? "").split("#")[0];
+  // Discover mode also drops successor imports that end up unused (an earlier attempt may have added them).
+  const cleanupModules = [...(cfg.deprecatedModules ?? [deprecatedModule]), ...(cfg.spans ? cfg.successorModules ?? [cfg.successorModule] : [])];
+  const oracle: ExtractedOracle | null = mergeOracles(
+    (cfg.successorModules ?? [cfg.successorModule])
+      .map((m) => extractOracle(session, m, files[0]))
+      .filter((o): o is ExtractedOracle => o != null)
+  );
   const candidates: ImportCandidate[] = oracle ? importCandidates(oracle) : [];
+  const gateOpts = { deprecatedNames: cfg.deprecatedSymbols, deprecatedSpec: cfg.deprecatedSpec, deprecatedDirs: cfg.deprecatedDirs, keepReceivers: Boolean(cfg.spans) };
   const successorApi: Array<{ symbol: string; signature: string | null }> = oracle
     ? oracle.exports.map((e) => ({ symbol: e.name, signature: e.signature }))
     : cfg.successorSymbols.map((s) => ({ symbol: s, signature: null }));
   for (const [owner, ms] of Object.entries(oracle?.members ?? {})) {
-    successorApi.push({ symbol: `${owner} members`, signature: ms.join(", ") });
+    const st = cfg.spans ? oracle?.statics?.[owner] : undefined;
+    if (st?.length) {
+      // Discover mode: say which members live on the class and which on its instances.
+      const inst = ms.filter((m) => !st.includes(m));
+      successorApi.push({ symbol: `${owner} static members (${owner}.X)`, signature: st.join(", ") });
+      if (inst.length) successorApi.push({ symbol: `${owner} instance members (new ${owner}(…).x)`, signature: inst.join(", ") });
+    } else successorApi.push({ symbol: `${owner} members`, signature: ms.join(", ") });
   }
 
-  const spans = findDeprecatedReferences(session, cfg.deprecatedSpec, { files });
+  // Static context, identical across calls so the provider can cache it.
+  const staticContext = cfg.cacheStaticContext
+    ? [
+        `## Successor API (${(cfg.successorModules ?? [cfg.successorModule]).join(", ")}, read from its declarations)\n` +
+          boundApi(successorApi, "", cfg.guide ?? "", 40000)
+            .map((a) => `- ${a.symbol}${a.signature ? `: ${a.signature}` : ""}`)
+            .join("\n"),
+        cfg.guide ? `## Migration guide (prose; the Successor API list wins on conflicts)\n${cfg.guide.slice(0, 60000)}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n")
+    : null;
+  /** Insert the cached static block after the system instructions. */
+  const withStatic = (msgs: LlmMessage[]): LlmMessage[] =>
+    staticContext ? [msgs[0], { role: "system", content: staticContext, cache: true }, ...msgs.slice(1)] : msgs;
+  const apiExcerpt = (mention: string) => boundApi(successorApi, mention, cfg.guide ?? "", staticContext ? 3000 : cfg.apiBudget);
+
+  const spans: WorkSpan[] = cfg.spans ?? (cfg.deprecatedSpec ? findDeprecatedReferences(session, cfg.deprecatedSpec, { files }) : []);
   emit("start", {
     arm: armId,
     model: cfg.model?.model ?? "custom",
@@ -276,7 +448,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         {
           role: "user",
           content: [
-            `Migrate every use of ${cfg.deprecatedSpec} to ${cfg.successorModule}.`,
+            `Migrate every use of ${label} to ${cfg.successorModule}.`,
             cfg.task ?? "",
             cfg.guide ? `## Migration guide\n${cfg.guide}` : "",
             `## ${path.basename(file)}\n\`\`\`ts\n${session.text(file)}\n\`\`\``,
@@ -303,7 +475,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   } else {
     const arm = ARMS[armId];
     const maxAttempts = arm.oracle ? (cfg.maxAttempts ?? 3) : 1;
-    const byFile = new Map<string, DeprecatedCallSpan[]>();
+    const byFile = new Map<string, WorkSpan[]>();
     for (const s of spans) byFile.set(s.file, [...(byFile.get(s.file) ?? []), s]);
 
     const factsBySpan = new Map<string, SliceFacts | null>();
@@ -332,12 +504,30 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
 
     const swapShift = new Map<string, number>();
     const swapped: Record<string, string> = {};
-    for (const f of files) {
-      const swap = swapSharedImports(session.text(f), f, { from: deprecatedModule, to: cfg.successorModule, shared });
-      if (!swap.moved.length) continue;
-      swapShift.set(f, swap.code.length - session.text(f).length);
-      swapped[f] = swap.code;
-      emit("imports", { file: rel(cfg.repoRoot, f), swapped: swap.moved });
+    const pairs = cfg.swapPairs ?? [{ from: deprecatedModule, to: cfg.successorModule }];
+    const sharedFor = (from: string, to: string) => {
+      if (from === deprecatedModule && to === cfg.successorModule && !cfg.swapPairs) return shared;
+      const o1 = extractOracle(session, from, files[0]);
+      const o2 = extractOracle(session, to, files[0]);
+      const named = new Set(o2?.exports.filter((e) => e.kind === "named").map((e) => e.name) ?? []);
+      const d1 = o1?.exports.find((e) => e.kind === "default")?.name;
+      return {
+        named: (o1?.exports ?? []).filter((e) => e.kind === "named" && named.has(e.name)).map((e) => e.name),
+        hasDefault: Boolean(d1 && d1 !== "default" && o2?.exports.some((e) => e.kind === "default" && e.name === d1)),
+      };
+    };
+    for (const pair of pairs) {
+      const sh = sharedFor(pair.from, pair.to);
+      if (!sh.named.length && !sh.hasDefault) continue;
+      for (const f of files) {
+        const before = session.text(f);
+        const swap = swapSharedImports(before, f, { from: pair.from, to: pair.to, shared: sh });
+        if (!swap.moved.length) continue;
+        swapShift.set(f, (swapShift.get(f) ?? 0) + swap.code.length - before.length);
+        swapped[f] = swap.code;
+        session.update({ [f]: swap.code });
+        emit("imports", { file: rel(cfg.repoRoot, f), swapped: swap.moved, from: pair.from, to: pair.to });
+      }
     }
     if (Object.keys(swapped).length) session.update(swapped);
 
@@ -350,25 +540,36 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
 
       const inserted: TextEdit[] = [];
       const shiftOf = (p: number) => inserted.filter((e) => e.pos <= p).reduce((n, e) => n + e.text.length - e.del, 0);
+      /** Lowest start of a slice already rewritten in this file; spans are processed in descending order. */
+      let consumedFrom = Infinity;
       for (const span0 of descending) {
         const span = { ...span0, start: span0.start + shiftOf(span0.start), end: span0.end + shiftOf(span0.start) };
         const bodySf = ts.createSourceFile(file, body, ts.ScriptTarget.Latest, true);
-        let kind: SliceKind = needsStatementSlice(cfg.successorKind) ? "statement" : "expression";
+        let kind: SliceKind = span0.sliceKind ?? (needsStatementSlice(cfg.successorKind) ? "statement" : "expression");
         let slice: Slice = sliceFor(bodySf, span, kind);
+        if (slice.end > consumedFrom) {
+          // An earlier (escalated) rewrite already covered this site; its text has moved.
+          emit("skipped", { file: rel(cfg.repoRoot, file), line: span.startLine, reason: "overlaps an earlier rewrite" });
+          continue;
+        }
+        const spanRules = [...(span0.notes?.length ? [`The upgrade breaks this code: ${span0.notes.join(" | ")}`] : []), ...(cfg.rules ?? [])];
         let escalated = false;
 
         session.update({ [file]: body });
+        // Pre-edit program, kept for rule learning/matching (TypeScript programs are immutable).
+        const preSf = session.sourceFile(file)!;
+        const preChecker = session.checker;
         const facts = factsBySpan.get(`${file}:${span.origStart}`) ?? null;
 
         const promptFor = (feedback?: string): LlmMessage[] => {
           const msgs = buildSlicePrompt({
             slice,
             facts,
-            successorApi,
-            deprecatedSpec: cfg.deprecatedSpec,
-            successorModule: cfg.successorModule,
-            rules: cfg.rules,
-            guide: cfg.guide,
+            successorApi: apiExcerpt(`${slice.text}\n${spanRules.join("\n")}\n${feedback ?? ""}`),
+            deprecatedSpec: label,
+            successorModule: cfg.successorLabel ?? (cfg.successorModules ?? [cfg.successorModule]).join(", "),
+            rules: spanRules,
+            guide: staticContext ? undefined : boundGuide(cfg.guide, `${slice.text}\n${spanRules.join("\n")}`, cfg.guideBudget),
             feedback,
           });
           if (arm.context === "file") {
@@ -377,15 +578,19 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               `## File ${path.basename(file)}\n\`\`\`ts\n${body}\n\`\`\``
             );
           }
-          return msgs;
+          return withStatic(msgs);
         };
-        const firstPrompt = promptFor()[1].content;
+        const firstPrompt = promptFor().slice(-1)[0].content;
         emit("span", { file: rel(cfg.repoRoot, file), line: span.startLine, slice: slice.text, kind, prompt: firstPrompt, facts });
 
         let accepted: string | null = null;
         let acceptedImports: string[] = [];
         let acceptedRange: { start: number; end: number } | null = null;
         let acceptedAsync: TextEdit[] = [];
+        let acceptedBindings = "";
+        let originalAny = cfg.spans ? anyProfile(session.sourceFile(file)!, session.checker, slice) : undefined;
+        const bindingBefore = cfg.spans ? session.diagnostics([file]).filter((d) => BINDING_ERRORS.has(d.code)) : [];
+        let keepCalls = cfg.spans ? projectCallees(session, session.sourceFile(file)!, slice, cfg.deprecatedDirs ?? []) : undefined;
         const evaluate = (candidate: string): GateResult => {
           const awaitBefore = /await\s*$/.test(body.slice(Math.max(0, slice.start - 8), slice.start));
           const code = reindent(cleanProposal(candidate, slice.kind, awaitBefore, slice.text), body, slice.start);
@@ -404,13 +609,22 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           const delta = withImports.code.length - spliced.length;
           session.update({ [file]: withImports.code });
           const range = { start: slice.start + shift + delta, end: slice.start + shift + delta + code.length };
-          const gate = gateSpan(session, file, range, oracle, { deprecatedNames: cfg.deprecatedSymbols, deprecatedSpec: cfg.deprecatedSpec });
+          const gate = gateSpan(session, file, range, oracle, { ...gateOpts, original: slice.text, originalAny, keepCalls });
+          projectSyntaxCheck(cfg, gate, body, withImports.code, file);
+          if (cfg.spans) {
+            // A rewrite must not break bindings outside its slice (dropped assignment or declaration).
+            const broken = session.diagnostics([file]).filter((d) => BINDING_ERRORS.has(d.code) && (d.start < range.start || d.start > range.end));
+            const fresh = broken.filter((d) => !bindingBefore.some((b) => b.code === d.code && b.message === d.message));
+            for (const d of fresh.slice(0, 3)) gate.findings.push({ kind: "type_error", line: d.line, code: d.code, message: `Your replacement breaks code outside the slice (line ${d.line}): ${d.message} Keep every assignment and declaration the slice made.` });
+            if (fresh.length) gate.ok = false;
+          }
           const result = arm.oracle ? gate : { ok: true, findings: [], warnings: [...gate.findings, ...gate.warnings] };
           if (result.ok) {
             accepted = code;
             acceptedImports = withImports.added;
             acceptedRange = range;
             acceptedAsync = asyncEdits;
+            acceptedBindings = cfg.ruleBook ? bindingsIn(session.sourceFile(file)!, session.checker, range.start, range.end) : "";
           } else {
             session.update({ [file]: addMissingImports(body, file, []).code });
           }
@@ -418,22 +632,54 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         };
 
         let attempts: AttemptRecord[] = [];
-        const loop = await repairLoop({
-          maxAttempts,
-          propose: (feedback, attempt) => {
-            emit("propose", { file: rel(cfg.repoRoot, file), line: span.startLine, attempt, feedback: feedback ?? null });
-            return ask(promptFor(feedback));
-          },
-          evaluate,
-          onAttempt: (rec) => emit("attempt", { file: rel(cfg.repoRoot, file), line: span.startLine, ...rec, sliceKind: slice.kind }),
-        });
-        attempts = loop.attempts.map((a) => ({ ...a, sliceKind: slice.kind }));
+        // Learned rule first: no LLM call if the gate accepts it and its names resolve as where it was learned.
+        const ruleAttempts: AttemptRecord[] = [];
+        let viaRule = false;
+        const suggestion = cfg.ruleBook?.suggest(preSf, preChecker, slice) ?? null;
+        if (suggestion) {
+          const r = evaluate(suggestion.text);
+          if (r.ok && suggestion.rule.newBindings != null && acceptedBindings !== suggestion.rule.newBindings) {
+            // Same text, different meaning here (e.g. a local class shadowing the SDK type): undo.
+            r.ok = false;
+            r.findings.push({ kind: "type_error", message: `Learned rule resolves differently here (${acceptedBindings} vs ${suggestion.rule.newBindings}).` });
+            accepted = null;
+            acceptedRange = null;
+            acceptedImports = [];
+            acceptedAsync = [];
+            session.update({ [file]: addMissingImports(body, file, []).code });
+          }
+          ruleAttempts.push({ attempt: 0, candidate: suggestion.text, ok: r.ok, findings: r.findings, warnings: r.warnings, sliceKind: slice.kind });
+          if (r.ok) suggestion.rule.uses++;
+          else suggestion.rule.fails++;
+          viaRule = r.ok;
+          emit(r.ok ? "rule_applied" : "rule_rejected", {
+            file: rel(cfg.repoRoot, file),
+            line: span.startLine,
+            rule: suggestion.rule.kind,
+            from: `${rel(cfg.repoRoot, suggestion.rule.from.file)}:${suggestion.rule.from.line}`,
+            findings: r.findings.slice(0, 2).map((f) => f.message.slice(0, 200)),
+          });
+        }
+        const loop = viaRule
+          ? { accepted: suggestion!.text, attempts: [] as AttemptRecord[] }
+          : await repairLoop({
+              maxAttempts,
+              propose: (feedback, attempt) => {
+                emit("propose", { file: rel(cfg.repoRoot, file), line: span.startLine, attempt, feedback: feedback ?? null });
+                return ask(promptFor(feedback));
+              },
+              evaluate,
+              onAttempt: (rec) => emit("attempt", { file: rel(cfg.repoRoot, file), line: span.startLine, ...rec, sliceKind: slice.kind }),
+            });
+        attempts = [...ruleAttempts, ...loop.attempts.map((a) => ({ ...a, sliceKind: slice.kind }))];
 
         const needsStatements = (fs: GateResult["findings"]) => fs.some((f) => f.kind === "parse" || f.receiverOwners?.length);
-        if (!accepted && slice.kind === "expression" && attempts.some((a) => needsStatements(a.findings))) {
+        if (!accepted && slice.kind !== "statement" && attempts.some((a) => needsStatements(a.findings) || slice.kind === "type")) {
           kind = "statement";
           slice = sliceFor(bodySf, span, "statement");
           escalated = true;
+          if (cfg.spans) originalAny = anyProfile(session.sourceFile(file)!, session.checker, slice);
+          if (cfg.spans) keepCalls = projectCallees(session, session.sourceFile(file)!, slice, cfg.deprecatedDirs ?? []);
           emit("escalate", { file: rel(cfg.repoRoot, file), line: span.startLine, slice: slice.text });
           const retry = await repairLoop({
             maxAttempts: arm.oracle ? 2 : 1,
@@ -477,6 +723,8 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
             inserted.push(...acceptedAsync);
             emit("asyncified", { file: rel(cfg.repoRoot, file), line: bodySf.getLineAndCharacterOfPosition(acceptedAsync[0].pos).line + 1 });
           }
+          consumedFrom = Math.min(consumedFrom, slice.start);
+          if (cfg.ruleBook && !viaRule) cfg.ruleBook.learn(preSf, preChecker, slice, acceptedCode, acceptedBindings);
           emit("accepted", { file: rel(cfg.repoRoot, file), line: span.startLine, code: acceptedCode, imports: acceptedImports });
         } else {
           session.update({ [file]: addMissingImports(body, file, []).code });
@@ -495,10 +743,11 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           accepted,
           imports: acceptedImports,
           dataflow,
+          viaRule,
         });
       }
 
-      const fin = reconcileImports(body, file, { add: candidates, cleanupModules: [deprecatedModule] });
+      const fin = reconcileImports(body, file, { add: candidates, cleanupModules });
       session.update({ [file]: fin.code });
       if (fin.added.length || fin.removed.length) emit("imports", { file: rel(cfg.repoRoot, file), added: fin.added, removed: fin.removed });
     }
@@ -516,18 +765,20 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       changedFiles,
       baselineDiagnostics: baseline,
       signaturesBefore,
-      deprecatedModule,
+      deprecatedModule: cfg.deprecatedModules ? undefined : deprecatedModule,
+      deprecatedModules: cfg.deprecatedModules,
+      moduleUseFiles: cfg.impactAllFiles ? files : undefined,
     });
 
   if (armCfg?.impact) {
     impact = runImpact();
     let current = impact;
     emit("impact", { round: 1, oneHopFiles: impact.oneHopFiles.map((f) => rel(cfg.repoRoot, f)), findings: impact.findings, changedFunctions: impact.changedFunctions });
-    for (let round = 2; round <= 3 && !current.complete; round++) {
+    for (let round = 2; round <= 1 + (cfg.impactRounds ?? 2) && !current.complete; round++) {
       let fixed = 0;
       const repairedStatements = new Set<string>();
       const ordered = [...current.findings].sort((a, b) => a.file.localeCompare(b.file) || (b.start ?? 0) - (a.start ?? 0));
-      for (const f of ordered.slice(0, 8)) {
+      for (const f of ordered.slice(0, cfg.impactLimit ?? 8)) {
         const sf = session.sourceFile(f.file);
         if (!sf || f.start == null) continue;
         if (f.reason === "missing_await") {
@@ -547,41 +798,75 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
           continue;
         }
         if (f.reason !== "new_type_error" && f.reason !== "same_api_leftover" && f.reason !== "deprecated_module_use") continue;
-        const slice = sliceFor(sf, { start: f.start, end: f.start + 1 }, "statement");
-        const stmtKey = `${f.file}:${slice.start}`;
+        // Def-use attribution: if the broken statement reads a value produced by a site we
+        // already rewrote, repair that producer instead of patching over the symptom here.
+        // Producer first; once it has been tried, later findings repair their own statement.
+        const accepted = [...(cfg.priorAccepted ?? []), ...steps].map((x) => ({ ...x, abs: path.resolve(cfg.repoRoot, x.file) }));
+        const found = f.reason === "new_type_error" && cfg.spans && !cfg.noAttribution ? producerOf(session, sf, f.start, accepted) : null;
+        const foundSf = found ? session.sourceFile(found.file) : undefined;
+        const producer = found && foundSf && !repairedStatements.has(`${found.file}:${sliceFor(foundSf, found, "statement").start}`) ? found : null;
+        // The statement to repair may live in another file (a rewritten type alias, say).
+        const tFile = producer?.file ?? f.file;
+        const tsf = session.sourceFile(tFile)!;
+        const slice = sliceFor(tsf, producer ?? { start: f.start, end: f.start + 1 }, "statement");
+        if (producer) emit("attributed", { file: rel(cfg.repoRoot, f.file), line: f.line, producerFile: rel(cfg.repoRoot, tFile), producerLine: slice.startLine, detail: f.detail });
+        const stmtKey = `${tFile}:${slice.start}`;
         if (repairedStatements.has(stmtKey)) continue;
         repairedStatements.add(stmtKey);
         const moduleUse = f.reason === "deprecated_module_use" ? new RegExp(`\\b${f.symbol}\\b`) : null;
-        const text = session.text(f.file);
-        const fileDiagsBefore = session.diagnostics([f.file]).length;
+        const text = session.text(tFile);
+        const checkFiles = [...new Set([tFile, f.file])];
+        const fileDiagsBefore = session.diagnostics(checkFiles).length;
         let acceptedFix: string | null = null;
+        const repairFacts =
+          armCfg.context === "slice" && cfg.spans
+            ? sliceFactsFor(session, {
+                repoRoot: cfg.repoRoot,
+                files,
+                span: { file: tFile, start: slice.start, end: slice.end, text: slice.text },
+                deprecatedSymbols: cfg.deprecatedSymbols,
+                successorModule: cfg.successorModule,
+                successorSymbols: cfg.successorSymbols,
+              }).facts
+            : null;
+        const repairAny = cfg.spans ? anyProfile(tsf, session.checker, slice) : undefined;
+        const keepCalls = cfg.spans ? projectCallees(session, tsf, slice, cfg.deprecatedDirs ?? []) : undefined;
         const loop = await repairLoop({
           maxAttempts: armCfg.oracle ? 2 : 1,
           propose: (feedback) =>
             ask(
-              buildSlicePrompt({
+              withStatic(buildSlicePrompt({
                 slice,
-                facts: null,
-                successorApi,
-                deprecatedSpec: cfg.deprecatedSpec,
-                successorModule: cfg.successorModule,
-                rules: [`This statement breaks after the migration: ${f.detail}`, "Fix it without changing behavior.", ...(cfg.rules ?? [])],
-                guide: cfg.guide,
+                facts: repairFacts,
+                successorApi: apiExcerpt(`${slice.text}\n${f.detail}\n${feedback ?? ""}`),
+                deprecatedSpec: label,
+                successorModule: cfg.successorLabel ?? (cfg.successorModules ?? [cfg.successorModule]).join(", "),
+                rules: [
+                  producer
+                    ? `This statement was migrated earlier, and a later use of it now fails${tFile === f.file ? "" : ` in ${rel(cfg.repoRoot, f.file)}`} at line ${f.line}: ${f.detail}. Change this statement so the later use type-checks (e.g. keep literal types precise).`
+                    : `This statement breaks after the migration: ${f.detail}`,
+                  "Fix it without changing behavior.",
+                  ...(cfg.rules ?? []),
+                ],
+                guide: staticContext ? undefined : boundGuide(cfg.guide, `${slice.text}\n${f.detail}`, cfg.guideBudget),
                 feedback,
-              })
+              }))
             ),
           evaluate: (candidate) => {
             const code = reindent(cleanProposal(candidate, "statement", false, slice.text), text, slice.start);
             if (!parsesAs(code, "statement")) return { ok: false, findings: [{ kind: "parse", message: "Output must parse as statements." }], warnings: [] };
             const spliced = text.slice(0, slice.start) + code + text.slice(slice.end);
-            const withImports = addMissingImports(spliced, f.file, candidates);
+            const withImports = addMissingImports(spliced, tFile, candidates);
             const delta = withImports.code.length - spliced.length;
-            session.update({ [f.file]: withImports.code });
-            const gate = gateSpan(session, f.file, { start: slice.start + delta, end: slice.start + delta + code.length }, oracle, {
-              deprecatedNames: cfg.deprecatedSymbols,
-              deprecatedSpec: cfg.deprecatedSpec,
+            session.update({ [tFile]: withImports.code });
+            const gate = gateSpan(session, tFile, { start: slice.start + delta, end: slice.start + delta + code.length }, oracle, {
+              ...gateOpts,
+              original: slice.text,
+              originalAny: repairAny,
+              keepCalls,
             });
-            const after = session.diagnostics([f.file]);
+            projectSyntaxCheck(cfg, gate, text, withImports.code, tFile);
+            const after = session.diagnostics(checkFiles);
             if (gate.ok && moduleUse) {
               if (moduleUse.test(code)) {
                 gate.ok = false;
@@ -597,14 +882,14 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
               );
             }
             if (gate.ok) acceptedFix = code;
-            else session.update({ [f.file]: text });
+            else session.update({ [tFile]: text });
             return gate;
           },
           onAttempt: (rec) => emit("repair_attempt", { file: rel(cfg.repoRoot, f.file), line: f.line, reason: f.reason, ...rec }),
         });
         impactFixes.push({
           reason: f.reason,
-          file: rel(cfg.repoRoot, f.file),
+          file: rel(cfg.repoRoot, tFile),
           line: f.line,
           before: slice.text,
           after: acceptedFix,
@@ -625,7 +910,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
     const cleaned: Record<string, string> = {};
     for (const f of files) {
       if (session.text(f) === originals[f]) continue;
-      const r = reconcileImports(session.text(f), f, { add: candidates, cleanupModules: [deprecatedModule] });
+      const r = reconcileImports(session.text(f), f, { add: candidates, cleanupModules });
       if (r.code !== session.text(f)) cleaned[f] = r.code;
     }
     if (Object.keys(cleaned).length) session.update(cleaned);
@@ -703,7 +988,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   const run: MigrationRun = {
     arm: armId,
     model: cfg.model?.model ?? "custom",
-    deprecatedSpec: cfg.deprecatedSpec,
+    deprecatedSpec: cfg.deprecatedSpec ?? label,
     successorModule: cfg.successorModule,
     oracle: oracle ? { exports: oracle.exports.length, allowed: oracle.allowed.length } : null,
     steps,
@@ -734,6 +1019,8 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
       churnRatio: changedLines ? outside / changedLines : 0,
       promptTokens: usage.prompt,
       completionTokens: usage.completion,
+      cacheWriteTokens: usage.cacheWrite,
+      cacheReadTokens: usage.cacheRead,
     },
     patches,
     ms: Date.now() - t0,

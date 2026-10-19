@@ -141,7 +141,7 @@ export { addMissingImports, reconcileImports, removeUnusedImports } from "./impo
 export type { ImportCandidate, ImportEdits } from "./importReconcile";
 export { extractOracle, importCandidates, suggestSymbols } from "./oracleExtract";
 export type { ExtractedOracle, OracleExport } from "./oracleExtract";
-export { feedbackFor, gateSpan, repairLoop } from "./gate";
+export { countAnyKeywords, feedbackFor, gateSpan, repairLoop } from "./gate";
 export type { AttemptRecord, GateFinding, GateFindingKind, GateResult } from "./gate";
 export { propagateResponseShape } from "./dataflow";
 export type { ShapeResult, ShapeRewrite } from "./dataflow";
@@ -163,3 +163,44 @@ export type {
   FocusDfgNode,
   SliceFacts,
 } from "./codePropertyGraph";
+export { boundApi, lineHunks } from "./pipeline";
+export type { WorkSpan } from "./pipeline";
+export { mergeOracles } from "./oracleExtract";
+export {
+  ALIAS_SUFFIX,
+  aliasOf,
+  aliasSpecifiersIn,
+  bridgeAliases,
+  bridgePaths,
+  installPreviousVersion,
+  mapPosition,
+  rewriteSpecifiers,
+} from "./bridge";
+export type { Bridge, SpecifierEdit } from "./bridge";
+export { chooseSlice, discoverWorkItems, findHandoffs, orderByDataFlow, producerOf, testFailureItems } from "./discover";
+export type { DiscoverInput, Handoff, WorkItem } from "./discover";
+export { runRepoMigration } from "./repoMigration";
+export type { RepoMigrationConfig, RepoMigrationRun } from "./repoMigration";
+export { ProjectCompiler } from "./projectCompiler";
+export { setInlineTypeModifiers } from "./importReconcile";
+export { RuleBook } from "./ruleBook";
+export type { LearnedRule } from "./ruleBook";
+export { groupIntoUnits } from "./discover";
+export {
+  danglingRefs,
+  droppedUses,
+  exportedSurface,
+  guideChecklist,
+  guideItems,
+  importedUses,
+  namesMissingInNewVersion,
+  packageEntryFiles,
+  publicApiChanges,
+  routeOf,
+  tokenSites,
+} from "./behaviourChecks";
+export type { BehaviourFinding, GuideItem } from "./behaviourChecks";
+export { changedDefaultsFor, changedDefaultsSummary, changedDefaultUses, extractDefaults } from "./versionDefaults";
+export type { ChangedDefault, ChangedDefaultUse, DefaultsTable } from "./versionDefaults";
+export { crossVersionFindings, indexOldDeclarations } from "./crossVersionChecks";
+export type { CrossVersionFinding } from "./crossVersionChecks";

@@ -9,7 +9,7 @@ import { buildCodePropertyGraph, type SliceFacts } from "./codePropertyGraph";
 import type { LlmMessage } from "./llm";
 import type { ProjectSession } from "./program";
 
-export type SliceKind = "expression" | "statement";
+export type SliceKind = "expression" | "statement" | "type";
 
 export type SuccessorKind = "call" | "builder" | "constructor_then_call" | "multi_step";
 
@@ -64,7 +64,17 @@ export function sliceFor(
 ): Slice {
   let node = innermost(sf, span.start, span.end) ?? sf;
   while (ts.isParenthesizedExpression(node.parent ?? sf) && node.parent) node = node.parent;
-  if (kind === "expression") {
+  if (kind === "type") {
+    // Outermost type node around the span, e.g. the whole `Promise<CreateCompletionResponse>`.
+    let cur: ts.Node | undefined = node;
+    let top: ts.Node | undefined;
+    while (cur && !ts.isSourceFile(cur)) {
+      if (ts.isTypeNode(cur)) top = cur;
+      else if (top) break;
+      cur = cur.parent;
+    }
+    if (top) node = top;
+  } else if (kind === "expression") {
     for (;;) {
       const p = node.parent;
       if (!p) break;
@@ -97,6 +107,12 @@ function parseErrors(sf: ts.SourceFile): number {
 export function parsesAs(code: string, kind: SliceKind): boolean {
   const body = code.trim().replace(/;$/, "");
   if (!body) return false;
+  if (kind === "type") {
+    const sf = ts.createSourceFile("__slice.ts", `let __x: ${body};`, ts.ScriptTarget.Latest, true);
+    if (parseErrors(sf) || sf.statements.length !== 1) return false;
+    const st = sf.statements[0];
+    return ts.isVariableStatement(st) && st.declarationList.declarations.length === 1 && !st.declarationList.declarations[0].initializer;
+  }
   if (kind === "expression") {
     const sf = ts.createSourceFile("__slice.ts", `const __x = (\n${body}\n);`, ts.ScriptTarget.Latest, true);
     if (parseErrors(sf) || sf.statements.length !== 1) return false;
@@ -125,7 +141,7 @@ export function sliceFactsFor(
   }
 ): SliceFactsResult {
   const sf = session.sourceFile(input.span.file);
-  const base = path.basename(input.span.file);
+  const base = path.relative(input.repoRoot, input.span.file).split(path.sep).join("/");
   const s = sf?.getLineAndCharacterOfPosition(input.span.start);
   const e = sf?.getLineAndCharacterOfPosition(input.span.end);
   const usage = {
@@ -171,7 +187,9 @@ export function buildSlicePrompt(input: SlicePromptInput): LlmMessage[] {
   const boundary =
     slice.kind === "expression"
       ? "Output ONLY one TypeScript expression that replaces the slice. No statements, no imports, no prose."
-      : "Output ONLY TypeScript statement(s) that replace the slice. Keep any variable the slice declared. No imports, no prose.";
+      : slice.kind === "type"
+        ? "Output ONLY one TypeScript type that replaces the slice (a type annotation). No statements, no imports, no prose."
+        : "Output ONLY TypeScript statement(s) that replace the slice. Keep any variable the slice declared. No imports, no prose.";
   const api = input.successorApi.map((a) => `- ${a.symbol}${a.signature ? `: ${a.signature}` : ""}`).join("\n");
   return [
     {

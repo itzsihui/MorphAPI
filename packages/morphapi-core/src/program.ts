@@ -63,6 +63,21 @@ export function findNearestTsconfig(startDir: string): string | null {
   return ts.findConfigFile(startDir, ts.sys.fileExists) ?? null;
 }
 
+/**
+ * Module aliases (the version bridge): `alias` and `alias/sub` resolve as
+ * `module` / `module/sub` from `fromFile`, a file inside the folder that holds
+ * the previous version. Works under every moduleResolution mode, unlike paths.
+ */
+export type ModuleAlias = { alias: string; module: string; fromFile: string };
+const ALIASES = new WeakMap<ts.CompilerOptions, ModuleAlias[]>();
+
+function dealias(moduleName: string, containingFile: string, options: ts.CompilerOptions): { name: string; from: string } {
+  for (const a of ALIASES.get(options) ?? []) {
+    if (moduleName === a.alias || moduleName.startsWith(`${a.alias}/`)) return { name: a.module + moduleName.slice(a.alias.length), from: a.fromFile };
+  }
+  return { name: moduleName, from: containingFile };
+}
+
 /** Resolve a bare module specifier (e.g. "mail-send-v2") the way tsc would. */
 export function resolveModuleFile(
   moduleName: string,
@@ -70,7 +85,8 @@ export function resolveModuleFile(
   options: ts.CompilerOptions,
   mode?: ts.ResolutionMode
 ): string | null {
-  const res = ts.resolveModuleName(moduleName, containingFile, options, ts.sys, undefined, undefined, mode);
+  const d = dealias(moduleName, containingFile, options);
+  const res = ts.resolveModuleName(d.name, d.from, options, ts.sys, undefined, undefined, mode);
   return res.resolvedModule?.resolvedFileName ?? null;
 }
 
@@ -142,20 +158,36 @@ export class ProjectSession {
   private host: ts.CompilerHost;
   private builder: ts.EmitAndSemanticDiagnosticsBuilderProgram;
 
-  private constructor(configPath: string, opts: { extraRootFiles?: string[] }) {
+  private constructor(configPath: string, opts: { extraRootFiles?: string[]; paths?: Record<string, string[]>; aliases?: ModuleAlias[] }) {
     this.configPath = path.resolve(configPath);
     this.projectDir = path.dirname(this.configPath);
     const read = ts.readConfigFile(this.configPath, ts.sys.readFile);
     if (read.error) throw new Error(`Cannot read ${this.configPath}: ${formatDiagnostic(read.error)}`);
     const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, this.projectDir, undefined, this.configPath);
     this.options = { ...parsed.options, noEmit: true };
+    if (opts.paths && Object.keys(opts.paths).length) {
+      // Extra module aliases (the version bridge). Targets are absolute, so they do not depend on baseUrl.
+      this.options.paths = { ...(parsed.options.paths ?? {}), ...opts.paths };
+    }
     this.configErrors = parsed.errors.map(formatDiagnostic);
     this.roots = [...parsed.fileNames, ...(opts.extraRootFiles ?? []).map((f) => path.resolve(f))];
 
+    if (opts.aliases?.length) ALIASES.set(this.options, opts.aliases);
     const base = ts.createIncrementalCompilerHost(this.options, ts.sys);
     const norm = (f: string) => path.resolve(f);
+    const moduleCache = ts.createModuleResolutionCache(this.projectDir, (f) => f, this.options);
     this.host = {
       ...base,
+      ...(opts.aliases?.length
+        ? {
+            resolveModuleNameLiterals: (literals, containingFile, redirected, options, containingSf) =>
+              literals.map((lit) => {
+                const mode = ts.getModeForUsageLocation(containingSf, lit, options);
+                const d = dealias(lit.text, containingFile, options);
+                return ts.resolveModuleName(d.name, d.from, options, this.host, d.from === containingFile ? moduleCache : undefined, redirected, mode);
+              }),
+          }
+        : {}),
       fileExists: (f) => this.overrides.has(norm(f)) || base.fileExists(f),
       readFile: (f) => this.overrides.get(norm(f)) ?? base.readFile(f),
       getSourceFile: (f, langVersion, onError, shouldCreate) => {
@@ -186,7 +218,7 @@ export class ProjectSession {
 
   static open(
     tsconfigPath: string,
-    opts: { extraRootFiles?: string[]; requireDeps?: boolean } = {}
+    opts: { extraRootFiles?: string[]; requireDeps?: boolean; paths?: Record<string, string[]>; aliases?: ModuleAlias[] } = {}
   ): ProjectSession {
     const dir = path.dirname(path.resolve(tsconfigPath));
     if (opts.requireDeps && !hasNodeModules(dir)) throw new DepsNotInstalledError(dir);
@@ -254,9 +286,11 @@ export class ProjectSession {
     for (const f of files) {
       const sf = this.sourceFile(f);
       if (!sf) continue;
+      // Ask the current Program, not the builder: the builder's per-file cache can
+      // return diagnostics computed before a dependency of `sf` was patched.
       const diags = [
-        ...this.builder.getSyntacticDiagnostics(sf),
-        ...this.builder.getSemanticDiagnostics(sf),
+        ...this.program.getSyntacticDiagnostics(sf),
+        ...this.program.getSemanticDiagnostics(sf),
       ];
       for (const d of diags) {
         out.push({

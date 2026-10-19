@@ -4,6 +4,8 @@ import * as path from "path";
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
   content: string;
+  /** Anthropic native API: mark this block as a prompt-cache breakpoint (system messages only). */
+  cache?: boolean;
 }
 
 export interface LlmGenerateOptions {
@@ -58,11 +60,56 @@ function requireApiKey(): string {
 /**
  * OpenAI-compatible chat completion. Always live — no offline fixture fallback.
  */
+export type LlmUsage = { prompt: number; completion: number; cacheWrite?: number; cacheRead?: number };
+
+/**
+ * Anthropic's native Messages API. Used for Anthropic endpoints because the
+ * OpenAI-compatible endpoint does not support prompt caching.
+ */
+async function anthropicMessages(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  temperature: number,
+  messages: LlmMessage[]
+): Promise<{ text: string; usage: LlmUsage }> {
+  const system = messages
+    .filter((m) => m.role === "system")
+    .map((m) => ({ type: "text", text: m.content, ...(m.cache ? { cache_control: { type: "ephemeral" } } : {}) }));
+  const turns = messages.filter((m) => m.role !== "system").map((m) => ({ role: m.role, content: m.content }));
+  let res: Response | undefined;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    res = await fetch(`${baseUrl}/messages`, {
+      method: "POST",
+      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model, temperature, max_tokens: 4096, system, messages: turns }),
+    });
+    // Retry rate limits and overload with backoff.
+    if (res.status !== 429 && res.status !== 529 && res.status < 500) break;
+    await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+  }
+  if (!res || !res.ok) throw new Error(`LLM request failed (${res?.status}): ${await res?.text()}`);
+  const json = (await res.json()) as {
+    content?: Array<{ type: string; text?: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number; cache_creation_input_tokens?: number; cache_read_input_tokens?: number };
+  };
+  const u = json.usage ?? {};
+  return {
+    text: (json.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join(""),
+    usage: {
+      prompt: u.input_tokens ?? 0,
+      completion: u.output_tokens ?? 0,
+      cacheWrite: u.cache_creation_input_tokens ?? 0,
+      cacheRead: u.cache_read_input_tokens ?? 0,
+    },
+  };
+}
+
 export async function generateCode(options: LlmGenerateOptions): Promise<{
   code: string;
   mode: "live";
   model: string;
-  usage: { prompt: number; completion: number };
+  usage: LlmUsage;
 }> {
   const profile = options.model;
   if (profile && !profile.apiKey) {
@@ -81,6 +128,11 @@ export async function generateCode(options: LlmGenerateOptions): Promise<{
   const model = profile?.model ?? process.env.MORPHAPI_LLM_MODEL ?? "gpt-4o-mini";
   const temperature = profile?.temperature ?? 0.2;
 
+  if (/anthropic\.com/.test(baseUrl) && process.env.MORPHAPI_OPENAI_COMPAT !== "1") {
+    const r = await anthropicMessages(baseUrl, apiKey, model, temperature, options.messages);
+    return { code: stripCodeFences(r.text), mode: "live", model, usage: r.usage };
+  }
+
   let res: Response;
   try {
     res = await fetch(`${baseUrl}/chat/completions`, {
@@ -92,7 +144,7 @@ export async function generateCode(options: LlmGenerateOptions): Promise<{
       body: JSON.stringify({
         model,
         temperature,
-        messages: options.messages,
+        messages: options.messages.map(({ role, content }) => ({ role, content })),
       }),
     });
   } catch (err) {

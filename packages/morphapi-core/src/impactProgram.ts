@@ -120,12 +120,17 @@ export type ProgramImpactResult = {
 export function programImpact(
   session: ProjectSession,
   opts: {
-    deprecatedSpec: string;
+    /** Absent in discover mode (no single deprecated symbol). */
+    deprecatedSpec?: string;
     projectFiles: string[];
     changedFiles: string[];
     baselineDiagnostics: Map<string, number>;
     signaturesBefore: FunctionSignatures;
     deprecatedModule?: string;
+    /** Several retired modules (e.g. the @ethersproject/* packages). */
+    deprecatedModules?: string[];
+    /** Files to scan for uses of the retired modules; defaults to the changed files. */
+    moduleUseFiles?: string[];
   }
 ): ProgramImpactResult {
   const changed = new Set(opts.changedFiles.map((f) => path.resolve(f)));
@@ -173,27 +178,30 @@ export function programImpact(
   ]);
 
   const from = opts.projectFiles[0];
-  for (const left of findDeprecatedReferences(session, opts.deprecatedSpec, { files: opts.projectFiles, fromFile: from })) {
+  const spec = opts.deprecatedSpec;
+  for (const left of spec ? findDeprecatedReferences(session, spec, { files: opts.projectFiles, fromFile: from }) : []) {
     findings.push({
       reason: "same_api_leftover",
       file: left.file,
       line: left.startLine,
       start: left.start,
-      symbol: opts.deprecatedSpec,
-      detail: `Still calls ${opts.deprecatedSpec.split("#")[1]}: ${left.text.slice(0, 60)}`,
+      symbol: spec,
+      detail: `Still calls ${spec!.split("#")[1]}: ${left.text.slice(0, 60)}`,
     });
   }
 
-  if (opts.deprecatedModule) {
+  const retired = new Set([...(opts.deprecatedModules ?? []), ...(opts.deprecatedModule ? [opts.deprecatedModule] : [])]);
+  const isRetired = (m: string) => retired.has(m) || [...retired].some((r) => m.startsWith(`${r}/`));
+  if (retired.size) {
     const leftoverRanges = findings
       .filter((f) => f.reason === "same_api_leftover" && f.start != null)
       .map((f) => ({ file: f.file, start: f.start! }));
-    for (const file of changed) {
+    for (const file of opts.moduleUseFiles?.map((f) => path.resolve(f)) ?? changed) {
       const sf = session.sourceFile(file);
       if (!sf) continue;
       const locals: ts.Identifier[] = [];
       for (const st of sf.statements) {
-        if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier) || st.moduleSpecifier.text !== opts.deprecatedModule) continue;
+        if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier) || !isRetired(st.moduleSpecifier.text)) continue;
         const c = st.importClause;
         if (c?.name) locals.push(c.name);
         if (c?.namedBindings && ts.isNamespaceImport(c.namedBindings)) locals.push(c.namedBindings.name);
@@ -216,7 +224,7 @@ export function programImpact(
               line: sf.getLineAndCharacterOfPosition(start).line + 1,
               start,
               symbol: n.text,
-              detail: `Still uses ${n.text} from ${opts.deprecatedModule}: ${stmt.getText(sf).split("\n")[0].slice(0, 80)}`,
+              detail: `Still uses ${n.text} from ${opts.deprecatedModule ?? "the previous SDK version"}: ${stmt.getText(sf).split("\n")[0].slice(0, 80)}`,
             });
           }
         }
@@ -226,7 +234,7 @@ export function programImpact(
     }
   }
 
-  const resolved = from ? resolveSymbolSpec(session, opts.deprecatedSpec, from) : null;
+  const resolved = from && spec ? resolveSymbolSpec(session, spec, from) : null;
   if (resolved) {
     const refs = findReferences(session, resolved.symbol, { files: opts.projectFiles });
     const byFile = new Map<string, typeof refs>();
