@@ -249,6 +249,11 @@ function checkEditFindings() {
     visit(sf);
   }
   for (const p of changedDefaultProblems()) findings.push(p);
+  try {
+    const s2 = core.ProjectSession.open(tsconfig, { extraRootFiles: extra });
+    const files2 = [...new Set([...start.files.filter((f) => fs.existsSync(f)), ...added()])];
+    for (const f of core.crossVersionFindings(s2.program, files2, defaultPkgs, rel)) findings.push(`${f.check === "now_async" ? "now async" : "option no longer accepted"}: ${f.message}`);
+  } catch {}
   return { problems: findings, confirm: behaviourFindings() };
 }
 function checkEdit() {
@@ -262,7 +267,7 @@ function checkEdit() {
 
 const TOOLS = [
   { name: "migration_status", description: "List every site in the project that the dependency upgrade still breaks, found by MorphAPI with the previous SDK version loaded beside the new one. Includes uses of exports the new version dropped (the compiler does not flag each use), untyped hand-offs, and the migration-guide instructions that apply to this project. Call it first and again as you go.", inputSchema: { type: "object", properties: {} } },
-  { name: "check_edit", description: "Check the current edits with MorphAPI's gate. Problems: new errors under the project's own TypeScript compiler (incl. library type errors), any-casts or ts-ignore, imports of a compatibility layer or a replaced package, X.prototype.instanceProperty, calls that omit an option whose default changed between the versions. Behaviour changes to confirm (invisible to the compiler): removed uses of APIs that still exist (e.g. a dropped auth wrapper), references to deleted files or routes, migration-guide instructions still open, changes to the project's exported API. Run before finishing; fix every problem and decide every behaviour change.", inputSchema: { type: "object", properties: {} } },
+  { name: "check_edit", description: "Check the current edits with MorphAPI's gate. Problems: new errors under the project's own TypeScript compiler (incl. library type errors), any-casts or ts-ignore, imports of a compatibility layer or a replaced package, X.prototype.instanceProperty, calls that omit an option whose default changed between the versions, options passed through variables that the new version no longer accepts, now-async APIs used without await. Behaviour changes to confirm (invisible to the compiler): removed uses of APIs that still exist (e.g. a dropped auth wrapper), references to deleted files or routes, migration-guide instructions still open, changes to the project's exported API. Run before finishing; fix every problem and decide every behaviour change.", inputSchema: { type: "object", properties: {} } },
 ];
 
 // ---- Stop hook (binding check_edit): Claude Code runs this when the agent tries to finish. ----

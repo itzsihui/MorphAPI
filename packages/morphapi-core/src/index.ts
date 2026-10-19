@@ -202,3 +202,5 @@ export {
 export type { BehaviourFinding, GuideItem } from "./behaviourChecks";
 export { changedDefaultsFor, changedDefaultsSummary, changedDefaultUses, extractDefaults } from "./versionDefaults";
 export type { ChangedDefault, ChangedDefaultUse, DefaultsTable } from "./versionDefaults";
+export { crossVersionFindings, indexOldDeclarations } from "./crossVersionChecks";
+export type { CrossVersionFinding } from "./crossVersionChecks";
