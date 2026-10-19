@@ -39,7 +39,7 @@ function dtsFiles(dir: string, cap = 800): string[] {
   return out;
 }
 
-type OldIndex = { returns: Map<string, Set<"promise" | "sync">>; optionNames: Set<string> };
+type OldIndex = { returns: Map<string, Set<"promise" | "sync">>; optionNames: Set<string>; paramOptions: Map<string, Set<string>> };
 const indexCache = new Map<string, OldIndex>();
 
 /** From the previous version's .d.ts: return kinds per function/method name, and property names of its types. */
@@ -48,6 +48,13 @@ export function indexOldDeclarations(oldDir: string): OldIndex {
   if (hit) return hit;
   const returns = new Map<string, Set<"promise" | "sync">>();
   const optionNames = new Set<string>();
+  const typeProps = new Map<string, { props: Set<string>; bases: string[] }>(); // interface / type alias name -> members
+  const paramTypeRefs: Array<{ fn: string; node: ts.TypeNode; sf: ts.SourceFile }> = [];
+  const membersOf = (members: ts.NodeArray<ts.TypeElement>) => {
+    const out = new Set<string>();
+    for (const m of members) if (m.name && (ts.isIdentifier(m.name) || ts.isStringLiteral(m.name))) out.add(m.name.text);
+    return out;
+  };
   const addRet = (name: string, t: ts.TypeNode | undefined, sf: ts.SourceFile) => {
     if (!t) return;
     const txt = t.getText(sf);
@@ -66,7 +73,25 @@ export function indexOldDeclarations(oldDir: string): OldIndex {
     }
     const sf = ts.createSourceFile(f, text, ts.ScriptTarget.Latest, true);
     const visit = (n: ts.Node) => {
-      if ((ts.isFunctionDeclaration(n) || ts.isMethodSignature(n) || ts.isMethodDeclaration(n)) && n.name && ts.isIdentifier(n.name)) addRet(n.name.text, n.type, sf);
+      if ((ts.isFunctionDeclaration(n) || ts.isMethodSignature(n) || ts.isMethodDeclaration(n)) && n.name && ts.isIdentifier(n.name)) {
+        addRet(n.name.text, n.type, sf);
+        for (const p of n.parameters) if (p.type) paramTypeRefs.push({ fn: n.name.text, node: p.type, sf });
+      }
+      if (ts.isConstructorDeclaration(n) && ts.isClassLike(n.parent) && n.parent.name) for (const p of n.parameters) if (p.type) paramTypeRefs.push({ fn: n.parent.name.text, node: p.type, sf });
+      if ((ts.isPropertySignature(n) || ts.isPropertyDeclaration(n)) && n.name && ts.isIdentifier(n.name) && n.type && ts.isFunctionTypeNode(n.type))
+        for (const p of n.type.parameters) if (p.type) paramTypeRefs.push({ fn: n.name.text, node: p.type, sf });
+      if (ts.isInterfaceDeclaration(n)) typeProps.set(n.name.text, { props: membersOf(n.members), bases: (n.heritageClauses ?? []).flatMap((h) => h.types.map((t) => t.expression.getText(sf))) });
+      if (ts.isTypeAliasDeclaration(n)) {
+        const bases: string[] = []; const props = new Set<string>();
+        const add = (t: ts.TypeNode) => {
+          if (ts.isTypeLiteralNode(t)) membersOf(t.members).forEach((x) => props.add(x));
+          else if (ts.isTypeReferenceNode(t)) bases.push(t.typeName.getText(sf));
+          else if (ts.isIntersectionTypeNode(t) || ts.isUnionTypeNode(t)) t.types.forEach(add);
+          else if (ts.isParenthesizedTypeNode(t)) add(t.type);
+        };
+        add(n.type);
+        typeProps.set(n.name.text, { props, bases });
+      }
       if ((ts.isPropertySignature(n) || ts.isPropertyDeclaration(n)) && n.name && (ts.isIdentifier(n.name) || ts.isStringLiteral(n.name))) {
         optionNames.add(n.name.text);
         if (n.type && ts.isFunctionTypeNode(n.type)) addRet(n.name.text, n.type.type, sf);
@@ -75,7 +100,28 @@ export function indexOldDeclarations(oldDir: string): OldIndex {
     };
     visit(sf);
   }
-  const idx = { returns, optionNames };
+  // resolve each callee's parameter types to option names
+  const resolve = (name: string, seen = new Set<string>()): Set<string> => {
+    const base = name.replace(/<.*$/, "").split(".").pop() ?? name;
+    if (seen.has(base)) return new Set(); seen.add(base);
+    const t = typeProps.get(base); if (!t) return new Set();
+    const out = new Set(t.props);
+    for (const b of t.bases) resolve(b, seen).forEach((x) => out.add(x));
+    return out;
+  };
+  const paramOptions = new Map<string, Set<string>>();
+  for (const { fn, node, sf } of paramTypeRefs) {
+    const set = paramOptions.get(fn) ?? new Set<string>();
+    const walkT = (t: ts.TypeNode) => {
+      if (ts.isTypeLiteralNode(t)) membersOf(t.members).forEach((x) => set.add(x));
+      else if (ts.isTypeReferenceNode(t)) { resolve(t.typeName.getText(sf)).forEach((x) => set.add(x)); t.typeArguments?.forEach(walkT); }
+      else if (ts.isIntersectionTypeNode(t) || ts.isUnionTypeNode(t)) t.types.forEach(walkT);
+      else if (ts.isParenthesizedTypeNode(t)) walkT(t.type);
+    };
+    walkT(node);
+    paramOptions.set(fn, set);
+  }
+  const idx = { returns, optionNames, paramOptions };
   indexCache.set(oldDir, idx);
   return idx;
 }
@@ -181,7 +227,8 @@ export function crossVersionFindings(program: ts.Program, files: string[], pkgs:
               const at = checker.getTypeAtLocation(src);
               if (at.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) continue;
               for (const p of at.getProperties()) {
-                if (known.has(p.name) || !old.optionNames.has(p.name)) continue;
+                // precision fix (post-hoc, after the verifier evaluation): the previous version of THIS callee must have accepted it
+                if (known.has(p.name) || !(old.paramOptions.get(info.name)?.has(p.name))) continue;
                 const decl = p.declarations?.[0];
                 if (decl && /node_modules/.test(decl.getSourceFile().fileName)) continue; // the property comes from a library type
                 push(src, "option_not_accepted", `${rel(f)}:${sf.getLineAndCharacterOfPosition(src.getStart(sf)).line + 1} passes \`${p.name}\` (via \`${src.getText(sf).slice(0, 40)}\`) to \`${info.name}\` (${info.pkg.module}). The previous version accepted \`${p.name}\`; the new version's parameter type has no such option, so it is ignored. Move it to where the new version expects it (see the migration guide) or remove it.`);

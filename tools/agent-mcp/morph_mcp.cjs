@@ -123,13 +123,16 @@ function changedDefaultProblems() {
       `changed default: ${u.file}:${u.line} calls \`${u.fn}\` (${u.module}) without \`${u.option}\`. In the new version it defaults to ${u.newValue}; in the previous version \`${u.option}\` defaulted to ${u.oldValues.map((o) => `${o.value} (${o.fn})`).join(", ")}. Pass \`${u.option}\` explicitly: the old value to keep the old behaviour, or the new value if the change is intended.`);
   } catch (e) { return []; }
 }
+function guideReminders() {
+  const g = core.guideChecklist(guide, startAll, allTexts());
+  return g.open.map((o) => `"${o.item.text.slice(0, 220)}" — still present: ${o.sites.slice(0, 5).join(", ")}`);
+}
 function behaviourFindings() {
   const nowAll = allTexts();
   const out = [];
   for (const f of core.droppedUses(startAll, nowAll, upgraded, missingInNew)) out.push(f.message);
   for (const f of core.danglingRefs(startAll, nowAll)) out.push(f.message);
-  const g = core.guideChecklist(guide, startAll, nowAll);
-  for (const o of g.open) out.push(`migration guide: "${o.item.text.slice(0, 220)}" — still present: ${o.sites.slice(0, 5).join(", ")}`);
+  // migration-guide reminders are informational only (verifier evaluation: 6 of 65 were real); see guideReminders()
   if (surfaceBefore) {
     try {
       const s = core.ProjectSession.open(tsconfig, { extraRootFiles: extra });
@@ -256,8 +259,19 @@ function checkEditFindings() {
   } catch {}
   return { problems: findings, confirm: behaviourFindings() };
 }
+const isPolicy = (x) => /^(evasion|compatibility layer|retired package):/.test(x);
 function checkEdit() {
-  const { problems: findings, confirm } = checkEditFindings();
+  const { problems: all, confirm } = checkEditFindings();
+  const bugs = all.filter((x) => !isPolicy(x)), policy = all.filter(isPolicy);
+  const findings = all;
+  const sec = (title, xs) => xs.length ? `\n${title} (${xs.length}):\n${xs.map((x) => `- ${x}`).join("\n")}` : "";
+  const reminders = guideReminders();
+  return (all.length ? `${all.length} problem(s) to fix.` : "No problems found.") +
+    sec("Bugs (compiler errors, and behaviour changes between the library versions)", bugs) +
+    sec("Policy (type suppressions, compatibility layers, replaced packages)", policy) +
+    (confirm.length ? `\n\nBehaviour changes to confirm (each may be intended; decide each one) (${confirm.length}):\n${confirm.map((x) => `- ${x}`).join("\n")}` : "") +
+    (reminders.length ? `\n\nMigration-guide reminders (informational, not checked) (${reminders.length}):\n${reminders.slice(0, 8).map((x) => `- ${x}`).join("\n")}` : "");
+  // eslint-disable-next-line no-unreachable
   const head = findings.length ? `${findings.length} problem(s):\n${findings.map((x) => `- ${x}`).join("\n")}` : "No problems found: no new compiler errors with the project's TypeScript, no evasion, no compat-layer or retired-package imports.";
   const tail = confirm.length
     ? `\n\n${confirm.length} behaviour change(s) to confirm (the compiler cannot see these; each may be intended, but decide each one):\n${confirm.map((x) => `- ${x}`).join("\n")}`
