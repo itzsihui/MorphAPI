@@ -12,8 +12,16 @@ const path = require("path");
 const core = require("../../packages/morphapi-core/dist/index.js");
 const ts = require("typescript");
 
-const cfg = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-const ws = path.resolve(process.argv[3] || process.cwd());
+// usage: morph_mcp.cjs <task.json> <ws> [<start-snapshot-dir>] [--stop-hook --state=<file>]
+const ARGS = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const FLAGS = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith("--")).map((a) => { const [k, v] = a.slice(2).split("="); return [k, v ?? true]; }));
+const cfg = JSON.parse(fs.readFileSync(ARGS[0], "utf8"));
+const ws = path.resolve(ARGS[1] || process.cwd());
+// The start state is read from a read-only snapshot of the workspace taken before the agent started, when given
+// (required for the Stop hook, a fresh process at the end of the run); otherwise from the workspace at startup.
+const sd = path.resolve(ARGS[2] || ws);
+const toWs = (f) => path.join(ws, path.relative(sd, path.resolve(f)));
+const relS = (f) => path.relative(sd, f).split(path.sep).join("/");
 const tsconfig = path.join(ws, cfg.tsconfig);
 const extra = (cfg.extraFiles || []).map((f) => path.join(ws, f));
 const bridges = cfg.bridges;
@@ -24,33 +32,36 @@ const revertMap = Object.fromEntries(bridges.map((b) => [core.aliasOf(b.module),
 const unalias = (m) => bridges.reduce((s, b) => s.split(core.aliasOf(b.module)).join(b.module), m);
 const rel = (f) => path.relative(ws, f).split(path.sep).join("/");
 
-// Start state, snapshotted when the agent starts (before any edit).
+// Start state (before any edit), keyed by workspace paths.
+const sdTsconfig = path.join(sd, cfg.tsconfig);
+const sdExtra = (cfg.extraFiles || []).map((f) => path.join(sd, f));
 const start = (() => {
-  const s = core.ProjectSession.open(tsconfig, { aliases: core.bridgeAliases(bridges), extraRootFiles: extra });
-  const files = [...new Set([...s.projectFiles, ...extra].map((f) => path.resolve(f)))];
-  return { files, text: Object.fromEntries(files.map((f) => [f, s.text(f)])) };
+  const s = core.ProjectSession.open(sdTsconfig, { aliases: core.bridgeAliases(bridges), extraRootFiles: sdExtra });
+  const sdFiles = [...new Set([...s.projectFiles, ...sdExtra].map((f) => path.resolve(f)))];
+  return { files: sdFiles.map(toWs), text: Object.fromEntries(sdFiles.map((f) => [toWs(f), s.text(f)])) };
 })();
 // All text files of the workspace at the start (for the behaviour checks: dangling references, dropped uses).
 const SKIP_DIRS = new Set(["node_modules", ".git", "coverage", ".next", "dist", "out", ".vitest-cache", ".nyc_output"]);
 const TEXT_EXT = /\.(m|c)?[jt]sx?$|\.(json|ya?ml|html)$/;
-function allTexts() {
+function allTexts(root = ws) {
   const out = {};
+  const relR = (p) => path.relative(root, p).split(path.sep).join("/");
   const walk = (d) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       if (e.isSymbolicLink()) continue;
       const p = path.join(d, e.name);
       if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name)) walk(p); }
       else if (TEXT_EXT.test(e.name) && !/\.d\.ts$/.test(e.name)) {
-        try { const st = fs.statSync(p); if (st.size < 1e6) out[rel(p)] = fs.readFileSync(p, "utf8"); } catch {}
+        try { const st = fs.statSync(p); if (st.size < 1e6) out[relR(p)] = fs.readFileSync(p, "utf8"); } catch {}
       }
     }
   };
-  walk(ws);
+  walk(root);
   return out;
 }
-const startAll = allTexts();
+const startAll = allTexts(sd);
 const upgraded = [...new Set([...successors, ...bridges.map((b) => b.module)])];
-const guideText = (() => { try { return fs.readFileSync(path.join(ws, "MIGRATION_GUIDE.md"), "utf8"); } catch { return ""; } })();
+const guideText = (() => { try { return fs.readFileSync(path.join(sd, "MIGRATION_GUIDE.md"), "utf8"); } catch { return ""; } })();
 const guide = core.guideItems(guideText);
 const pc = core.ProjectCompiler.load(tsconfig, { extraRootFiles: extra, aliases: core.bridgeAliases(bridges) });
 const baseline = (() => {
@@ -86,11 +97,12 @@ const missingInNew = core.namesMissingInNewVersion(pc.diagnostics(start.text, st
 const entryFiles = core.packageEntryFiles(ws, start.files);
 const surfaceBefore = (() => {
   try {
-    const s = core.ProjectSession.open(tsconfig, { aliases: core.bridgeAliases(bridges), extraRootFiles: extra });
+    const s = core.ProjectSession.open(sdTsconfig, { aliases: core.bridgeAliases(bridges), extraRootFiles: sdExtra });
+    const sdFiles = start.files.map((f) => path.join(sd, path.relative(ws, f)));
     const upd = {};
-    for (const f of start.files) upd[f] = core.rewriteSpecifiers(start.text[f], f, aliasMap).text;
+    for (const f of sdFiles) upd[f] = core.rewriteSpecifiers(s.text(f), f, aliasMap).text;
     s.update(upd);
-    return core.exportedSurface(s.program, start.files, rel, entryFiles);
+    return core.exportedSurface(s.program, sdFiles, relS, core.packageEntryFiles(sd, sdFiles));
   } catch (e) { return null; }
 })();
 function behaviourFindings() {
@@ -110,10 +122,18 @@ function behaviourFindings() {
   return out;
 }
 const current = () => Object.fromEntries(start.files.map((f) => [f, fs.existsSync(f) ? fs.readFileSync(f, "utf8") : ""]));
+const added = () => {
+  try {
+    const read = ts.readConfigFile(tsconfig, ts.sys.readFile);
+    const parsed = ts.parseJsonConfigFileContent(read.config || {}, ts.sys, path.dirname(tsconfig));
+    const have = new Set(start.files);
+    return [...parsed.fileNames, ...extra].map((f) => path.resolve(f)).filter((f) => !have.has(f) && fs.existsSync(f));
+  } catch { return []; }
+};
 const newErrors = (texts) => {
   const rem = new Map(baseline);
   const out = [];
-  for (const d of pc.diagnostics(texts, start.files)) {
+  for (const d of pc.diagnostics(texts, [...start.files, ...added()])) {
     if (!fs.existsSync(d.file)) continue; // a file the edits deleted is not compiled by tsc
     const k = `${d.file}|${d.code}|${d.message}`;
     const n = rem.get(k) || 0;
@@ -156,7 +176,7 @@ function migrationStatus() {
 }
 
 const EVASION = [/\bas\s+any\b/, /:\s*any\b/, /@ts-ignore/, /@ts-expect-error/, /@ts-nocheck/, /eslint-disable/];
-function checkEdit() {
+function checkEditFindings() {
   const texts = current();
   const findings = [];
   for (const e of newErrors(texts)) findings.push(`compiler (project's TypeScript ${pc.version}): ${e}`);
@@ -208,7 +228,10 @@ function checkEdit() {
     };
     visit(sf);
   }
-  const confirm = behaviourFindings();
+  return { problems: findings, confirm: behaviourFindings() };
+}
+function checkEdit() {
+  const { problems: findings, confirm } = checkEditFindings();
   const head = findings.length ? `${findings.length} problem(s):\n${findings.map((x) => `- ${x}`).join("\n")}` : "No problems found: no new compiler errors with the project's TypeScript, no evasion, no compat-layer or retired-package imports.";
   const tail = confirm.length
     ? `\n\n${confirm.length} behaviour change(s) to confirm (the compiler cannot see these; each may be intended, but decide each one):\n${confirm.map((x) => `- ${x}`).join("\n")}`
@@ -221,10 +244,47 @@ const TOOLS = [
   { name: "check_edit", description: "Check the current edits with MorphAPI's gate. Problems: new errors under the project's own TypeScript compiler (incl. library type errors), any-casts or ts-ignore, imports of a compatibility layer or a replaced package, X.prototype.instanceProperty. Behaviour changes to confirm (invisible to the compiler): removed uses of APIs that still exist (e.g. a dropped auth wrapper), references to deleted files or routes, migration-guide instructions still open, changes to the project's exported API. Run before finishing; fix every problem and decide every behaviour change.", inputSchema: { type: "object", properties: {} } },
 ];
 
+// ---- Stop hook (binding check_edit): Claude Code runs this when the agent tries to finish. ----
+// Problems (compiler errors, evasion, compat/retired imports, library errors, prototype misuse) block finishing,
+// up to MAX_BLOCKS times; behaviour changes to confirm block once, so the agent decides each one explicitly.
+const MAX_BLOCKS = 6;
+function stopHook(input) {
+  const stateFile = FLAGS.state;
+  let st = { invocations: 0, problemBlocks: 0, confirmShown: false, log: [] };
+  try { st = { ...st, ...JSON.parse(fs.readFileSync(stateFile, "utf8")) }; } catch {}
+  const t0 = Date.now();
+  let decision = null, reason = "";
+  let res;
+  try { res = checkEditFindings(); } catch (e) { res = { problems: [], confirm: [], error: String(e && e.message) }; }
+  const { problems, confirm } = res;
+  const list = (xs) => xs.slice(0, 60).map((x) => `- ${x}`).join("\n") + (xs.length > 60 ? `\n- ... and ${xs.length - 60} more (run check_edit)` : "");
+  if (problems.length && st.problemBlocks < MAX_BLOCKS) {
+    st.problemBlocks++;
+    decision = "block";
+    reason = `MorphAPI check_edit (runs automatically when you try to finish): ${problems.length} problem(s) remain. You cannot finish until they are fixed (block ${st.problemBlocks} of ${MAX_BLOCKS}).\n${list(problems)}`
+      + (confirm.length ? `\n\nAlso decide these ${confirm.length} behaviour change(s) (fix, or say in your final message why each is intended):\n${list(confirm)}` : "");
+  } else if (confirm.length && !st.confirmShown) {
+    st.confirmShown = true;
+    decision = "block";
+    reason = `MorphAPI check_edit (runs automatically when you try to finish): no blocking problems${problems.length ? " left that it will still block on" : ""}, but ${confirm.length} behaviour change(s) need a decision. The compiler cannot see these. For each one, either fix it or state in your final message why it is intended; then finish.\n${list(confirm)}`;
+  }
+  st.invocations++;
+  st.log.push({ t: new Date().toISOString(), ms: Date.now() - t0, stop_hook_active: !!(input && input.stop_hook_active), problems: problems.length, confirm: confirm.length, decision: decision || "allow", error: res.error });
+  try { fs.writeFileSync(stateFile, JSON.stringify(st, null, 1)); } catch {}
+  if (decision) process.stdout.write(JSON.stringify({ decision, reason: reason.slice(0, 20000) }));
+  process.exit(0);
+}
+if (FLAGS["stop-hook"]) {
+  let inp = "";
+  process.stdin.setEncoding("utf8");
+  process.stdin.on("data", (d) => (inp += d));
+  process.stdin.on("end", () => { let j = {}; try { j = JSON.parse(inp); } catch {} stopHook(j); });
+}
+
 const send = (msg) => process.stdout.write(JSON.stringify(msg) + "\n");
 let buf = "";
-process.stdin.setEncoding("utf8");
-process.stdin.on("data", (chunk) => {
+if (!FLAGS["stop-hook"]) process.stdin.setEncoding("utf8");
+if (!FLAGS["stop-hook"]) process.stdin.on("data", (chunk) => {
   buf += chunk;
   let i;
   while ((i = buf.indexOf("\n")) >= 0) {
