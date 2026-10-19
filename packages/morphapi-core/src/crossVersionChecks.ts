@@ -39,7 +39,7 @@ function dtsFiles(dir: string, cap = 800): string[] {
   return out;
 }
 
-type OldIndex = { returns: Map<string, Set<"promise" | "sync">>; optionNames: Set<string>; paramOptions: Map<string, Set<string>> };
+type OldIndex = { returns: Map<string, Set<"promise" | "sync">>; optionNames: Set<string>; paramOptions: Map<string, Set<string>>; callables: Set<string> };
 const indexCache = new Map<string, OldIndex>();
 
 /** From the previous version's .d.ts: return kinds per function/method name, and property names of its types. */
@@ -48,6 +48,7 @@ export function indexOldDeclarations(oldDir: string): OldIndex {
   if (hit) return hit;
   const returns = new Map<string, Set<"promise" | "sync">>();
   const optionNames = new Set<string>();
+  const callables = new Set<string>(); // every function / method / class name declared in the previous version
   const typeProps = new Map<string, { props: Set<string>; bases: string[] }>(); // interface / type alias name -> members
   const paramTypeRefs: Array<{ fn: string; node: ts.TypeNode; sf: ts.SourceFile }> = [];
   const membersOf = (members: ts.NodeArray<ts.TypeElement>) => {
@@ -73,6 +74,7 @@ export function indexOldDeclarations(oldDir: string): OldIndex {
     }
     const sf = ts.createSourceFile(f, text, ts.ScriptTarget.Latest, true);
     const visit = (n: ts.Node) => {
+      if ((ts.isFunctionDeclaration(n) || ts.isMethodSignature(n) || ts.isMethodDeclaration(n) || ts.isClassDeclaration(n) || ts.isVariableDeclaration(n) || ts.isPropertySignature(n) || ts.isPropertyDeclaration(n)) && n.name && ts.isIdentifier(n.name)) callables.add(n.name.text);
       if ((ts.isFunctionDeclaration(n) || ts.isMethodSignature(n) || ts.isMethodDeclaration(n)) && n.name && ts.isIdentifier(n.name)) {
         addRet(n.name.text, n.type, sf);
         for (const p of n.parameters) if (p.type) paramTypeRefs.push({ fn: n.name.text, node: p.type, sf });
@@ -121,7 +123,7 @@ export function indexOldDeclarations(oldDir: string): OldIndex {
     walkT(node);
     paramOptions.set(fn, set);
   }
-  const idx = { returns, optionNames, paramOptions };
+  const idx = { returns, optionNames, paramOptions, callables };
   indexCache.set(oldDir, idx);
   return idx;
 }
@@ -152,6 +154,9 @@ function consumedAsPromise(n: ts.Node, sf: ts.SourceFile, checker: ts.TypeChecke
   const p = e.parent;
   if (ts.isAwaitExpression(p) || ts.isReturnStatement(p) || ts.isArrowFunction(p) || ts.isYieldExpression(p)) return true;
   if (ts.isPropertyAccessExpression(p) && p.expression === e && /^(then|catch|finally)$/.test(p.name.text)) return true;
+  // post-hoc fix 2: a member of the result is used (builder chains such as mongoose's find().exec()): a thenable
+  // builder, not a forgotten await; do not guess
+  if ((ts.isPropertyAccessExpression(p) || ts.isElementAccessExpression(p)) && p.expression === e) return true;
   if (ts.isArrayLiteralExpression(p)) return true; // usually Promise.all([...])
   if (ts.isCallExpression(p) && p.arguments.includes(e as ts.Expression)) {
     const t = p.expression.getText(sf);
@@ -228,7 +233,11 @@ export function crossVersionFindings(program: ts.Program, files: string[], pkgs:
               if (at.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) continue;
               for (const p of at.getProperties()) {
                 // precision fix (post-hoc, after the verifier evaluation): the previous version of THIS callee must have accepted it
-                if (known.has(p.name) || !(old.paramOptions.get(info.name)?.has(p.name))) continue;
+                // Tried and reverted (post-hoc): falling back to every old option when the callee is new in this version
+                // recovers renamed callees (openai Configuration -> OpenAI, 2 ignored-option mutants) but re-flags 4 of 19
+                // harmless mutants (new callees REST, createNodeMiddleware). Precision is kept: same callee only.
+                const oldOpts = old.paramOptions.get(info.name);
+                if (known.has(p.name) || !oldOpts?.has(p.name)) continue;
                 const decl = p.declarations?.[0];
                 if (decl && /node_modules/.test(decl.getSourceFile().fileName)) continue; // the property comes from a library type
                 push(src, "option_not_accepted", `${rel(f)}:${sf.getLineAndCharacterOfPosition(src.getStart(sf)).line + 1} passes \`${p.name}\` (via \`${src.getText(sf).slice(0, 40)}\`) to \`${info.name}\` (${info.pkg.module}). The previous version accepted \`${p.name}\`; the new version's parameter type has no such option, so it is ignored. Move it to where the new version expects it (see the migration guide) or remove it.`);
