@@ -200,3 +200,5 @@ export {
   tokenSites,
 } from "./behaviourChecks";
 export type { BehaviourFinding, GuideItem } from "./behaviourChecks";
+export { changedDefaultsFor, changedDefaultsSummary, changedDefaultUses, extractDefaults } from "./versionDefaults";
+export type { ChangedDefault, ChangedDefaultUse, DefaultsTable } from "./versionDefaults";
