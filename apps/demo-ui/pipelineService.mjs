@@ -7,7 +7,7 @@ import path from "path";
 import { getMeta } from "./scenarioMeta.mjs";
 import { loadCoreModule } from "./spansService.mjs";
 
-export const PIPELINE_ARMS = ["arm1_morphapi", "arm0_llm_only", "ablA_no_slices", "ablB_no_oracle", "ablC_no_impact"];
+export const PIPELINE_ARMS = ["arm1_morphapi", "arm_codemod", "arm_ast", "ast_no_gate", "ast_no_impact", "arm0_llm_only", "ablA_no_slices", "ablB_no_oracle", "ablC_no_impact"];
 
 /**
  * @param {string} root
@@ -31,6 +31,7 @@ export async function runScenarioPipeline(root, scenario, opts = {}) {
     arm: PIPELINE_ARMS.includes(opts.arm) ? opts.arm : "arm1_morphapi",
     model: opts.propose ? undefined : core.resolveModelProfile(opts.model ?? "mini"),
     propose: opts.propose,
+    codemod: opts.codemod,
     onEvent: opts.onEvent,
   });
   return { scenario: meta.id, label: meta.label, ...run };

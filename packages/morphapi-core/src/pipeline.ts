@@ -32,17 +32,24 @@ import {
 } from "./sliceMetadata";
 import type { SliceFacts } from "./codePropertyGraph";
 
-export type ArmId = "arm0_llm_only" | "arm1_morphapi" | "ablA_no_slices" | "ablB_no_oracle" | "ablC_no_impact";
+export type ArmId = "arm0_llm_only" | "arm_codemod" | "arm1_morphapi" | "arm_ast" | "ast_no_gate" | "ast_no_impact" | "ablA_no_slices" | "ablB_no_oracle" | "ablC_no_impact";
 
 export type ArmConfig = {
   context: "slice" | "file";
   oracle: boolean;
   dataflow: boolean;
   impact: boolean;
+  /** Code property graph: slice facts in the prompt (default true). false = AST + type checker only. */
+  graph?: boolean;
 };
 
-export const ARMS: Record<Exclude<ArmId, "arm0_llm_only">, ArmConfig> = {
+export const ARMS: Record<Exclude<ArmId, "arm0_llm_only" | "arm_codemod">, ArmConfig> = {
   arm1_morphapi: { context: "slice", oracle: true, dataflow: true, impact: true },
+  // Semester-1 version (supervisor feedback): AST + type checker only. Call-site slice, type-checker gate and
+  // diagnostic-driven impact repair; no code property graph (no slice facts, no def-use result-shape adapters).
+  arm_ast: { context: "slice", oracle: true, dataflow: false, impact: true, graph: false },
+  ast_no_gate: { context: "slice", oracle: false, dataflow: false, impact: true, graph: false },
+  ast_no_impact: { context: "slice", oracle: true, dataflow: false, impact: false, graph: false },
   ablA_no_slices: { context: "file", oracle: true, dataflow: true, impact: true },
   ablB_no_oracle: { context: "slice", oracle: false, dataflow: true, impact: true },
   ablC_no_impact: { context: "slice", oracle: true, dataflow: true, impact: false },
@@ -106,6 +113,8 @@ export type MigrationConfig = {
   maxAttempts?: number;
   /** Override the LLM (tests / replay) */
   propose?: (messages: LlmMessage[]) => Promise<string>;
+  /** arm_codemod: a hand-written, rule-based rewrite applied to every project file (no LLM). */
+  codemod?: (relPath: string, text: string) => string;
   onEvent?: (evt: MigrationEvent) => void;
 };
 
@@ -439,7 +448,30 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   /** Lines changed by deterministic follow-ups (async conversion, data-flow rewrites) */
   const structural = { old: [] as string[], new: [] as string[] };
 
-  if (armId === "arm0_llm_only") {
+  if (armId === "arm_codemod") {
+    if (!cfg.codemod) throw new Error("arm_codemod needs cfg.codemod");
+    const changed: Record<string, string> = {};
+    for (const file of files) {
+      const before = session.text(file);
+      const out = cfg.codemod(rel(cfg.repoRoot, file), before);
+      if (out === before) continue;
+      changed[file] = out;
+      steps.push({
+        file: rel(cfg.repoRoot, file),
+        line: 1,
+        text: "codemod",
+        slice: { kind: "statement", startLine: 1, text: "(whole file)" },
+        escalated: false,
+        prompt: "",
+        facts: null,
+        attempts: [{ attempt: 1, candidate: out, ok: true, findings: [], warnings: [] }],
+        accepted: out,
+        imports: [],
+        dataflow: null,
+      });
+    }
+    if (Object.keys(changed).length) session.update(changed);
+  } else if (armId === "arm0_llm_only") {
     const byFile = new Map<string, DeprecatedCallSpan[]>();
     for (const s of spans) byFile.set(s.file, [...(byFile.get(s.file) ?? []), s]);
     for (const [file, list] of byFile) {
@@ -479,7 +511,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
     for (const s of spans) byFile.set(s.file, [...(byFile.get(s.file) ?? []), s]);
 
     const factsBySpan = new Map<string, SliceFacts | null>();
-    if (arm.context === "slice") {
+    if (arm.context === "slice" && arm.graph !== false) {
       for (const s of spans) {
         factsBySpan.set(
           `${s.file}:${s.start}`,
@@ -757,7 +789,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
   const changedFiles = files.filter((f) => session.text(f) !== originals[f]);
   const impactFixes: ImpactFix[] = [];
   let impact: ProgramImpactResult | null = null;
-  const armCfg = armId === "arm0_llm_only" ? null : ARMS[armId];
+  const armCfg = armId === "arm0_llm_only" || armId === "arm_codemod" ? null : ARMS[armId];
   const runImpact = () =>
     programImpact(session, {
       deprecatedSpec: cfg.deprecatedSpec,
@@ -943,7 +975,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
     ...structural.old.flatMap(linesOf),
   ]);
   const allowedNew = new Set([
-    ...steps.flatMap((s) => (armId === "arm0_llm_only" ? [] : linesOf(s.accepted))),
+    ...steps.flatMap((s) => (armId === "arm0_llm_only" || armId === "arm_codemod" ? [] : linesOf(s.accepted))),
     ...impactFixes.flatMap((x) => linesOf(x.after)),
     ...structural.new.flatMap(linesOf),
   ]);
@@ -979,7 +1011,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
         continue;
       }
       const oldOk = oldIdx.every((i) => impA.has(i) || allows(allowedOld, a[i]));
-      const newOk = armId === "arm0_llm_only" ? oldIdx.length > 0 : newIdx.every((i) => impB.has(i) || allows(allowedNew, b[i]));
+      const newOk = armId === "arm0_llm_only" || armId === "arm_codemod" ? oldIdx.length > 0 : newIdx.every((i) => impB.has(i) || allows(allowedNew, b[i]));
       if (!(oldOk && newOk)) outside += n;
     }
   }
@@ -1008,7 +1040,7 @@ export async function runMigration(cfg: MigrationConfig): Promise<MigrationRun> 
     },
     metrics: {
       spansFound: spans.length,
-      spansMigrated: armId === "arm0_llm_only" ? Math.max(0, spans.length - leftovers) : steps.filter((s) => s.accepted != null).length,
+      spansMigrated: armId === "arm0_llm_only" || armId === "arm_codemod" ? Math.max(0, spans.length - leftovers) : steps.filter((s) => s.accepted != null).length,
       attempts: allAttempts.length,
       phantomRejections: allAttempts.reduce((n, a) => n + a.findings.filter((f) => f.kind === "phantom").length, 0),
       escalations: steps.filter((s) => s.escalated).length,

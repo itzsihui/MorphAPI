@@ -197,7 +197,7 @@ export function buildSlicePrompt(input: SlicePromptInput): LlmMessage[] {
       content: [
         "You migrate one call site from a deprecated API to its successor.",
         boundary,
-        "Use only symbols listed under 'Successor API' or already in scope (see facts). Imports are added for you.",
+        input.facts ? "Use only symbols listed under 'Successor API' or already in scope (see facts). Imports are added for you." : "Use only symbols listed under 'Successor API' or already in scope. Imports are added for you.",
       ].join(" "),
     },
     {
@@ -206,7 +206,7 @@ export function buildSlicePrompt(input: SlicePromptInput): LlmMessage[] {
         `## Migration\n${input.deprecatedSpec} → ${input.successorModule}`,
         `## Successor API\n${api || "- (none extracted)"}`,
         `## Slice (${slice.kind}, line ${slice.startLine})\n\`\`\`ts\n${slice.text}\n\`\`\``,
-        `## Facts (TypeScript checker)\n\`\`\`json\n${JSON.stringify(input.facts, null, 2)}\n\`\`\``,
+        input.facts ? `## Facts (TypeScript checker)\n\`\`\`json\n${JSON.stringify(input.facts, null, 2)}\n\`\`\`` : "",
         input.rules?.length ? `## Rules\n${input.rules.map((r) => `- ${r}`).join("\n")}` : "",
         input.guide ? `## Migration guide (prose; the Successor API list wins on conflicts)\n${input.guide}` : "",
         input.feedback ? `## Previous attempt rejected\n${input.feedback}` : "",
