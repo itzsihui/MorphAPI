@@ -3,7 +3,7 @@
 codemod as reference migration), tokens, cost, time. Written before looking at the per-arm results."""
 import json, glob, os, difflib, collections, sys
 D = '/home/claude/itzsihui/morphapi/out/ca_ast'
-PRICE = {'claude-haiku-4-5': (1.0, 5.0, 1.25, 0.10), 'claude-sonnet-4-5': (3.0, 15.0, 3.75, 0.30)}
+PRICE = {'gpt-4o-mini': (0.15, 0.60, 0.15, 0.075), 'claude-haiku-4-5': (1.0, 5.0, 1.25, 0.10), 'claude-sonnet-4-5': (3.0, 15.0, 3.75, 0.30)}
 IDS = ["morphpay", "plaid", "openai", "stripe", "stripe-errors", "auth", "envelope", "async", "mail", "hmac", "discriminator"]
 ref = {id: json.load(open(f'{D}/{id}.arm_codemod.json'))['patches'] for id in IDS}
 def changed_old(before, after):
