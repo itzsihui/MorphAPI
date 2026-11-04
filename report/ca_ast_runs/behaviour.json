@@ -1,0 +1,5461 @@
+{
+ "async.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.arm_codemod.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "async.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "async",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"k\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"theme\":\"dark\",\"region\":\"b\",\"key\":\"banner.txt\"}"
+   }
+  }
+ },
+ "auth.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "auth",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: invalid_token"
+   }
+  }
+ },
+ "auth.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "auth",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: invalid_token"
+   }
+  }
+ },
+ "auth.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "auth",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: invalid_token"
+   }
+  }
+ },
+ "auth.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785774}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.arm_codemod.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "auth",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: jwksClient is not defined"
+   }
+  }
+ },
+ "auth.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "auth.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "auth",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"a\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775},\"b\":{\"sub\":\"user_demo\",\"aud\":\"morphapi\",\"iss\":\"auth-jwt-v2\",\"exp\":1793785775}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"keys\":[\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\",\"-----BEGIN PUBLIC KEY-----\\nDEMO_k1\\n-----END PUBLIC KEY-----\"],\"kids\":[\"k1\",\"k1\"]}"
+   }
+  }
+ },
+ "discriminator.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.arm_codemod.json": {
+  "id": "discriminator",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"message_create\",\"message_update\",\"reaction_add\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "discriminator.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "discriminator",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"message.created\",\"message.updated\",\"reaction.added\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+   }
+  }
+ },
+ "envelope.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'map')"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'filter')"
+   }
+  }
+ },
+ "envelope.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'map')"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'filter')"
+   }
+  }
+ },
+ "envelope.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'map')"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'filter')"
+   }
+  }
+ },
+ "envelope.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.arm_codemod.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "envelope",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "threw: users.map is not a function"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: users.filter is not a function"
+   }
+  }
+ },
+ "envelope.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "envelope.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "envelope",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[\"alice\",\"bob\"]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[\"alice\"]"
+   }
+  }
+ },
+ "hmac.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.arm_codemod.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[true,true]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "[false,false]"
+   }
+  }
+ },
+ "hmac.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "hmac.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "hmac",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "[true,false]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "[false,true]"
+   }
+  }
+ },
+ "mail.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "queued:[object Object]"
+   }
+  }
+ },
+ "mail.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "queued:[object Object]"
+   }
+  }
+ },
+ "mail.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "queued:[object Object]"
+   }
+  }
+ },
+ "mail.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "queued:[object Object]"
+   }
+  }
+ },
+ "mail.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "queued:[object Object]"
+   }
+  }
+ },
+ "mail.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "queued:[object Object]"
+   }
+  }
+ },
+ "mail.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.arm_codemod.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "mail",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "queued:msg_v2_b@x_7_29"
+   }
+  }
+ },
+ "mail.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'length')"
+   }
+  }
+ },
+ "mail.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'length')"
+   }
+  }
+ },
+ "mail.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'length')"
+   }
+  }
+ },
+ "mail.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'length')"
+   }
+  }
+ },
+ "mail.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'length')"
+   }
+  }
+ },
+ "mail.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "mail",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "[[\"a@x\",\"noreply@morphapi.demo\",\"Welcome\",\"Hi Ann, thanks for signing up.\"],[\"a@x\",\"security@morphapi.demo\",\"Reset your password\",\"Use this token: T1\"],[\"ops@x\",\"cron@morphapi.demo\",\"Nightly digest\",\"sum\"],[\"admin@t1\",\"seed@morphapi.demo\",\"Demo tenant ready\",\"Tenant t1 was seeded.\"]]"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Cannot read properties of undefined (reading 'length')"
+   }
+  }
+ },
+ "morphpay.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": false,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": false,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": false,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": false,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": false,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": false,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.arm_codemod.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "true"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "morphpay.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "morphpay",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"chargeId\":\"pi_2000_usd\",\"status\":\"succeeded\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"id\":\"pi_2000_usd\",\"amount\":2000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"automatic\",\"status\":\"requires_confirmation\"}"
+   },
+   "P4": {
+    "ok": false
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"c\":{\"id\":\"pi_5000_usd\",\"amount\":5000,\"currency\":\"usd\",\"paymentMethod\":\"tok_visa\",\"captureMode\":\"manual\",\"status\":\"requires_confirmation\"},\"id\":\"pi_5000_usd\"}"
+   }
+  }
+ },
+ "openai.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.arm_codemod.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "openai",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "openai",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "openai",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "openai",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "openai",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "openai",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "openai.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "openai",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:hi\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"r\":\"echo:q\",\"p\":{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"q\"}],\"temperature\":0.2}}"
+   }
+  }
+ },
+ "plaid.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "plaid",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[null],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[null],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "plaid",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": false,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[null],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[null],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.arm_codemod.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "plaid.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "plaid",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u1\"},\"client_name\":\"MorphAPI Demo\",\"products\":[\"transactions\"],\"country_codes\":[\"US\"],\"language\":\"en\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"user\":{\"client_user_id\":\"u2\"},\"client_name\":\"MorphAPI Demo UK\",\"products\":[\"auth\"],\"country_codes\":[\"GB\"],\"language\":\"en\"}"
+   },
+   "P3": {
+    "ok": true
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.arm_codemod.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": true,
+    "detail": "{\"ok\":false,\"reason\":\"card_declined\"}"
+   }
+  }
+ },
+ "stripe-errors.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   }
+  }
+ },
+ "stripe-errors.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   }
+  }
+ },
+ "stripe-errors.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   }
+  }
+ },
+ "stripe-errors.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "stripe-errors",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   }
+  }
+ },
+ "stripe-errors.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "stripe-errors",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   }
+  }
+ },
+ "stripe-errors.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "stripe-errors",
+  "complete": false,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_500\"}"
+   },
+   "P2": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   },
+   "P3": {
+    "ok": true,
+    "detail": "{\"ok\":true,\"id\":\"pi_5000\"}"
+   },
+   "P4": {
+    "ok": false,
+    "detail": "threw: Your card was declined."
+   }
+  }
+ },
+ "stripe.arm0_llm_full.claude-haiku-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_full.claude-haiku-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_full.claude-haiku-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_full.claude-sonnet-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_full.claude-sonnet-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_full.claude-sonnet-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_only.claude-haiku-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_only.claude-haiku-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_only.claude-haiku-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_only.claude-sonnet-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_only.claude-sonnet-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm0_llm_only.claude-sonnet-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm_ast.claude-haiku-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.arm_ast.claude-haiku-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.arm_ast.claude-haiku-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.arm_ast.claude-sonnet-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm_ast.claude-sonnet-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm_ast.claude-sonnet-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.arm_codemod.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.ast_no_gate.claude-haiku-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.ast_no_gate.claude-haiku-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.ast_no_gate.claude-haiku-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.ast_no_gate.claude-sonnet-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.ast_no_gate.claude-sonnet-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.ast_no_gate.claude-sonnet-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.ast_no_impact.claude-haiku-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.ast_no_impact.claude-haiku-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.ast_no_impact.claude-haiku-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": false,
+    "detail": 1998.9999999999998
+   }
+  }
+ },
+ "stripe.ast_no_impact.claude-sonnet-4-5.r1.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.ast_no_impact.claude-sonnet-4-5.r2.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ },
+ "stripe.ast_no_impact.claude-sonnet-4-5.r3.json": {
+  "id": "stripe",
+  "complete": true,
+  "props": {
+   "P1": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P2": {
+    "ok": true,
+    "detail": 1050
+   },
+   "P3": {
+    "ok": true,
+    "detail": 1999
+   }
+  }
+ }
+}
