@@ -1,0 +1,113 @@
+{
+  "scenario": "plaid",
+  "label": "Plaid Link enums",
+  "arm": "arm_ast",
+  "model": "gpt-4o-mini",
+  "deprecatedSpec": "plaid-link-v1#PlaidApi.linkTokenCreate",
+  "successorModule": "plaid-link-v2",
+  "oracle": {
+    "exports": 7,
+    "allowed": 189
+  },
+  "steps": [
+    {
+      "file": "fixtures/plaid-client-v1/src/link.ts",
+      "line": 32,
+      "text": "client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo UK\",\n    products: [\"auth\"],\n    country_codes: [\"GB\"],\n    language: \"en\",\n  })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 32,
+        "text": "client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo UK\",\n    products: [\"auth\"],\n    country_codes: [\"GB\"],\n    language: \"en\",\n  })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nplaid-link-v1#PlaidApi.linkTokenCreate → plaid-link-v2\n\n## Successor API\n- createPlaidClient: (_config: { clientId: string; secret: string; }) => PlaidApi\n- CountryCode: typeof CountryCode\n- Products: typeof Products\n- LinkTokenCreateRequest: LinkTokenCreateRequest\n- LinkTokenCreateResponse: LinkTokenCreateResponse\n- PlaidApi: PlaidApi\n- createPlaidClient: (_config: { clientId: string; secret: string; }) => PlaidApi\n- PlaidApi members: linkTokenCreate\n- LinkTokenCreateResponse members: link_token, expiration\n- CountryCode members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@97, at, Us, Gb, Ca, Fr, De\n- Products members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@97, at, Auth, Identity, Transactions, Investments, Liabilities\n- LinkTokenCreateRequest members: user, client_name, products, country_codes, language\n\n## Slice (expression, line 32)\n```ts\nclient.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo UK\",\n    products: [\"auth\"],\n    country_codes: [\"GB\"],\n    language: \"en\",\n  })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Plaid Link Token Migration Guide\n\nLegacy integrations pass `products` and `country_codes` as plain strings.\nModern Plaid TypeScript clients should use the typed enums from the SDK.\n\n## Overview\n\nWhen creating a Link token, prefer enum members for products and country codes\ninstead of raw string literals.\n\n## Typical pattern\n\n```ts\nimport createPlaidClient, { CountryCode, Products } from \"plaid-link-v2\";\n\nconst client = createPlaidClient({\n  clientId: process.env.PLAID_CLIENT_ID!,\n  secret: process.env.PLAID_SECRET!,\n});\n\nconst response = await client.linkTokenCreate({\n  user: { client_user_id: userId },\n  client_name: \"My App\",\n  products: [/* products enum member for transactions */],\n  country_codes: [/* country code enum for the United States */],\n  language: \"en\",\n});\n```\n\n## Notes\n\n- Map string `\"transactions\"` → the appropriate `Products` enum member.\n- Map string `\"US\"` → the appropriate `CountryCode` enum member.\n- Do not leave bare string literals in `products` / `country_codes` after upgrading.\n- Enum member names follow the Plaid TypeScript SDK conventions (not always\n  identical to the ISO / product string values).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo UK\",\n    products: [Products.Auth],\n    country_codes: [CountryCode.Gb],\n    language: \"en\",\n})\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "client.linkTokenCreate({\n      user: { client_user_id: userId },\n      client_name: \"MorphAPI Demo UK\",\n      products: [Products.Auth],\n      country_codes: [CountryCode.Gb],\n      language: \"en\",\n  })",
+      "imports": [
+        "plaid-link-v2#CountryCode",
+        "plaid-link-v2#Products"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/plaid-client-v1/src/link.ts",
+      "line": 14,
+      "text": "client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo\",\n    products: [\"transactions\"],\n    country_codes: [\"US\"],\n    language: \"en\",\n  })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 14,
+        "text": "client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo\",\n    products: [\"transactions\"],\n    country_codes: [\"US\"],\n    language: \"en\",\n  })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nplaid-link-v1#PlaidApi.linkTokenCreate → plaid-link-v2\n\n## Successor API\n- createPlaidClient: (_config: { clientId: string; secret: string; }) => PlaidApi\n- CountryCode: typeof CountryCode\n- Products: typeof Products\n- LinkTokenCreateRequest: LinkTokenCreateRequest\n- LinkTokenCreateResponse: LinkTokenCreateResponse\n- PlaidApi: PlaidApi\n- createPlaidClient: (_config: { clientId: string; secret: string; }) => PlaidApi\n- PlaidApi members: linkTokenCreate\n- LinkTokenCreateResponse members: link_token, expiration\n- CountryCode members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@97, at, Us, Gb, Ca, Fr, De\n- Products members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@97, at, Auth, Identity, Transactions, Investments, Liabilities\n- LinkTokenCreateRequest members: user, client_name, products, country_codes, language\n\n## Slice (expression, line 14)\n```ts\nclient.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo\",\n    products: [\"transactions\"],\n    country_codes: [\"US\"],\n    language: \"en\",\n  })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Plaid Link Token Migration Guide\n\nLegacy integrations pass `products` and `country_codes` as plain strings.\nModern Plaid TypeScript clients should use the typed enums from the SDK.\n\n## Overview\n\nWhen creating a Link token, prefer enum members for products and country codes\ninstead of raw string literals.\n\n## Typical pattern\n\n```ts\nimport createPlaidClient, { CountryCode, Products } from \"plaid-link-v2\";\n\nconst client = createPlaidClient({\n  clientId: process.env.PLAID_CLIENT_ID!,\n  secret: process.env.PLAID_SECRET!,\n});\n\nconst response = await client.linkTokenCreate({\n  user: { client_user_id: userId },\n  client_name: \"My App\",\n  products: [/* products enum member for transactions */],\n  country_codes: [/* country code enum for the United States */],\n  language: \"en\",\n});\n```\n\n## Notes\n\n- Map string `\"transactions\"` → the appropriate `Products` enum member.\n- Map string `\"US\"` → the appropriate `CountryCode` enum member.\n- Do not leave bare string literals in `products` / `country_codes` after upgrading.\n- Enum member names follow the Plaid TypeScript SDK conventions (not always\n  identical to the ISO / product string values).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo\",\n    products: [Products.Transactions],\n    country_codes: [CountryCode.Us],\n    language: \"en\",\n})\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "client.linkTokenCreate({\n      user: { client_user_id: userId },\n      client_name: \"MorphAPI Demo\",\n      products: [Products.Transactions],\n      country_codes: [CountryCode.Us],\n      language: \"en\",\n  })",
+      "imports": [
+        "plaid-link-v2#CountryCode",
+        "plaid-link-v2#Products"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/plaid-client-v1/src/link.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [],
+    "complete": true
+  },
+  "impactFixes": [],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 2,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 22,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 1729,
+    "completionTokens": 108,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/plaid-client-v1/src/link.ts": {
+      "before": "import createPlaidClient from \"plaid-link-v1\";\n\n/**\n * Link token helpers using legacy string products / country_codes.\n * Migrate to plaid-link-v2 CountryCode / Products enums.\n */\nexport async function createUserLinkToken(userId: string) {\n  const client = createPlaidClient({\n    clientId: process.env.PLAID_CLIENT_ID ?? \"client_demo\",\n    secret: process.env.PLAID_SECRET ?? \"secret_demo\",\n  });\n\n  // Usage site 1 — US transactions Link\n  const response = await client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo\",\n    products: [\"transactions\"],\n    country_codes: [\"US\"],\n    language: \"en\",\n  });\n\n  return response.link_token;\n}\n\nexport async function createUkAuthLinkToken(userId: string) {\n  const client = createPlaidClient({\n    clientId: process.env.PLAID_CLIENT_ID ?? \"client_demo\",\n    secret: process.env.PLAID_SECRET ?? \"secret_demo\",\n  });\n\n  // Usage site 2 — UK auth Link\n  const response = await client.linkTokenCreate({\n    user: { client_user_id: userId },\n    client_name: \"MorphAPI Demo UK\",\n    products: [\"auth\"],\n    country_codes: [\"GB\"],\n    language: \"en\",\n  });\n\n  return response.link_token;\n}\n",
+      "after": "import createPlaidClient, { CountryCode, Products } from \"plaid-link-v2\";\n\n/**\n * Link token helpers using legacy string products / country_codes.\n * Migrate to plaid-link-v2 CountryCode / Products enums.\n */\nexport async function createUserLinkToken(userId: string) {\n  const client = createPlaidClient({\n    clientId: process.env.PLAID_CLIENT_ID ?? \"client_demo\",\n    secret: process.env.PLAID_SECRET ?? \"secret_demo\",\n  });\n\n  // Usage site 1 — US transactions Link\n  const response = await client.linkTokenCreate({\n      user: { client_user_id: userId },\n      client_name: \"MorphAPI Demo\",\n      products: [Products.Transactions],\n      country_codes: [CountryCode.Us],\n      language: \"en\",\n  });\n\n  return response.link_token;\n}\n\nexport async function createUkAuthLinkToken(userId: string) {\n  const client = createPlaidClient({\n    clientId: process.env.PLAID_CLIENT_ID ?? \"client_demo\",\n    secret: process.env.PLAID_SECRET ?? \"secret_demo\",\n  });\n\n  // Usage site 2 — UK auth Link\n  const response = await client.linkTokenCreate({\n      user: { client_user_id: userId },\n      client_name: \"MorphAPI Demo UK\",\n      products: [Products.Auth],\n      country_codes: [CountryCode.Gb],\n      language: \"en\",\n  });\n\n  return response.link_token;\n}\n"
+    }
+  },
+  "ms": 15823
+}

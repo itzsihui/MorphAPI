@@ -1,0 +1,385 @@
+{
+ "async.arm_codemod": {
+  "id": "async",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "auth.arm_codemod": {
+  "id": "auth",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "discriminator.arm_codemod": {
+  "id": "discriminator",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 1
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "envelope.arm_codemod": {
+  "id": "envelope",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "hmac.arm_codemod": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "mail.arm_codemod": {
+  "id": "mail",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 5
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "morphpay.arm_codemod": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "openai.arm_codemod": {
+  "id": "openai",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "plaid.arm_codemod": {
+  "id": "plaid",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe-errors.arm_codemod": {
+  "id": "stripe-errors",
+  "baseline": {
+   "calls": 4,
+   "threw": 0,
+   "wire": 4
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe.arm_codemod": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "hmac.arm1_morphapi.claude-haiku-4-5.r1": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(legacyToken)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=false but result=true"
+   },
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(signed)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=true but result=false"
+   }
+  ],
+  "oracleFailed": [
+   "P1: [true,false]",
+   "P2: [false,true]"
+  ]
+ },
+ "hmac.arm1_morphapi.claude-haiku-4-5.r2": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(legacyToken)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=false but result=true"
+   },
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(signed)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=true but result=false"
+   }
+  ],
+  "oracleFailed": [
+   "P1: [true,false]",
+   "P2: [false,true]"
+  ]
+ },
+ "hmac.arm1_morphapi.claude-haiku-4-5.r3": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(legacyToken)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=false but result=true"
+   },
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(signed)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=true but result=false"
+   }
+  ],
+  "oracleFailed": [
+   "P1: [true,false]",
+   "P2: [false,true]"
+  ]
+ },
+ "morphpay.arm1_morphapi.claude-haiku-4-5.r1": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "morphpay.arm1_morphapi.claude-haiku-4-5.r2": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "morphpay.arm1_morphapi.claude-haiku-4-5.r3": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe.arm1_morphapi.claude-haiku-4-5.r1": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "wire",
+    "call": "pay([\"tok\",19.99])",
+    "v1": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1999,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ],
+    "v2": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1998.9999999999998,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ]
+   }
+  ],
+  "oracleFailed": [
+   "P3: 1998.9999999999998"
+  ]
+ },
+ "stripe.arm1_morphapi.claude-haiku-4-5.r2": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "wire",
+    "call": "pay([\"tok\",19.99])",
+    "v1": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1999,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ],
+    "v2": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1998.9999999999998,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ]
+   }
+  ],
+  "oracleFailed": [
+   "P3: 1998.9999999999998"
+  ]
+ },
+ "stripe.arm1_morphapi.claude-haiku-4-5.r3": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "wire",
+    "call": "pay([\"tok\",19.99])",
+    "v1": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1999,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ],
+    "v2": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1998.9999999999998,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ]
+   }
+  ],
+  "oracleFailed": [
+   "P3: 1998.9999999999998"
+  ]
+ }
+}

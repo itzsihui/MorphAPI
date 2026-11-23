@@ -1,0 +1,248 @@
+{
+  "scenario": "stripe-errors",
+  "label": "Error hierarchy",
+  "arm": "arm_ast",
+  "model": "gpt-4o-mini",
+  "deprecatedSpec": "stripe-errors-v1#default.charges.create",
+  "successorModule": "stripe-errors-v2",
+  "oracle": {
+    "exports": 4,
+    "allowed": 35
+  },
+  "steps": [
+    {
+      "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+      "line": 31,
+      "text": "stripe.charges.create({\n      amount: 5000,\n      currency: \"usd\",\n      source,\n    })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 31,
+        "text": "stripe.charges.create({\n      amount: 5000,\n      currency: \"usd\",\n      source,\n    })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nstripe-errors-v1#default.charges.create → stripe-errors-v2\n\n## Successor API\n- StripeCardError: typeof StripeCardError\n- StripeAPIError: typeof StripeAPIError\n- PaymentIntent: PaymentIntent\n- Stripe: typeof Stripe\n- StripeCardError members: type, name, message, stack, captureStackTrace, prepareStackTrace, stackTraceLimit\n- StripeAPIError members: type, name, message, stack, captureStackTrace, prepareStackTrace, stackTraceLimit\n- PaymentIntent members: id, amount, status\n- Stripe members: paymentIntents, errors\n\n## Slice (expression, line 31)\n```ts\nstripe.charges.create({\n      amount: 5000,\n      currency: \"usd\",\n      source,\n    })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Stripe Payment Migration (v2)\n\nLegacy integrations used `charges.create`. Prefer PaymentIntents on the modern client.\n\n## Overview\n\nCreate payments with `paymentIntents.create`. Map `source` → `payment_method` and pass\n`confirm: true` when you previously expected an immediate charge result.\n\n## Typical create pattern\n\n```ts\nimport Stripe from \"stripe-errors-v2\";\n\nconst stripe = new Stripe(process.env.STRIPE_KEY!);\n\nconst intent = await stripe.paymentIntents.create({\n  amount: 2000,\n  currency: \"usd\",\n  payment_method: source,\n  confirm: true,\n});\n```\n\n## Notes\n\n- Instantiate the client: `const stripe = new Stripe(apiKey)` — then call instance methods.\n- Do not call `Stripe.paymentIntents` as a static.\n- Keep existing try/catch and `instanceof` error handling as-is unless the compiler forces a change.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "stripe.paymentIntents.create({\n  amount: 5000,\n  currency: \"usd\",\n  payment_method: source,\n  confirm: true,\n})\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "phantom",
+              "symbol": "{ charges: { create(params: { amount: number; currency: string; source: strin....paymentIntents",
+              "line": 31,
+              "code": 2339,
+              "message": "paymentIntents exists on Stripe from stripe-errors-v2, but `stripe` is a deprecated value (type { charges: { create(params: { amount: number; currency: string; source: strin...), not a Stripe. Do not use `stripe` as the receiver. Create a Stripe in your output with new Stripe(_apiKey: string) under a new name and call paymentIntents on it.",
+              "suggestions": [],
+              "receiverOwners": [
+                "Stripe"
+              ]
+            }
+          ],
+          "warnings": [],
+          "sliceKind": "expression"
+        },
+        {
+          "attempt": 2,
+          "candidate": "new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n  amount: 5000,\n  currency: \"usd\",\n  payment_method: source,\n  confirm: true,\n})\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "feedbackSent": "Your previous output was:\n```ts\nstripe.paymentIntents.create({\n  amount: 5000,\n  currency: \"usd\",\n  payment_method: source,\n  confirm: true,\n})\n```\nIt was rejected because:\n- paymentIntents exists on Stripe from stripe-errors-v2, but `stripe` is a deprecated value (type { charges: { create(params: { amount: number; currency: string; source: strin...), not a Stripe. Do not use `stripe` as the receiver. Create a Stripe in your output with new Stripe(_apiKey: string) under a new name and call paymentIntents on it.",
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n      amount: 5000,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    })",
+      "imports": [
+        "stripe-errors-v2#default(Stripe)"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+      "line": 13,
+      "text": "stripe.charges.create({\n      amount: amountCents,\n      currency: \"usd\",\n      source,\n    })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 13,
+        "text": "stripe.charges.create({\n      amount: amountCents,\n      currency: \"usd\",\n      source,\n    })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nstripe-errors-v1#default.charges.create → stripe-errors-v2\n\n## Successor API\n- StripeCardError: typeof StripeCardError\n- StripeAPIError: typeof StripeAPIError\n- PaymentIntent: PaymentIntent\n- Stripe: typeof Stripe\n- StripeCardError members: type, name, message, stack, captureStackTrace, prepareStackTrace, stackTraceLimit\n- StripeAPIError members: type, name, message, stack, captureStackTrace, prepareStackTrace, stackTraceLimit\n- PaymentIntent members: id, amount, status\n- Stripe members: paymentIntents, errors\n\n## Slice (expression, line 13)\n```ts\nstripe.charges.create({\n      amount: amountCents,\n      currency: \"usd\",\n      source,\n    })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Stripe Payment Migration (v2)\n\nLegacy integrations used `charges.create`. Prefer PaymentIntents on the modern client.\n\n## Overview\n\nCreate payments with `paymentIntents.create`. Map `source` → `payment_method` and pass\n`confirm: true` when you previously expected an immediate charge result.\n\n## Typical create pattern\n\n```ts\nimport Stripe from \"stripe-errors-v2\";\n\nconst stripe = new Stripe(process.env.STRIPE_KEY!);\n\nconst intent = await stripe.paymentIntents.create({\n  amount: 2000,\n  currency: \"usd\",\n  payment_method: source,\n  confirm: true,\n});\n```\n\n## Notes\n\n- Instantiate the client: `const stripe = new Stripe(apiKey)` — then call instance methods.\n- Do not call `Stripe.paymentIntents` as a static.\n- Keep existing try/catch and `instanceof` error handling as-is unless the compiler forces a change.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "stripe.paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    })\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "phantom",
+              "symbol": "{ charges: { create(params: { amount: number; currency: string; source: strin....paymentIntents",
+              "line": 14,
+              "code": 2339,
+              "message": "paymentIntents exists on Stripe from stripe-errors-v2, but `stripe` is a deprecated value (type { charges: { create(params: { amount: number; currency: string; source: strin...), not a Stripe. Do not use `stripe` as the receiver. Create a Stripe in your output with new Stripe(_apiKey: string) under a new name and call paymentIntents on it.",
+              "suggestions": [],
+              "receiverOwners": [
+                "Stripe"
+              ]
+            }
+          ],
+          "warnings": [],
+          "sliceKind": "expression"
+        },
+        {
+          "attempt": 2,
+          "candidate": "new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "feedbackSent": "Your previous output was:\n```ts\nstripe.paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    })\n```\nIt was rejected because:\n- paymentIntents exists on Stripe from stripe-errors-v2, but `stripe` is a deprecated value (type { charges: { create(params: { amount: number; currency: string; source: strin...), not a Stripe. Do not use `stripe` as the receiver. Create a Stripe in your output with new Stripe(_apiKey: string) under a new name and call paymentIntents on it.",
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    })",
+      "imports": [
+        "stripe-errors-v2#default(Stripe)"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/stripe-errors-client-v1/src/charge.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [
+      {
+        "reason": "deprecated_module_use",
+        "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+        "line": 22,
+        "start": 711,
+        "symbol": "stripe",
+        "detail": "Still uses stripe from stripe-errors-v1: if (e instanceof stripe.error.CardError) {"
+      },
+      {
+        "reason": "deprecated_module_use",
+        "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+        "line": 41,
+        "start": 1212,
+        "symbol": "stripe",
+        "detail": "Still uses stripe from stripe-errors-v1: if (e instanceof stripe.error.CardError) {"
+      }
+    ],
+    "complete": false
+  },
+  "impactFixes": [
+    {
+      "reason": "deprecated_module_use",
+      "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+      "line": 41,
+      "before": "if (e instanceof stripe.error.CardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }",
+      "after": "if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    },
+    {
+      "reason": "deprecated_module_use",
+      "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+      "line": 22,
+      "before": "try {\n    // Usage site — happy path + card decline handling\n    const charge = await new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof stripe.error.CardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }",
+      "after": null,
+      "attempts": 2,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "try {\n    const charge = await stripe.paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "phantom",
+              "symbol": "{ charges: { create(params: { amount: number; currency: string; source: strin....paymentIntents",
+              "line": 13,
+              "code": 2339,
+              "message": "paymentIntents exists on Stripe from stripe-errors-v2, but `stripe` is a deprecated value (type { charges: { create(params: { amount: number; currency: string; source: strin...), not a Stripe. Do not use `stripe` as the receiver. Create a Stripe in your output with new Stripe(_apiKey: string) under a new name and call paymentIntents on it.",
+              "suggestions": [],
+              "receiverOwners": [
+                "Stripe"
+              ]
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "attempt": 2,
+          "candidate": "try {\n    const stripe = new Stripe(process.env.STRIPE_KEY!);\n    const charge = await stripe.paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "leftover",
+              "symbol": "stripe",
+              "message": "The replacement still uses stripe from stripe-errors-v1."
+            }
+          ],
+          "warnings": [],
+          "feedbackSent": "Your previous output was:\n```ts\ntry {\n    const charge = await stripe.paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n```\nIt was rejected because:\n- paymentIntents exists on Stripe from stripe-errors-v2, but `stripe` is a deprecated value (type { charges: { create(params: { amount: number; currency: string; source: strin...), not a Stripe. Do not use `stripe` as the receiver. Create a Stripe in your output with new Stripe(_apiKey: string) under a new name and call paymentIntents on it."
+        }
+      ]
+    },
+    {
+      "reason": "deprecated_module_use",
+      "file": "fixtures/stripe-errors-client-v1/src/charge.ts",
+      "line": 22,
+      "before": "if (e instanceof stripe.error.CardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }",
+      "after": "if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    }
+  ],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 4,
+    "phantomRejections": 2,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 16,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 4303,
+    "completionTokens": 422,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/stripe-errors-client-v1/src/charge.ts": {
+      "before": "import stripe from \"stripe-errors-v1\";\n\n/**\n * Charge helper with legacy stripe.error.CardError handling.\n * Migrate to stripe-errors-v2 PaymentIntents + Stripe.errors.StripeCardError.\n */\nexport async function chargeOrHandle(\n  source: string,\n  amountCents: number\n): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {\n  try {\n    // Usage site — happy path + card decline handling\n    const charge = await stripe.charges.create({\n      amount: amountCents,\n      currency: \"usd\",\n      source,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof stripe.error.CardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n}\n\nexport async function holdOrHandle(\n  source: string\n): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {\n  try {\n    const charge = await stripe.charges.create({\n      amount: 5000,\n      currency: \"usd\",\n      source,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof stripe.error.CardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n}\n",
+      "after": "import Stripe, { StripeCardError } from \"stripe-errors-v2\";\n\n/**\n * Charge helper with legacy stripe.error.CardError handling.\n * Migrate to stripe-errors-v2 PaymentIntents + Stripe.errors.StripeCardError.\n */\nexport async function chargeOrHandle(\n  source: string,\n  amountCents: number\n): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {\n  try {\n    // Usage site — happy path + card decline handling\n    const charge = await new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n      amount: amountCents,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n}\n\nexport async function holdOrHandle(\n  source: string\n): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {\n  try {\n    const charge = await new Stripe(process.env.STRIPE_KEY!).paymentIntents.create({\n      amount: 5000,\n      currency: \"usd\",\n      payment_method: source,\n      confirm: true,\n    });\n    return { ok: true, id: charge.id };\n  } catch (e) {\n    if (e instanceof StripeCardError) {\n      return { ok: false, reason: \"card_declined\" };\n    }\n    throw e;\n  }\n}\n"
+    }
+  },
+  "ms": 23505
+}

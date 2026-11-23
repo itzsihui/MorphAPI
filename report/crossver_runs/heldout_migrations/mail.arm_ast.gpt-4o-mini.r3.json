@@ -1,0 +1,230 @@
+{
+  "scenario": "mail",
+  "label": "Multi-site mail",
+  "arm": "arm_ast",
+  "model": "gpt-4o-mini",
+  "deprecatedSpec": "mail-send-v1#sendEmail",
+  "successorModule": "mail-send-v2",
+  "oracle": {
+    "exports": 4,
+    "allowed": 15
+  },
+  "steps": [
+    {
+      "file": "fixtures/mail-client-v1/src/notify.ts",
+      "line": 28,
+      "text": "sendEmail(\n    email,\n    \"security@morphapi.demo\",\n    \"Reset your password\",\n    `Use this token: ${token}`\n  )",
+      "slice": {
+        "kind": "expression",
+        "startLine": 28,
+        "text": "sendEmail(\n    email,\n    \"security@morphapi.demo\",\n    \"Reset your password\",\n    `Use this token: ${token}`\n  )"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nmail-send-v1#sendEmail → mail-send-v2\n\n## Successor API\n- send: (payload: MailPayload) => Promise<SendResult>\n- MailPayload: MailPayload\n- SendResult: SendResult\n- send: (payload: MailPayload) => Promise<SendResult>\n- SendResult members: messageId, accepted\n- MailPayload members: to, from, subject, content\n\n## Slice (expression, line 28)\n```ts\nsendEmail(\n    email,\n    \"security@morphapi.demo\",\n    \"Reset your password\",\n    `Use this token: ${token}`\n  )\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Mail Send Migration Guide (v1 → v2)\n\nLegacy clients call flat `sendEmail(to, from, subject, body)`.\nModern clients use a structured `send({ ... })` payload.\n\n## Overview\n\nReplace positional arguments with a single object. The body field is\nrenamed to `content`.\n\n**SendResult contract change:** v1 used `{ id: string }`. v2 returns\n`{ messageId: string; accepted: boolean }`. Helpers that used to return a bare\nid string should return the full `SendResult` — update direct callers one hop away.\n\n## Typical pattern (notification service)\n\n```ts\nimport send, { type SendResult } from \"mail-send-v2\";\n\nexport async function notifyUser(email: string, name: string): Promise<SendResult> {\n  return await send({\n    to: email,\n    from: \"noreply@example.com\",\n    subject: \"Welcome\",\n    content: `Hi ${name}`,\n  });\n}\n```\n\n## Caller adaptation (1° impact)\n\n```ts\n// before (expects string id)\nconst messageId = await notifyUser(email, name);\n\n// after (SendResult)\nconst result = await notifyUser(email, name);\nconst messageId = result.messageId;\n```\n\n## Notes\n\n- `sendEmail` is removed in v2 — do not keep the old import.\n- Prefer `content` (not `body`) for the message text.\n- Update call sites that still use the flat signature.\n- After changing a helper’s return type, re-scan **direct callers** (1° impact).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "send({ to: email, from: \"security@morphapi.demo\", subject: \"Reset your password\", content: `Use this token: ${token}` })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "send({ to: email, from: \"security@morphapi.demo\", subject: \"Reset your password\", content: `Use this token: ${token}` })",
+      "imports": [
+        "mail-send-v2#send"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/mail-client-v1/src/notify.ts",
+      "line": 15,
+      "text": "sendEmail(\n    email,\n    \"noreply@morphapi.demo\",\n    \"Welcome\",\n    `Hi ${name}, thanks for signing up.`\n  )",
+      "slice": {
+        "kind": "expression",
+        "startLine": 15,
+        "text": "sendEmail(\n    email,\n    \"noreply@morphapi.demo\",\n    \"Welcome\",\n    `Hi ${name}, thanks for signing up.`\n  )"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nmail-send-v1#sendEmail → mail-send-v2\n\n## Successor API\n- send: (payload: MailPayload) => Promise<SendResult>\n- MailPayload: MailPayload\n- SendResult: SendResult\n- send: (payload: MailPayload) => Promise<SendResult>\n- SendResult members: messageId, accepted\n- MailPayload members: to, from, subject, content\n\n## Slice (expression, line 15)\n```ts\nsendEmail(\n    email,\n    \"noreply@morphapi.demo\",\n    \"Welcome\",\n    `Hi ${name}, thanks for signing up.`\n  )\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Mail Send Migration Guide (v1 → v2)\n\nLegacy clients call flat `sendEmail(to, from, subject, body)`.\nModern clients use a structured `send({ ... })` payload.\n\n## Overview\n\nReplace positional arguments with a single object. The body field is\nrenamed to `content`.\n\n**SendResult contract change:** v1 used `{ id: string }`. v2 returns\n`{ messageId: string; accepted: boolean }`. Helpers that used to return a bare\nid string should return the full `SendResult` — update direct callers one hop away.\n\n## Typical pattern (notification service)\n\n```ts\nimport send, { type SendResult } from \"mail-send-v2\";\n\nexport async function notifyUser(email: string, name: string): Promise<SendResult> {\n  return await send({\n    to: email,\n    from: \"noreply@example.com\",\n    subject: \"Welcome\",\n    content: `Hi ${name}`,\n  });\n}\n```\n\n## Caller adaptation (1° impact)\n\n```ts\n// before (expects string id)\nconst messageId = await notifyUser(email, name);\n\n// after (SendResult)\nconst result = await notifyUser(email, name);\nconst messageId = result.messageId;\n```\n\n## Notes\n\n- `sendEmail` is removed in v2 — do not keep the old import.\n- Prefer `content` (not `body`) for the message text.\n- Update call sites that still use the flat signature.\n- After changing a helper’s return type, re-scan **direct callers** (1° impact).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "send({ to: email, from: \"noreply@morphapi.demo\", subject: \"Welcome\", content: `Hi ${name}, thanks for signing up.` })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "send({ to: email, from: \"noreply@morphapi.demo\", subject: \"Welcome\", content: `Hi ${name}, thanks for signing up.` })",
+      "imports": [
+        "mail-send-v2#send"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/mail-client-v1/src/cron.ts",
+      "line": 7,
+      "text": "sendEmail(\n    opsInbox,\n    \"cron@morphapi.demo\",\n    \"Nightly digest\",\n    summary\n  )",
+      "slice": {
+        "kind": "expression",
+        "startLine": 7,
+        "text": "sendEmail(\n    opsInbox,\n    \"cron@morphapi.demo\",\n    \"Nightly digest\",\n    summary\n  )"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nmail-send-v1#sendEmail → mail-send-v2\n\n## Successor API\n- send: (payload: MailPayload) => Promise<SendResult>\n- MailPayload: MailPayload\n- SendResult: SendResult\n- send: (payload: MailPayload) => Promise<SendResult>\n- SendResult members: messageId, accepted\n- MailPayload members: to, from, subject, content\n\n## Slice (expression, line 7)\n```ts\nsendEmail(\n    opsInbox,\n    \"cron@morphapi.demo\",\n    \"Nightly digest\",\n    summary\n  )\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Mail Send Migration Guide (v1 → v2)\n\nLegacy clients call flat `sendEmail(to, from, subject, body)`.\nModern clients use a structured `send({ ... })` payload.\n\n## Overview\n\nReplace positional arguments with a single object. The body field is\nrenamed to `content`.\n\n**SendResult contract change:** v1 used `{ id: string }`. v2 returns\n`{ messageId: string; accepted: boolean }`. Helpers that used to return a bare\nid string should return the full `SendResult` — update direct callers one hop away.\n\n## Typical pattern (notification service)\n\n```ts\nimport send, { type SendResult } from \"mail-send-v2\";\n\nexport async function notifyUser(email: string, name: string): Promise<SendResult> {\n  return await send({\n    to: email,\n    from: \"noreply@example.com\",\n    subject: \"Welcome\",\n    content: `Hi ${name}`,\n  });\n}\n```\n\n## Caller adaptation (1° impact)\n\n```ts\n// before (expects string id)\nconst messageId = await notifyUser(email, name);\n\n// after (SendResult)\nconst result = await notifyUser(email, name);\nconst messageId = result.messageId;\n```\n\n## Notes\n\n- `sendEmail` is removed in v2 — do not keep the old import.\n- Prefer `content` (not `body`) for the message text.\n- Update call sites that still use the flat signature.\n- After changing a helper’s return type, re-scan **direct callers** (1° impact).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "send({ to: opsInbox, from: \"cron@morphapi.demo\", subject: \"Nightly digest\", content: summary })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "send({ to: opsInbox, from: \"cron@morphapi.demo\", subject: \"Nightly digest\", content: summary })",
+      "imports": [
+        "mail-send-v2#send"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/mail-client-v1/src/seed.ts",
+      "line": 9,
+      "text": "sendEmail(\n      `admin@${tenant}`,\n      \"seed@morphapi.demo\",\n      \"Demo tenant ready\",\n      `Tenant ${tenant} was seeded.`\n    )",
+      "slice": {
+        "kind": "expression",
+        "startLine": 9,
+        "text": "sendEmail(\n      `admin@${tenant}`,\n      \"seed@morphapi.demo\",\n      \"Demo tenant ready\",\n      `Tenant ${tenant} was seeded.`\n    )"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nmail-send-v1#sendEmail → mail-send-v2\n\n## Successor API\n- send: (payload: MailPayload) => Promise<SendResult>\n- MailPayload: MailPayload\n- SendResult: SendResult\n- send: (payload: MailPayload) => Promise<SendResult>\n- SendResult members: messageId, accepted\n- MailPayload members: to, from, subject, content\n\n## Slice (expression, line 9)\n```ts\nsendEmail(\n      `admin@${tenant}`,\n      \"seed@morphapi.demo\",\n      \"Demo tenant ready\",\n      `Tenant ${tenant} was seeded.`\n    )\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Mail Send Migration Guide (v1 → v2)\n\nLegacy clients call flat `sendEmail(to, from, subject, body)`.\nModern clients use a structured `send({ ... })` payload.\n\n## Overview\n\nReplace positional arguments with a single object. The body field is\nrenamed to `content`.\n\n**SendResult contract change:** v1 used `{ id: string }`. v2 returns\n`{ messageId: string; accepted: boolean }`. Helpers that used to return a bare\nid string should return the full `SendResult` — update direct callers one hop away.\n\n## Typical pattern (notification service)\n\n```ts\nimport send, { type SendResult } from \"mail-send-v2\";\n\nexport async function notifyUser(email: string, name: string): Promise<SendResult> {\n  return await send({\n    to: email,\n    from: \"noreply@example.com\",\n    subject: \"Welcome\",\n    content: `Hi ${name}`,\n  });\n}\n```\n\n## Caller adaptation (1° impact)\n\n```ts\n// before (expects string id)\nconst messageId = await notifyUser(email, name);\n\n// after (SendResult)\nconst result = await notifyUser(email, name);\nconst messageId = result.messageId;\n```\n\n## Notes\n\n- `sendEmail` is removed in v2 — do not keep the old import.\n- Prefer `content` (not `body`) for the message text.\n- Update call sites that still use the flat signature.\n- After changing a helper’s return type, re-scan **direct callers** (1° impact).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "send({ to: `admin@${tenant}`, from: \"seed@morphapi.demo\", subject: \"Demo tenant ready\", content: `Tenant ${tenant} was seeded.` })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "send({ to: `admin@${tenant}`, from: \"seed@morphapi.demo\", subject: \"Demo tenant ready\", content: `Tenant ${tenant} was seeded.` })",
+      "imports": [
+        "mail-send-v2#send"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/mail-client-v1/src/cron.ts",
+      "fixtures/mail-client-v1/src/notify.ts",
+      "fixtures/mail-client-v1/src/onboarding.ts",
+      "fixtures/mail-client-v1/src/seed.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/mail-client-v1/src/notify.ts",
+        "line": 16,
+        "start": 597,
+        "detail": "TS2339: Property 'id' does not exist on type 'SendResult'."
+      },
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/mail-client-v1/src/notify.ts",
+        "line": 24,
+        "start": 852,
+        "detail": "TS2339: Property 'id' does not exist on type 'SendResult'."
+      }
+    ],
+    "complete": false
+  },
+  "impactFixes": [
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/mail-client-v1/src/notify.ts",
+      "line": 24,
+      "before": "return r.id;",
+      "after": "return r.messageId;",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "return r.messageId;\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    },
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/mail-client-v1/src/notify.ts",
+      "line": 16,
+      "before": "return r.id;",
+      "after": "return r.messageId;",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "return r.messageId;\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    }
+  ],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 4,
+    "spansMigrated": 4,
+    "attempts": 4,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 38,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 6,
+    "churnRatio": 0,
+    "promptTokens": 3263,
+    "completionTokens": 166,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/mail-client-v1/src/notify.ts": {
+      "before": "import sendEmail from \"mail-send-v1\";\n\n/**\n * Primary product path — user-facing notifications.\n * Migrate mail-send-v1 → mail-send-v2 structured send().\n *\n * v1 helpers return the bare message id string (`SendResult.id`).\n * v2 helpers should return the full `SendResult` (`messageId` + `accepted`) —\n * callers one hop away (see onboarding.ts) must adapt.\n */\nexport async function notifyUser(\n  email: string,\n  name: string\n): Promise<string> {\n  const r = await sendEmail(\n    email,\n    \"noreply@morphapi.demo\",\n    \"Welcome\",\n    `Hi ${name}, thanks for signing up.`\n  );\n  return r.id;\n}\n\nexport async function notifyPasswordReset(\n  email: string,\n  token: string\n): Promise<string> {\n  const r = await sendEmail(\n    email,\n    \"security@morphapi.demo\",\n    \"Reset your password\",\n    `Use this token: ${token}`\n  );\n  return r.id;\n}\n",
+      "after": "import { send } from \"mail-send-v2\";\n\n/**\n * Primary product path — user-facing notifications.\n * Migrate mail-send-v1 → mail-send-v2 structured send().\n *\n * v1 helpers return the bare message id string (`SendResult.id`).\n * v2 helpers should return the full `SendResult` (`messageId` + `accepted`) —\n * callers one hop away (see onboarding.ts) must adapt.\n */\nexport async function notifyUser(\n  email: string,\n  name: string\n): Promise<string> {\n  const r = await send({ to: email, from: \"noreply@morphapi.demo\", subject: \"Welcome\", content: `Hi ${name}, thanks for signing up.` });\n  return r.messageId;\n}\n\nexport async function notifyPasswordReset(\n  email: string,\n  token: string\n): Promise<string> {\n  const r = await send({ to: email, from: \"security@morphapi.demo\", subject: \"Reset your password\", content: `Use this token: ${token}` });\n  return r.messageId;\n}\n"
+    },
+    "fixtures/mail-client-v1/src/cron.ts": {
+      "before": "import sendEmail from \"mail-send-v1\";\n\n/**\n * Nightly cron — ops digest (often forgotten in partial migrations).\n */\nexport async function runNightlyDigest(opsInbox: string, summary: string) {\n  await sendEmail(\n    opsInbox,\n    \"cron@morphapi.demo\",\n    \"Nightly digest\",\n    summary\n  );\n}\n",
+      "after": "import { send } from \"mail-send-v2\";\n\n/**\n * Nightly cron — ops digest (often forgotten in partial migrations).\n */\nexport async function runNightlyDigest(opsInbox: string, summary: string) {\n  await send({ to: opsInbox, from: \"cron@morphapi.demo\", subject: \"Nightly digest\", content: summary });\n}\n"
+    },
+    "fixtures/mail-client-v1/src/seed.ts": {
+      "before": "import sendEmail from \"mail-send-v1\";\n\n/**\n * Seed / bootstrap helper — welcome mail for demo tenants.\n * Easy to miss when migrating only the main notify service.\n */\nexport async function seedWelcomeEmails(tenants: string[]) {\n  for (const tenant of tenants) {\n    await sendEmail(\n      `admin@${tenant}`,\n      \"seed@morphapi.demo\",\n      \"Demo tenant ready\",\n      `Tenant ${tenant} was seeded.`\n    );\n  }\n}\n",
+      "after": "import { send } from \"mail-send-v2\";\n\n/**\n * Seed / bootstrap helper — welcome mail for demo tenants.\n * Easy to miss when migrating only the main notify service.\n */\nexport async function seedWelcomeEmails(tenants: string[]) {\n  for (const tenant of tenants) {\n    await send({ to: `admin@${tenant}`, from: \"seed@morphapi.demo\", subject: \"Demo tenant ready\", content: `Tenant ${tenant} was seeded.` });\n  }\n}\n"
+    }
+  },
+  "ms": 17600
+}

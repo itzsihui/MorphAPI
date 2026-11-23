@@ -1,0 +1,668 @@
+{
+ "async.arm_ast.gpt-4o-mini.r1": {
+  "id": "async",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "async.arm_ast.gpt-4o-mini.r2": {
+  "id": "async",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "async.arm_ast.gpt-4o-mini.r3": {
+  "id": "async",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "auth.arm_ast.gpt-4o-mini.r1": {
+  "id": "auth",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "auth.arm_ast.gpt-4o-mini.r2": {
+  "id": "auth",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "auth.arm_ast.gpt-4o-mini.r3": {
+  "id": "auth",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "discriminator.arm_ast.gpt-4o-mini.r1": {
+  "id": "discriminator",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 1
+  },
+  "complete": false,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"message.create\"}])",
+    "v1": "message_create",
+    "v2": "ignored"
+   },
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"message.update\"}])",
+    "v1": "message_update",
+    "v2": "ignored"
+   },
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"reaction.add\"}])",
+    "v1": "reaction_add",
+    "v2": "ignored"
+   }
+  ],
+  "oracleFailed": [
+   "P2: [\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+  ]
+ },
+ "discriminator.arm_ast.gpt-4o-mini.r2": {
+  "id": "discriminator",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 1
+  },
+  "complete": false,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"message.create\"}])",
+    "v1": "message_create",
+    "v2": "ignored"
+   },
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"message.update\"}])",
+    "v1": "message_update",
+    "v2": "ignored"
+   },
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"reaction.add\"}])",
+    "v1": "reaction_add",
+    "v2": "ignored"
+   }
+  ],
+  "oracleFailed": [
+   "P2: [\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+  ]
+ },
+ "discriminator.arm_ast.gpt-4o-mini.r3": {
+  "id": "discriminator",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 1
+  },
+  "complete": false,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"message.create\"}])",
+    "v1": "message_create",
+    "v2": "ignored"
+   },
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"message.update\"}])",
+    "v1": "message_update",
+    "v2": "ignored"
+   },
+   {
+    "kind": "output",
+    "call": "handleEvent([{\"$event\":\"reaction.add\"}])",
+    "v1": "reaction_add",
+    "v2": "ignored"
+   }
+  ],
+  "oracleFailed": [
+   "P2: [\"ignored\",\"ignored\",\"ignored\",\"ignored\"]"
+  ]
+ },
+ "envelope.arm_ast.gpt-4o-mini.r1": {
+  "id": "envelope",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "envelope.arm_ast.gpt-4o-mini.r2": {
+  "id": "envelope",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "envelope.arm_ast.gpt-4o-mini.r3": {
+  "id": "envelope",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "hmac.arm_ast.gpt-4o-mini.r1": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(legacyToken)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=false but result=true"
+   },
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(signed)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=true but result=false"
+   }
+  ],
+  "oracleFailed": [
+   "P1: [true,false]",
+   "P2: [false,true]"
+  ]
+ },
+ "hmac.arm_ast.gpt-4o-mini.r2": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(legacyToken)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=false but result=true"
+   },
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(signed)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=true but result=false"
+   }
+  ],
+  "oracleFailed": [
+   "P1: [true,false]",
+   "P2: [false,true]"
+  ]
+ },
+ "hmac.arm_ast.gpt-4o-mini.r3": {
+  "id": "hmac",
+  "baseline": {
+   "calls": 15,
+   "threw": 4,
+   "wire": 0
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(legacyToken)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=false but result=true"
+   },
+   {
+    "kind": "relation",
+    "call": "authorizeLegacyCompat(signed)",
+    "detail": "v1: result == verifyWebhookRequest(input); v2: verifyWebhookRequest(input)=true but result=false"
+   }
+  ],
+  "oracleFailed": [
+   "P1: [true,false]",
+   "P2: [false,true]"
+  ]
+ },
+ "mail.arm_ast.gpt-4o-mini.r1": {
+  "id": "mail",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 5
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "mail.arm_ast.gpt-4o-mini.r2": {
+  "id": "mail",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 5
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "mail.arm_ast.gpt-4o-mini.r3": {
+  "id": "mail",
+  "baseline": {
+   "calls": 5,
+   "threw": 0,
+   "wire": 5
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "morphpay.arm_ast.gpt-4o-mini.r1": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "output",
+    "call": "checkout([\"tok_visa\",2000])",
+    "v1": {
+     "chargeId": "<lib>",
+     "status": "<lib>",
+     "captured": true
+    },
+    "v2": {
+     "chargeId": "<lib>",
+     "status": "requires_confirmation",
+     "captured": true
+    }
+   }
+  ],
+  "oracleFailed": [
+   "P1: {\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+  ]
+ },
+ "morphpay.arm_ast.gpt-4o-mini.r2": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "output",
+    "call": "checkout([\"tok_visa\",2000])",
+    "v1": {
+     "chargeId": "<lib>",
+     "status": "<lib>",
+     "captured": true
+    },
+    "v2": {
+     "chargeId": "<lib>",
+     "status": "requires_confirmation",
+     "captured": true
+    }
+   }
+  ],
+  "oracleFailed": [
+   "P1: {\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+  ]
+ },
+ "morphpay.arm_ast.gpt-4o-mini.r3": {
+  "id": "morphpay",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "output",
+    "call": "checkout([\"tok_visa\",2000])",
+    "v1": {
+     "chargeId": "<lib>",
+     "status": "<lib>",
+     "captured": true
+    },
+    "v2": {
+     "chargeId": "<lib>",
+     "status": "requires_confirmation",
+     "captured": true
+    }
+   }
+  ],
+  "oracleFailed": [
+   "P1: {\"chargeId\":\"pi_2000_usd\",\"status\":\"requires_confirmation\",\"captured\":true}"
+  ]
+ },
+ "openai.arm_ast.gpt-4o-mini.r1": {
+  "id": "openai",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "openai.arm_ast.gpt-4o-mini.r2": {
+  "id": "openai",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "openai.arm_ast.gpt-4o-mini.r3": {
+  "id": "openai",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "plaid.arm_ast.gpt-4o-mini.r1": {
+  "id": "plaid",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "plaid.arm_ast.gpt-4o-mini.r2": {
+  "id": "plaid",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "plaid.arm_ast.gpt-4o-mini.r3": {
+  "id": "plaid",
+  "baseline": {
+   "calls": 2,
+   "threw": 0,
+   "wire": 2
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe-errors.arm_ast.gpt-4o-mini.r1": {
+  "id": "stripe-errors",
+  "baseline": {
+   "calls": 4,
+   "threw": 0,
+   "wire": 4
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe-errors.arm_ast.gpt-4o-mini.r2": {
+  "id": "stripe-errors",
+  "baseline": {
+   "calls": 4,
+   "threw": 0,
+   "wire": 4
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe-errors.arm_ast.gpt-4o-mini.r3": {
+  "id": "stripe-errors",
+  "baseline": {
+   "calls": 4,
+   "threw": 0,
+   "wire": 4
+  },
+  "complete": true,
+  "crossverOk": true,
+  "oracleOk": true,
+  "findings": [],
+  "oracleFailed": []
+ },
+ "stripe.arm_ast.gpt-4o-mini.r1": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "wire",
+    "call": "pay([\"tok\",19.99])",
+    "v1": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1999,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ],
+    "v2": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1998.9999999999998,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ]
+   }
+  ],
+  "oracleFailed": [
+   "P3: 1998.9999999999998"
+  ]
+ },
+ "stripe.arm_ast.gpt-4o-mini.r2": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "wire",
+    "call": "pay([\"tok\",19.99])",
+    "v1": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1999,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ],
+    "v2": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1998.9999999999998,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ]
+   }
+  ],
+  "oracleFailed": [
+   "P3: 1998.9999999999998"
+  ]
+ },
+ "stripe.arm_ast.gpt-4o-mini.r3": {
+  "id": "stripe",
+  "baseline": {
+   "calls": 3,
+   "threw": 0,
+   "wire": 3
+  },
+  "complete": true,
+  "crossverOk": false,
+  "oracleOk": false,
+  "findings": [
+   {
+    "kind": "wire",
+    "call": "pay([\"tok\",19.99])",
+    "v1": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1999,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ],
+    "v2": [
+     {
+      "op": "charge",
+      "req": {
+       "amount_cents": 1998.9999999999998,
+       "currency": "usd",
+       "source": "tok"
+      }
+     }
+    ]
+   }
+  ],
+  "oracleFailed": [
+   "P3: 1998.9999999999998"
+  ]
+ }
+}

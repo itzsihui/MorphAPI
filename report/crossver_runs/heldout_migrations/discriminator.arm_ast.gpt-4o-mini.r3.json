@@ -1,0 +1,157 @@
+{
+  "scenario": "discriminator",
+  "label": "Discriminator",
+  "arm": "arm_ast",
+  "model": "gpt-4o-mini",
+  "deprecatedSpec": "events-gateway-v1#GatewayClient.subscribe",
+  "successorModule": "events-gateway-v2",
+  "oracle": {
+    "exports": 6,
+    "allowed": 109
+  },
+  "steps": [
+    {
+      "file": "fixtures/events-client-v1/src/subscribe.ts",
+      "line": 11,
+      "text": "client.subscribe(\n    [\"MESSAGE_CREATE\", \"MESSAGE_UPDATE\", \"REACTION_ADD\"],\n    (event) => {\n      handleEvent(event);\n    }\n  )",
+      "slice": {
+        "kind": "expression",
+        "startLine": 11,
+        "text": "client.subscribe(\n    [\"MESSAGE_CREATE\", \"MESSAGE_UPDATE\", \"REACTION_ADD\"],\n    (event) => {\n      handleEvent(event);\n    }\n  )"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nevents-gateway-v1#GatewayClient.subscribe → events-gateway-v2\n\n## Successor API\n- createGateway: (token: string) => GatewayClient\n- EventType: EventType\n- GatewayEvent: GatewayEvent\n- EventHandler: EventHandler\n- GatewayClient: GatewayClient\n- createGateway: (token: string) => GatewayClient\n- GatewayClient members: subscribe\n- EventType members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@86, at\n- GatewayEvent members: event_type, payload\n\n## Slice (expression, line 11)\n```ts\nclient.subscribe(\n    [\"MESSAGE_CREATE\", \"MESSAGE_UPDATE\", \"REACTION_ADD\"],\n    (event) => {\n      handleEvent(event);\n    }\n  )\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Events Gateway Migration Guide (v1 → v2)\n\nGateway event payloads are still polymorphic, but the discriminator changed.\n\n## Overview\n\n- Package: `events-gateway-v1` → `events-gateway-v2`\n- Prefer the new intent names when **registering** listeners\n\n## Typical subscription pattern\n\n```ts\nimport createGateway from \"events-gateway-v2\";\n\nconst client = createGateway(process.env.GATEWAY_TOKEN!);\n\nclient.subscribe(\n  [\"message.created\", \"message.updated\", \"reaction.added\"],\n  (event) => {\n    // handle event\n  }\n);\n```\n\n## Notes\n\n- Keep using `subscribe(types, handler)` — no rename.\n- New UI surfaces use the dotted lowercase intent catalog above.\n- See Discord / Slack event catalogs for the full list.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "client.subscribe(\n    [\"message.created\", \"message.updated\", \"reaction.added\"],\n    (event) => {\n      handleEvent(event);\n    }\n  )\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "client.subscribe(\n    [\"message.created\", \"message.updated\", \"reaction.added\"],\n    (event) => {\n      handleEvent(event);\n    }\n  )",
+      "imports": [],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/events-client-v1/src/router.ts",
+      "fixtures/events-client-v1/src/subscribe.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/events-client-v1/src/router.ts",
+        "line": 8,
+        "start": 264,
+        "detail": "TS2339: Property 'type' does not exist on type 'GatewayEvent'."
+      }
+    ],
+    "complete": false
+  },
+  "impactFixes": [
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/events-client-v1/src/router.ts",
+      "line": 8,
+      "before": "switch (event.type) {\n    case \"MESSAGE_CREATE\":\n      return handleMessageCreate(event);\n    case \"MESSAGE_UPDATE\":\n      return handleMessageUpdate(event);\n    case \"REACTION_ADD\":\n      return handleReaction(event);\n    default:\n      return \"ignored\";\n  }",
+      "after": null,
+      "attempts": 2,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "client.subscribe(\n  [\"message.created\", \"message.updated\", \"reaction.added\"],\n  (event) => {\n    switch (event.event_type) {\n      case \"MESSAGE_CREATE\":\n        return handleMessageCreate(event);\n      case \"MESSAGE_UPDATE\":\n        return handleMessageUpdate(event);\n      case \"REACTION_ADD\":\n        return handleReaction(event);\n      default:\n        return \"ignored\";\n    }\n  }\n);\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "phantom",
+              "symbol": "client",
+              "line": 8,
+              "code": 2304,
+              "message": "Symbol client does not exist in events-gateway-v2 or in scope. In scope with successor types: event: GatewayEvent.",
+              "suggestions": [
+                "event",
+                "Event",
+                "GatewayClient"
+              ]
+            },
+            {
+              "kind": "type_error",
+              "line": 10,
+              "code": 7006,
+              "message": "Parameter 'event' implicitly has an 'any' type."
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "attempt": 2,
+          "candidate": "client.subscribe(\n  [\"message.created\", \"message.updated\", \"reaction.added\"],\n  (event: GatewayEvent) => {\n    switch (event.event_type) {\n      case \"message.created\":\n        return handleMessageCreate(event);\n      case \"message.updated\":\n        return handleMessageUpdate(event);\n      case \"reaction.added\":\n        return handleReaction(event);\n      default:\n        return \"ignored\";\n    }\n  }\n);\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "phantom",
+              "symbol": "client",
+              "line": 8,
+              "code": 2304,
+              "message": "Symbol client does not exist in events-gateway-v2 or in scope. In scope with successor types: event: GatewayEvent.",
+              "suggestions": [
+                "event",
+                "Event",
+                "GatewayClient"
+              ]
+            }
+          ],
+          "warnings": [],
+          "feedbackSent": "Your previous output was:\n```ts\nclient.subscribe(\n  [\"message.created\", \"message.updated\", \"reaction.added\"],\n  (event) => {\n    switch (event.event_type) {\n      case \"MESSAGE_CREATE\":\n        return handleMessageCreate(event);\n      case \"MESSAGE_UPDATE\":\n        return handleMessageUpdate(event);\n      case \"REACTION_ADD\":\n        return handleReaction(event);\n      default:\n        return \"ignored\";\n    }\n  }\n);\n```\nIt was rejected because:\n- Symbol client does not exist in events-gateway-v2 or in scope. In scope with successor types: event: GatewayEvent. Valid options: [event, Event, GatewayClient]\n- Parameter 'event' implicitly has an 'any' type."
+        }
+      ]
+    }
+  ],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [
+      {
+        "file": "fixtures/events-client-v1/src/router.ts",
+        "line": 8,
+        "message": "TS2339: Property 'type' does not exist on type 'GatewayEvent'."
+      }
+    ],
+    "phantomDiagnostics": 1,
+    "complete": false
+  },
+  "metrics": {
+    "spansFound": 1,
+    "spansMigrated": 1,
+    "attempts": 1,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 6,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 4,
+    "churnRatio": 0,
+    "promptTokens": 1858,
+    "completionTokens": 213,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/events-client-v1/src/subscribe.ts": {
+      "before": "import createGateway from \"events-gateway-v1\";\nimport { handleEvent } from \"./router\";\n\n/**\n * Listener registration — the \"product path\" docs emphasize.\n * Downstream switch/case routing lives in router.ts (not shown to LLM-only).\n */\nexport function startBot() {\n  const client = createGateway(process.env.GATEWAY_TOKEN ?? \"demo\");\n\n  client.subscribe(\n    [\"MESSAGE_CREATE\", \"MESSAGE_UPDATE\", \"REACTION_ADD\"],\n    (event) => {\n      handleEvent(event);\n    }\n  );\n}\n",
+      "after": "import createGateway from \"events-gateway-v2\";\nimport { handleEvent } from \"./router\";\n\n/**\n * Listener registration — the \"product path\" docs emphasize.\n * Downstream switch/case routing lives in router.ts (not shown to LLM-only).\n */\nexport function startBot() {\n  const client = createGateway(process.env.GATEWAY_TOKEN ?? \"demo\");\n\n  client.subscribe(\n    [\"message.created\", \"message.updated\", \"reaction.added\"],\n    (event) => {\n      handleEvent(event);\n    }\n  );\n}\n"
+    },
+    "fixtures/events-client-v1/src/router.ts": {
+      "before": "import type { GatewayEvent } from \"events-gateway-v1\";\n\n/**\n * Internal router — discriminates on event.type.\n * Miss this file and v2 migration fallthroughs / type errors appear here.\n */\nexport function handleEvent(event: GatewayEvent): string {\n  switch (event.type) {\n    case \"MESSAGE_CREATE\":\n      return handleMessageCreate(event);\n    case \"MESSAGE_UPDATE\":\n      return handleMessageUpdate(event);\n    case \"REACTION_ADD\":\n      return handleReaction(event);\n    default:\n      return \"ignored\";\n  }\n}\n\nfunction handleMessageCreate(_event: GatewayEvent): string {\n  return \"message_create\";\n}\n\nfunction handleMessageUpdate(_event: GatewayEvent): string {\n  return \"message_update\";\n}\n\nfunction handleReaction(_event: GatewayEvent): string {\n  return \"reaction_add\";\n}\n",
+      "after": "import type { GatewayEvent } from \"events-gateway-v2\";\n\n/**\n * Internal router — discriminates on event.type.\n * Miss this file and v2 migration fallthroughs / type errors appear here.\n */\nexport function handleEvent(event: GatewayEvent): string {\n  switch (event.type) {\n    case \"MESSAGE_CREATE\":\n      return handleMessageCreate(event);\n    case \"MESSAGE_UPDATE\":\n      return handleMessageUpdate(event);\n    case \"REACTION_ADD\":\n      return handleReaction(event);\n    default:\n      return \"ignored\";\n  }\n}\n\nfunction handleMessageCreate(_event: GatewayEvent): string {\n  return \"message_create\";\n}\n\nfunction handleMessageUpdate(_event: GatewayEvent): string {\n  return \"message_update\";\n}\n\nfunction handleReaction(_event: GatewayEvent): string {\n  return \"reaction_add\";\n}\n"
+    }
+  },
+  "ms": 16839
+}

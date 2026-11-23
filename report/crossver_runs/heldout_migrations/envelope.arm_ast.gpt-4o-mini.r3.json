@@ -1,0 +1,170 @@
+{
+  "scenario": "envelope",
+  "label": "Envelope / DFG",
+  "arm": "arm_ast",
+  "model": "gpt-4o-mini",
+  "deprecatedSpec": "users-list-v1#UsersListClient.listUsers",
+  "successorModule": "users-list-v2",
+  "oracle": {
+    "exports": 6,
+    "allowed": 21
+  },
+  "steps": [
+    {
+      "file": "fixtures/users-client-v1/src/api.ts",
+      "line": 9,
+      "text": "api.listUsers()",
+      "slice": {
+        "kind": "expression",
+        "startLine": 9,
+        "text": "api.listUsers()"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nusers-list-v1#UsersListClient.listUsers → users-list-v2\n\n## Successor API\n- createUsersApi: (apiKey: string) => UsersListClient\n- User: User\n- Pagination: Pagination\n- UsersPage: UsersPage\n- UsersListClient: UsersListClient\n- createUsersApi: (apiKey: string) => UsersListClient\n- UsersListClient members: listUsers\n- UsersPage members: data, pagination\n- User members: id, login, active\n- Pagination members: cursor, hasMore\n\n## Slice (expression, line 9)\n```ts\napi.listUsers()\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Users List Migration Guide (v1 → v2)\n\nLegacy `listUsers()` returned a bare array. v2 adds pagination metadata.\n\n## Overview\n\nThe method name is unchanged: `api.listUsers()`.\nUpdate package imports to `users-list-v2`.\n\n## Typical pattern\n\n```ts\nimport createUsersApi from \"users-list-v2\";\n\nconst api = createUsersApi(process.env.USERS_API_KEY!);\nconst page = await api.listUsers();\nif (page.pagination.hasMore) {\n  // fetch next page with page.pagination.cursor\n}\n```\n\n## Notes\n\n- Keep calling `listUsers()` — no rename.\n- Prefer reading `pagination` when implementing infinite scroll.\n- Example above focuses on cursor fields used by the new UI.\n- See provider docs for rate limits on list endpoints.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "api.listUsers()\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "api.listUsers()",
+      "imports": [],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/users-client-v1/src/api.ts",
+      "fixtures/users-client-v1/src/users.ts"
+    ],
+    "changedFunctions": [
+      {
+        "file": "fixtures/users-client-v1/src/api.ts",
+        "name": "loadUsers",
+        "before": "Promise<User[]>",
+        "after": "Promise<UsersPage>"
+      }
+    ],
+    "findings": [
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/users-client-v1/src/users.ts",
+        "line": 10,
+        "start": 292,
+        "detail": "TS2345: Argument of type 'UsersPage' is not assignable to parameter of type 'User[]'.\n  Type 'UsersPage' is missing the following properties from type 'User[]': length, pop, push, concat, and 29 more."
+      },
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/users-client-v1/src/users.ts",
+        "line": 15,
+        "start": 404,
+        "detail": "TS2339: Property 'filter' does not exist on type 'UsersPage'."
+      },
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/users-client-v1/src/users.ts",
+        "line": 15,
+        "start": 412,
+        "detail": "TS7006: Parameter 'u' implicitly has an 'any' type."
+      }
+    ],
+    "complete": false
+  },
+  "impactFixes": [
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/users-client-v1/src/users.ts",
+      "line": 15,
+      "before": "const active = users.filter((u) => u.active);",
+      "after": "const active = users.data.filter((u: User) => u.active);",
+      "attempts": 2,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "const active = (await api.listUsers()).data.filter((u: User) => u.active);\n",
+          "ok": false,
+          "findings": [
+            {
+              "kind": "phantom",
+              "symbol": "api",
+              "line": 15,
+              "code": 2304,
+              "message": "Symbol api does not exist in users-list-v2 or in scope. In scope with successor types: users: UsersPage.",
+              "suggestions": [
+                "User",
+                "atob",
+                "gc"
+              ]
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "attempt": 2,
+          "candidate": "const active = users.data.filter((u: User) => u.active);\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "feedbackSent": "Your previous output was:\n```ts\nconst active = (await api.listUsers()).data.filter((u: User) => u.active);\n```\nIt was rejected because:\n- Symbol api does not exist in users-list-v2 or in scope. In scope with successor types: users: UsersPage. Valid options: [User, atob, gc]"
+        }
+      ]
+    },
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/users-client-v1/src/users.ts",
+      "line": 10,
+      "before": "return toLogins(users);",
+      "after": "return toLogins(users.data);",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "return toLogins(users.data);\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    }
+  ],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 1,
+    "spansMigrated": 1,
+    "attempts": 1,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 8,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 4,
+    "churnRatio": 0,
+    "promptTokens": 1773,
+    "completionTokens": 62,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/users-client-v1/src/api.ts": {
+      "before": "import createUsersApi from \"users-list-v1\";\n\n/**\n * Network edge — returns whatever listUsers() returns.\n * Consumers live in users.ts (not shown to LLM-only).\n */\nexport async function loadUsers() {\n  const api = createUsersApi(process.env.USERS_API_KEY ?? \"demo\");\n  return await api.listUsers();\n}\n",
+      "after": "import createUsersApi from \"users-list-v2\";\n\n/**\n * Network edge — returns whatever listUsers() returns.\n * Consumers live in users.ts (not shown to LLM-only).\n */\nexport async function loadUsers() {\n  const api = createUsersApi(process.env.USERS_API_KEY ?? \"demo\");\n  return await api.listUsers();\n}\n"
+    },
+    "fixtures/users-client-v1/src/users.ts": {
+      "before": "import type { User } from \"users-list-v1\";\nimport { loadUsers } from \"./api\";\n\n/**\n * Downstream consumers — treat loadUsers() as User[].\n * v2 wraps the array; without an edge adapter these break.\n */\nexport async function listLogins() {\n  const users = await loadUsers();\n  return toLogins(users);\n}\n\nexport async function listActiveLogins() {\n  const users = await loadUsers();\n  const active = users.filter((u) => u.active);\n  return toLogins(active);\n}\n\nfunction toLogins(users: User[]) {\n  return users.map((u) => u.login);\n}\n",
+      "after": "import type { User } from \"users-list-v2\";\nimport { loadUsers } from \"./api\";\n\n/**\n * Downstream consumers — treat loadUsers() as User[].\n * v2 wraps the array; without an edge adapter these break.\n */\nexport async function listLogins() {\n  const users = await loadUsers();\n  return toLogins(users.data);\n}\n\nexport async function listActiveLogins() {\n  const users = await loadUsers();\n  const active = users.data.filter((u: User) => u.active);\n  return toLogins(active);\n}\n\nfunction toLogins(users: User[]) {\n  return users.map((u) => u.login);\n}\n"
+    }
+  },
+  "ms": 15624
+}
