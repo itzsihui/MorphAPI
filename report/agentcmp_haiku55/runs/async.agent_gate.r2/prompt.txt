@@ -1,0 +1,45 @@
+Migrate the TypeScript project in the current directory from the deprecated package `aws-s3-v1` to its successor `aws-s3-v2` (both are installed in node_modules).
+Deprecated API: aws-s3-v1#S3.getObject.
+
+Requirements:
+- The project must type-check: `npx tsc --noEmit -p tsconfig.json`.
+- No file may import or require `aws-s3-v1` any more.
+- Runtime behaviour must stay the same as before the migration.
+- Edit files under src/ only. Do not use `as any`, `: any`, `@ts-ignore`, `@ts-expect-error` or `@ts-nocheck`.
+
+Migration guide for aws-s3-v2:
+----------------------------------------------------------------
+# AWS S3 Client Migration Guide (v2 → v3 style)
+
+Legacy code uses the AWS SDK v2 request pattern:
+
+```ts
+const result = await s3.getObject({ Bucket, Key }).promise();
+```
+
+Modern AWS SDK for JavaScript (v3) uses command objects sent through the client.
+
+## Overview
+
+Replace `getObject(...).promise()` with the v3 command + send pattern.
+Create the client from `aws-s3-v2` and construct a `GetObjectCommand` for each read.
+
+## Typical pattern
+
+```ts
+import { createS3Client, GetObjectCommand } from "aws-s3-v2";
+
+const client = createS3Client();
+
+// Send a GetObjectCommand with the same Bucket / Key fields.
+// The send() call returns a Promise for the object output.
+```
+
+## Notes
+
+- `getObject` is not a method on the v3 client.
+- Prefer `GetObjectCommand` + `client.send(...)`.
+- Preserve existing helper names: `fetchObjectBody`, `loadSettings`, `bootApp`, `loadBanner`.
+- The docs do not spell out every await/async annotation — match whatever the new client types require.
+
+----------------------------------------------------------------

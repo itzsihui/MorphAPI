@@ -1,0 +1,157 @@
+{
+  "scenario": "openai",
+  "label": "OpenAI engine→model",
+  "arm": "arm_ast",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "openai-chat-v0#default.ChatCompletion.create",
+  "successorModule": "openai-chat-v1",
+  "oracle": {
+    "exports": 6,
+    "allowed": 25
+  },
+  "steps": [
+    {
+      "file": "fixtures/openai-client-v0/src/chat.ts",
+      "line": 26,
+      "text": "openai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 26,
+        "text": "openai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nopenai-chat-v0#default.ChatCompletion.create → openai-chat-v1\n\n## Successor API\n- ChatMessage: ChatMessage\n- ChatCompletionCreateParams: ChatCompletionCreateParams\n- ChatCompletionChoice: ChatCompletionChoice\n- ChatCompletion: ChatCompletion\n- OpenAI: typeof OpenAI\n- OpenAI: typeof OpenAI\n- ChatMessage members: role, content\n- ChatCompletionCreateParams members: model, messages, temperature\n- ChatCompletionChoice members: message, index\n- ChatCompletion members: id, choices\n- OpenAI members: chat\n\n## Slice (expression, line 26)\n```ts\nopenai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# OpenAI Chat Migration Guide (v0 → v1 style)\n\nLegacy integrations used a module-style `ChatCompletion.create` helper with an\n`engine` field. Modern OpenAI TypeScript clients use an instantiated client and\nthe nested `chat.completions.create` method.\n\n## Overview\n\nPrefer the v1 client pattern when creating chat completions.\n\n## Typical pattern\n\n```ts\nimport OpenAI from \"openai-chat-v1\";\n\nconst client = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY!,\n});\n\nconst response = await client.chat.completions.create({\n  model: /* the chat model id, e.g. for GPT-4 */,\n  messages: [\n    { role: \"user\", content: prompt },\n  ],\n});\n```\n\n## Notes\n\n- Map the old engine / model identifier field to the appropriate v1 request field.\n- Replace `ChatCompletion.create` with the nested completions API on the client.\n- Do not keep deprecated request fields after upgrading.\n- Response choices are on the completion object (use attribute access, not legacy wrappers).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "openai.chat.completions.create({\n    model: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "openai.chat.completions.create({\n    model: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  })",
+      "imports": [],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/openai-client-v0/src/chat.ts",
+      "line": 11,
+      "text": "openai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 11,
+        "text": "openai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nopenai-chat-v0#default.ChatCompletion.create → openai-chat-v1\n\n## Successor API\n- ChatMessage: ChatMessage\n- ChatCompletionCreateParams: ChatCompletionCreateParams\n- ChatCompletionChoice: ChatCompletionChoice\n- ChatCompletion: ChatCompletion\n- OpenAI: typeof OpenAI\n- OpenAI: typeof OpenAI\n- ChatMessage members: role, content\n- ChatCompletionCreateParams members: model, messages, temperature\n- ChatCompletionChoice members: message, index\n- ChatCompletion members: id, choices\n- OpenAI members: chat\n\n## Slice (expression, line 11)\n```ts\nopenai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# OpenAI Chat Migration Guide (v0 → v1 style)\n\nLegacy integrations used a module-style `ChatCompletion.create` helper with an\n`engine` field. Modern OpenAI TypeScript clients use an instantiated client and\nthe nested `chat.completions.create` method.\n\n## Overview\n\nPrefer the v1 client pattern when creating chat completions.\n\n## Typical pattern\n\n```ts\nimport OpenAI from \"openai-chat-v1\";\n\nconst client = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY!,\n});\n\nconst response = await client.chat.completions.create({\n  model: /* the chat model id, e.g. for GPT-4 */,\n  messages: [\n    { role: \"user\", content: prompt },\n  ],\n});\n```\n\n## Notes\n\n- Map the old engine / model identifier field to the appropriate v1 request field.\n- Replace `ChatCompletion.create` with the nested completions API on the client.\n- Do not keep deprecated request fields after upgrading.\n- Response choices are on the completion object (use attribute access, not legacy wrappers).\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "openai.chat.completions.create({\n    model: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "openai.chat.completions.create({\n    model: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  })",
+      "imports": [],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/openai-client-v0/src/chat.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/openai-client-v0/src/chat.ts",
+        "line": 8,
+        "start": 266,
+        "detail": "TS2559: Type 'string' has no properties in common with type '{ apiKey?: string | undefined; }'."
+      },
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/openai-client-v0/src/chat.ts",
+        "line": 23,
+        "start": 664,
+        "detail": "TS2559: Type 'string' has no properties in common with type '{ apiKey?: string | undefined; }'."
+      }
+    ],
+    "complete": false
+  },
+  "impactFixes": [
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/openai-client-v0/src/chat.ts",
+      "line": 23,
+      "before": "const openai = new OpenAI(process.env.OPENAI_API_KEY ?? \"sk-demo\");",
+      "after": "const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? \"sk-demo\" });",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? \"sk-demo\" });\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    },
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/openai-client-v0/src/chat.ts",
+      "line": 8,
+      "before": "const openai = new OpenAI(process.env.OPENAI_API_KEY ?? \"sk-demo\");",
+      "after": "const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? \"sk-demo\" });",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? \"sk-demo\" });\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    }
+  ],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 2,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 14,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 3297,
+    "completionTokens": 798,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/openai-client-v0/src/chat.ts": {
+      "before": "import OpenAI from \"openai-chat-v0\";\n\n/**\n * Chat helpers using the deprecated v0 chat create API.\n * Migrate to openai-chat-v1 nested completions.create with model id.\n */\nexport async function askOnce(prompt: string): Promise<string> {\n  const openai = new OpenAI(process.env.OPENAI_API_KEY ?? \"sk-demo\");\n\n  // Usage site 1 — single-turn GPT-4 style call\n  const response = await openai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  });\n\n  return response.choices[0].message.content;\n}\n\nexport async function askWithSystem(\n  system: string,\n  prompt: string\n): Promise<string> {\n  const openai = new OpenAI(process.env.OPENAI_API_KEY ?? \"sk-demo\");\n\n  // Usage site 2 — system + user\n  const response = await openai.ChatCompletion.create({\n    engine: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  });\n\n  return response.choices[0].message.content;\n}\n",
+      "after": "import OpenAI from \"openai-chat-v1\";\n\n/**\n * Chat helpers using the deprecated v0 chat create API.\n * Migrate to openai-chat-v1 nested completions.create with model id.\n */\nexport async function askOnce(prompt: string): Promise<string> {\n  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? \"sk-demo\" });\n\n  // Usage site 1 — single-turn GPT-4 style call\n  const response = await openai.chat.completions.create({\n    model: \"gpt-4\",\n    messages: [{ role: \"user\", content: prompt }],\n  });\n\n  return response.choices[0].message.content;\n}\n\nexport async function askWithSystem(\n  system: string,\n  prompt: string\n): Promise<string> {\n  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? \"sk-demo\" });\n\n  // Usage site 2 — system + user\n  const response = await openai.chat.completions.create({\n    model: \"gpt-4\",\n    messages: [\n      { role: \"system\", content: system },\n      { role: \"user\", content: prompt },\n    ],\n    temperature: 0.2,\n  });\n\n  return response.choices[0].message.content;\n}\n"
+    }
+  },
+  "ms": 7298
+}

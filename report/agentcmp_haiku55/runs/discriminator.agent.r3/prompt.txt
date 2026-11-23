@@ -1,0 +1,42 @@
+Migrate the TypeScript project in the current directory from the deprecated package `events-gateway-v1` to its successor `events-gateway-v2` (both are installed in node_modules).
+Deprecated API: events-gateway-v1#GatewayClient.subscribe.
+
+Requirements:
+- The project must type-check: `npx tsc --noEmit -p tsconfig.json`.
+- No file may import or require `events-gateway-v1` any more.
+- Runtime behaviour must stay the same as before the migration.
+- Edit files under src/ only. Do not use `as any`, `: any`, `@ts-ignore`, `@ts-expect-error` or `@ts-nocheck`.
+
+Migration guide for events-gateway-v2:
+----------------------------------------------------------------
+# Events Gateway Migration Guide (v1 → v2)
+
+Gateway event payloads are still polymorphic, but the discriminator changed.
+
+## Overview
+
+- Package: `events-gateway-v1` → `events-gateway-v2`
+- Prefer the new intent names when **registering** listeners
+
+## Typical subscription pattern
+
+```ts
+import createGateway from "events-gateway-v2";
+
+const client = createGateway(process.env.GATEWAY_TOKEN!);
+
+client.subscribe(
+  ["message.created", "message.updated", "reaction.added"],
+  (event) => {
+    // handle event
+  }
+);
+```
+
+## Notes
+
+- Keep using `subscribe(types, handler)` — no rename.
+- New UI surfaces use the dotted lowercase intent catalog above.
+- See Discord / Slack event catalogs for the full list.
+
+----------------------------------------------------------------

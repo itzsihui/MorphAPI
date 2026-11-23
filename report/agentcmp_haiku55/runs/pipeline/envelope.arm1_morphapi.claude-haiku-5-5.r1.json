@@ -1,0 +1,143 @@
+{
+  "scenario": "envelope",
+  "label": "Envelope / DFG",
+  "arm": "arm1_morphapi",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "users-list-v1#UsersListClient.listUsers",
+  "successorModule": "users-list-v2",
+  "oracle": {
+    "exports": 6,
+    "allowed": 21
+  },
+  "steps": [
+    {
+      "file": "fixtures/users-client-v1/src/api.ts",
+      "line": 9,
+      "text": "api.listUsers()",
+      "slice": {
+        "kind": "expression",
+        "startLine": 9,
+        "text": "api.listUsers()"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nusers-list-v1#UsersListClient.listUsers → users-list-v2\n\n## Successor API\n- createUsersApi: (apiKey: string) => UsersListClient\n- User: User\n- Pagination: Pagination\n- UsersPage: UsersPage\n- UsersListClient: UsersListClient\n- createUsersApi: (apiKey: string) => UsersListClient\n- UsersListClient members: listUsers\n- UsersPage members: data, pagination\n- User members: id, login, active\n- Pagination members: cursor, hasMore\n\n## Slice (expression, line 9)\n```ts\napi.listUsers()\n```\n\n## Facts (TypeScript checker)\n```json\n{\n  \"target_call\": \"api.listUsers()\",\n  \"slice\": {\n    \"file\": \"fixtures/users-client-v1/src/api.ts\",\n    \"bytes\": [\n      282,\n      297\n    ],\n    \"lines\": [\n      9,\n      9\n    ]\n  },\n  \"resolved_api\": {\n    \"symbol\": \"users-list-v1#listUsers\",\n    \"module\": \"users-list-v1\",\n    \"signature\": \"(): Promise<User[]>\",\n    \"deprecated\": true,\n    \"deprecated_reason\": \"scenario_meta\"\n  },\n  \"successor_api\": [\n    {\n      \"symbol\": \"users-list-v2#UsersListClient.listUsers\",\n      \"module\": \"users-list-v2\",\n      \"signature\": \"() => Promise<UsersPage>\"\n    },\n    {\n      \"symbol\": \"users-list-v2#UsersPage\",\n      \"module\": \"users-list-v2\",\n      \"signature\": \"{ data: User[]; pagination: Pagination }\"\n    }\n  ],\n  \"arguments\": [],\n  \"data_flow\": [],\n  \"result\": {\n    \"binding\": null,\n    \"type\": \"User[]\",\n    \"downstream_usages\": [\n      \"returned to listLogins() (fixtures/users-client-v1/src/users.ts:9, awaited)\",\n      \"returned to listActiveLogins() (fixtures/users-client-v1/src/users.ts:14, awaited)\"\n    ]\n  },\n  \"enclosing_function\": {\n    \"name\": \"loadUsers\",\n    \"async\": true,\n    \"return_type\": \"Promise<User[]>\",\n    \"params\": []\n  },\n  \"callers_1hop\": [\n    \"listLogins() (fixtures/users-client-v1/src/users.ts:9, awaited)\",\n    \"listActiveLogins() (fixtures/users-client-v1/src/users.ts:14, awaited)\"\n  ]\n}\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Users List Migration Guide (v1 → v2)\n\nLegacy `listUsers()` returned a bare array. v2 adds pagination metadata.\n\n## Overview\n\nThe method name is unchanged: `api.listUsers()`.\nUpdate package imports to `users-list-v2`.\n\n## Typical pattern\n\n```ts\nimport createUsersApi from \"users-list-v2\";\n\nconst api = createUsersApi(process.env.USERS_API_KEY!);\nconst page = await api.listUsers();\nif (page.pagination.hasMore) {\n  // fetch next page with page.pagination.cursor\n}\n```\n\n## Notes\n\n- Keep calling `listUsers()` — no rename.\n- Prefer reading `pagination` when implementing infinite scroll.\n- Example above focuses on cursor fields used by the new UI.\n- See provider docs for rate limits on list endpoints.\n",
+      "facts": {
+        "target_call": "api.listUsers()",
+        "slice": {
+          "file": "fixtures/users-client-v1/src/api.ts",
+          "bytes": [
+            282,
+            297
+          ],
+          "lines": [
+            9,
+            9
+          ]
+        },
+        "resolved_api": {
+          "symbol": "users-list-v1#listUsers",
+          "module": "users-list-v1",
+          "signature": "(): Promise<User[]>",
+          "deprecated": true,
+          "deprecated_reason": "scenario_meta"
+        },
+        "successor_api": [
+          {
+            "symbol": "users-list-v2#UsersListClient.listUsers",
+            "module": "users-list-v2",
+            "signature": "() => Promise<UsersPage>"
+          },
+          {
+            "symbol": "users-list-v2#UsersPage",
+            "module": "users-list-v2",
+            "signature": "{ data: User[]; pagination: Pagination }"
+          }
+        ],
+        "arguments": [],
+        "data_flow": [],
+        "result": {
+          "binding": null,
+          "type": "User[]",
+          "downstream_usages": [
+            "returned to listLogins() (fixtures/users-client-v1/src/users.ts:9, awaited)",
+            "returned to listActiveLogins() (fixtures/users-client-v1/src/users.ts:14, awaited)"
+          ]
+        },
+        "enclosing_function": {
+          "name": "loadUsers",
+          "async": true,
+          "return_type": "Promise<User[]>",
+          "params": []
+        },
+        "callers_1hop": [
+          "listLogins() (fixtures/users-client-v1/src/users.ts:9, awaited)",
+          "listActiveLogins() (fixtures/users-client-v1/src/users.ts:14, awaited)"
+        ]
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "api.listUsers().then((page) => page.data)\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "api.listUsers().then((page) => page.data)",
+      "imports": [],
+      "dataflow": {
+        "mode": "none",
+        "wrapperPath": null,
+        "diagnosticsBefore": 0,
+        "diagnosticsAfter": 0,
+        "rewrites": []
+      },
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/users-client-v1/src/api.ts",
+      "fixtures/users-client-v1/src/users.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [],
+    "complete": true
+  },
+  "impactFixes": [],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 1,
+    "spansMigrated": 1,
+    "attempts": 1,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 6,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 4,
+    "churnRatio": 0,
+    "promptTokens": 1245,
+    "completionTokens": 229,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/users-client-v1/src/api.ts": {
+      "before": "import createUsersApi from \"users-list-v1\";\n\n/**\n * Network edge — returns whatever listUsers() returns.\n * Consumers live in users.ts (not shown to LLM-only).\n */\nexport async function loadUsers() {\n  const api = createUsersApi(process.env.USERS_API_KEY ?? \"demo\");\n  return await api.listUsers();\n}\n",
+      "after": "import createUsersApi from \"users-list-v2\";\n\n/**\n * Network edge — returns whatever listUsers() returns.\n * Consumers live in users.ts (not shown to LLM-only).\n */\nexport async function loadUsers() {\n  const api = createUsersApi(process.env.USERS_API_KEY ?? \"demo\");\n  return await api.listUsers().then((page) => page.data);\n}\n"
+    },
+    "fixtures/users-client-v1/src/users.ts": {
+      "before": "import type { User } from \"users-list-v1\";\nimport { loadUsers } from \"./api\";\n\n/**\n * Downstream consumers — treat loadUsers() as User[].\n * v2 wraps the array; without an edge adapter these break.\n */\nexport async function listLogins() {\n  const users = await loadUsers();\n  return toLogins(users);\n}\n\nexport async function listActiveLogins() {\n  const users = await loadUsers();\n  const active = users.filter((u) => u.active);\n  return toLogins(active);\n}\n\nfunction toLogins(users: User[]) {\n  return users.map((u) => u.login);\n}\n",
+      "after": "import type { User } from \"users-list-v2\";\nimport { loadUsers } from \"./api\";\n\n/**\n * Downstream consumers — treat loadUsers() as User[].\n * v2 wraps the array; without an edge adapter these break.\n */\nexport async function listLogins() {\n  const users = await loadUsers();\n  return toLogins(users);\n}\n\nexport async function listActiveLogins() {\n  const users = await loadUsers();\n  const active = users.filter((u) => u.active);\n  return toLogins(active);\n}\n\nfunction toLogins(users: User[]) {\n  return users.map((u) => u.login);\n}\n"
+    }
+  },
+  "ms": 3458
+}

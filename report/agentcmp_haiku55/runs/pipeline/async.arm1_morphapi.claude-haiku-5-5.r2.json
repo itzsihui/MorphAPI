@@ -1,0 +1,269 @@
+{
+  "scenario": "async",
+  "label": "Async contagion",
+  "arm": "arm1_morphapi",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "aws-s3-v1#S3.getObject",
+  "successorModule": "aws-s3-v2",
+  "oracle": {
+    "exports": 6,
+    "allowed": 17
+  },
+  "steps": [
+    {
+      "file": "fixtures/aws-s3-client-v1/src/io.ts",
+      "line": 19,
+      "text": "s3\n    .getObject({ Bucket: bucket, Key: \"banner.txt\" })",
+      "slice": {
+        "kind": "statement",
+        "startLine": 19,
+        "text": "return s3\n    .getObject({ Bucket: bucket, Key: \"banner.txt\" })\n    .promise()\n    .then((body) => body.Body);"
+      },
+      "escalated": false,
+      "prompt": "## Migration\naws-s3-v1#S3.getObject → aws-s3-v2\n\n## Successor API\n- createS3Client: () => S3Client\n- GetObjectOutput: GetObjectOutput\n- GetObjectRequest: GetObjectRequest\n- GetObjectCommand: typeof GetObjectCommand\n- S3Client: S3Client\n- createS3Client: () => S3Client\n- S3Client members: send\n- GetObjectOutput members: Body, ContentType\n- GetObjectRequest members: Bucket, Key\n- GetObjectCommand members: input\n\n## Slice (statement, line 19)\n```ts\nreturn s3\n    .getObject({ Bucket: bucket, Key: \"banner.txt\" })\n    .promise()\n    .then((body) => body.Body);\n```\n\n## Facts (TypeScript checker)\n```json\n{\n  \"target_call\": \"s3 .getObject({ Bucket: bucket, Key: \\\"banner.txt\\\" })\",\n  \"slice\": {\n    \"file\": \"fixtures/aws-s3-client-v1/src/io.ts\",\n    \"bytes\": [\n      461,\n      517\n    ],\n    \"lines\": [\n      19,\n      20\n    ]\n  },\n  \"resolved_api\": {\n    \"symbol\": \"aws-s3-v1#getObject\",\n    \"module\": \"aws-s3-v1\",\n    \"signature\": \"(params: GetObjectRequest): AwsRequest<GetObjectOutput>\",\n    \"deprecated\": true,\n    \"deprecated_reason\": \"scenario_meta\"\n  },\n  \"successor_api\": [\n    {\n      \"symbol\": \"aws-s3-v2#S3Client.send\",\n      \"module\": \"aws-s3-v2\",\n      \"signature\": \"(command: GetObjectCommand) => Promise<GetObjectOutput>\"\n    },\n    {\n      \"symbol\": \"aws-s3-v2#GetObjectCommand\",\n      \"module\": \"aws-s3-v2\",\n      \"signature\": \"typeof GetObjectCommand\"\n    }\n  ],\n  \"arguments\": [\n    {\n      \"index\": 0,\n      \"text\": \"{ Bucket: bucket, Key: \\\"banner.txt\\\" }\",\n      \"type\": \"{ Bucket: string; Key: string; }\",\n      \"param\": \"params\",\n      \"paramType\": \"GetObjectRequest\",\n      \"origin\": null\n    }\n  ],\n  \"data_flow\": [\n    {\n      \"variable\": \"bucket\",\n      \"declared_type\": \"string\",\n      \"origin\": \"parameter of loadBanner() (line 18)\",\n      \"downstream_usages\": [\n        \"line 20\"\n      ]\n    }\n  ],\n  \"result\": {\n    \"binding\": null,\n    \"type\": \"Promise<string>\",\n    \"downstream_usages\": []\n  },\n  \"enclosing_function\": {\n    \"name\": \"loadBanner\",\n    \"async\": true,\n    \"return_type\": \"Promise<string>\",\n    \"params\": [\n      \"bucket: string\"\n    ]\n  },\n  \"callers_1hop\": []\n}\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# AWS S3 Client Migration Guide (v2 → v3 style)\n\nLegacy code uses the AWS SDK v2 request pattern:\n\n```ts\nconst result = await s3.getObject({ Bucket, Key }).promise();\n```\n\nModern AWS SDK for JavaScript (v3) uses command objects sent through the client.\n\n## Overview\n\nReplace `getObject(...).promise()` with the v3 command + send pattern.\nCreate the client from `aws-s3-v2` and construct a `GetObjectCommand` for each read.\n\n## Typical pattern\n\n```ts\nimport { createS3Client, GetObjectCommand } from \"aws-s3-v2\";\n\nconst client = createS3Client();\n\n// Send a GetObjectCommand with the same Bucket / Key fields.\n// The send() call returns a Promise for the object output.\n```\n\n## Notes\n\n- `getObject` is not a method on the v3 client.\n- Prefer `GetObjectCommand` + `client.send(...)`.\n- Preserve existing helper names: `fetchObjectBody`, `loadSettings`, `bootApp`, `loadBanner`.\n- The docs do not spell out every await/async annotation — match whatever the new client types require.\n",
+      "facts": {
+        "target_call": "s3 .getObject({ Bucket: bucket, Key: \"banner.txt\" })",
+        "slice": {
+          "file": "fixtures/aws-s3-client-v1/src/io.ts",
+          "bytes": [
+            461,
+            517
+          ],
+          "lines": [
+            19,
+            20
+          ]
+        },
+        "resolved_api": {
+          "symbol": "aws-s3-v1#getObject",
+          "module": "aws-s3-v1",
+          "signature": "(params: GetObjectRequest): AwsRequest<GetObjectOutput>",
+          "deprecated": true,
+          "deprecated_reason": "scenario_meta"
+        },
+        "successor_api": [
+          {
+            "symbol": "aws-s3-v2#S3Client.send",
+            "module": "aws-s3-v2",
+            "signature": "(command: GetObjectCommand) => Promise<GetObjectOutput>"
+          },
+          {
+            "symbol": "aws-s3-v2#GetObjectCommand",
+            "module": "aws-s3-v2",
+            "signature": "typeof GetObjectCommand"
+          }
+        ],
+        "arguments": [
+          {
+            "index": 0,
+            "text": "{ Bucket: bucket, Key: \"banner.txt\" }",
+            "type": "{ Bucket: string; Key: string; }",
+            "param": "params",
+            "paramType": "GetObjectRequest",
+            "origin": null
+          }
+        ],
+        "data_flow": [
+          {
+            "variable": "bucket",
+            "declared_type": "string",
+            "origin": "parameter of loadBanner() (line 18)",
+            "downstream_usages": [
+              "line 20"
+            ]
+          }
+        ],
+        "result": {
+          "binding": null,
+          "type": "Promise<string>",
+          "downstream_usages": []
+        },
+        "enclosing_function": {
+          "name": "loadBanner",
+          "async": true,
+          "return_type": "Promise<string>",
+          "params": [
+            "bucket: string"
+          ]
+        },
+        "callers_1hop": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "return s3\n    .send(new GetObjectCommand({ Bucket: bucket, Key: \"banner.txt\" }))\n    .then((body) => body.Body);\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "statement"
+        }
+      ],
+      "accepted": "return s3\n    .send(new GetObjectCommand({ Bucket: bucket, Key: \"banner.txt\" }))\n    .then((body) => body.Body);",
+      "imports": [
+        "aws-s3-v2#GetObjectCommand"
+      ],
+      "dataflow": {
+        "mode": "unresolved",
+        "wrapperPath": null,
+        "diagnosticsBefore": 2,
+        "diagnosticsAfter": 2,
+        "rewrites": []
+      },
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/aws-s3-client-v1/src/io.ts",
+      "line": 13,
+      "text": "s3.getObject({ Bucket: bucket, Key: key })",
+      "slice": {
+        "kind": "statement",
+        "startLine": 13,
+        "text": "return s3.getObject({ Bucket: bucket, Key: key }).promise().then((result) => {\n    return result.Body;\n  });"
+      },
+      "escalated": false,
+      "prompt": "## Migration\naws-s3-v1#S3.getObject → aws-s3-v2\n\n## Successor API\n- createS3Client: () => S3Client\n- GetObjectOutput: GetObjectOutput\n- GetObjectRequest: GetObjectRequest\n- GetObjectCommand: typeof GetObjectCommand\n- S3Client: S3Client\n- createS3Client: () => S3Client\n- S3Client members: send\n- GetObjectOutput members: Body, ContentType\n- GetObjectRequest members: Bucket, Key\n- GetObjectCommand members: input\n\n## Slice (statement, line 13)\n```ts\nreturn s3.getObject({ Bucket: bucket, Key: key }).promise().then((result) => {\n    return result.Body;\n  });\n```\n\n## Facts (TypeScript checker)\n```json\n{\n  \"target_call\": \"s3.getObject({ Bucket: bucket, Key: key })\",\n  \"slice\": {\n    \"file\": \"fixtures/aws-s3-client-v1/src/io.ts\",\n    \"bytes\": [\n      285,\n      327\n    ],\n    \"lines\": [\n      13,\n      13\n    ]\n  },\n  \"resolved_api\": {\n    \"symbol\": \"aws-s3-v1#getObject\",\n    \"module\": \"aws-s3-v1\",\n    \"signature\": \"(params: GetObjectRequest): AwsRequest<GetObjectOutput>\",\n    \"deprecated\": true,\n    \"deprecated_reason\": \"scenario_meta\"\n  },\n  \"successor_api\": [\n    {\n      \"symbol\": \"aws-s3-v2#S3Client.send\",\n      \"module\": \"aws-s3-v2\",\n      \"signature\": \"(command: GetObjectCommand) => Promise<GetObjectOutput>\"\n    },\n    {\n      \"symbol\": \"aws-s3-v2#GetObjectCommand\",\n      \"module\": \"aws-s3-v2\",\n      \"signature\": \"typeof GetObjectCommand\"\n    }\n  ],\n  \"arguments\": [\n    {\n      \"index\": 0,\n      \"text\": \"{ Bucket: bucket, Key: key }\",\n      \"type\": \"{ Bucket: string; Key: string; }\",\n      \"param\": \"params\",\n      \"paramType\": \"GetObjectRequest\",\n      \"origin\": null\n    }\n  ],\n  \"data_flow\": [\n    {\n      \"variable\": \"bucket\",\n      \"declared_type\": \"string\",\n      \"origin\": \"parameter of fetchObjectBody() (line 10)\",\n      \"downstream_usages\": [\n        \"line 13\"\n      ]\n    },\n    {\n      \"variable\": \"key\",\n      \"declared_type\": \"string\",\n      \"origin\": \"parameter of fetchObjectBody() (line 11)\",\n      \"downstream_usages\": [\n        \"line 13\"\n      ]\n    }\n  ],\n  \"result\": {\n    \"binding\": null,\n    \"type\": \"Promise<string>\",\n    \"downstream_usages\": [\n      \"returned to loadSettings() (fixtures/aws-s3-client-v1/src/app.ts:14)\"\n    ]\n  },\n  \"enclosing_function\": {\n    \"name\": \"fetchObjectBody\",\n    \"async\": true,\n    \"return_type\": \"Promise<string>\",\n    \"params\": [\n      \"bucket: string\",\n      \"key: string\"\n    ]\n  },\n  \"callers_1hop\": [\n    \"loadSettings() (fixtures/aws-s3-client-v1/src/app.ts:14, not awaited)\"\n  ]\n}\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# AWS S3 Client Migration Guide (v2 → v3 style)\n\nLegacy code uses the AWS SDK v2 request pattern:\n\n```ts\nconst result = await s3.getObject({ Bucket, Key }).promise();\n```\n\nModern AWS SDK for JavaScript (v3) uses command objects sent through the client.\n\n## Overview\n\nReplace `getObject(...).promise()` with the v3 command + send pattern.\nCreate the client from `aws-s3-v2` and construct a `GetObjectCommand` for each read.\n\n## Typical pattern\n\n```ts\nimport { createS3Client, GetObjectCommand } from \"aws-s3-v2\";\n\nconst client = createS3Client();\n\n// Send a GetObjectCommand with the same Bucket / Key fields.\n// The send() call returns a Promise for the object output.\n```\n\n## Notes\n\n- `getObject` is not a method on the v3 client.\n- Prefer `GetObjectCommand` + `client.send(...)`.\n- Preserve existing helper names: `fetchObjectBody`, `loadSettings`, `bootApp`, `loadBanner`.\n- The docs do not spell out every await/async annotation — match whatever the new client types require.\n",
+      "facts": {
+        "target_call": "s3.getObject({ Bucket: bucket, Key: key })",
+        "slice": {
+          "file": "fixtures/aws-s3-client-v1/src/io.ts",
+          "bytes": [
+            285,
+            327
+          ],
+          "lines": [
+            13,
+            13
+          ]
+        },
+        "resolved_api": {
+          "symbol": "aws-s3-v1#getObject",
+          "module": "aws-s3-v1",
+          "signature": "(params: GetObjectRequest): AwsRequest<GetObjectOutput>",
+          "deprecated": true,
+          "deprecated_reason": "scenario_meta"
+        },
+        "successor_api": [
+          {
+            "symbol": "aws-s3-v2#S3Client.send",
+            "module": "aws-s3-v2",
+            "signature": "(command: GetObjectCommand) => Promise<GetObjectOutput>"
+          },
+          {
+            "symbol": "aws-s3-v2#GetObjectCommand",
+            "module": "aws-s3-v2",
+            "signature": "typeof GetObjectCommand"
+          }
+        ],
+        "arguments": [
+          {
+            "index": 0,
+            "text": "{ Bucket: bucket, Key: key }",
+            "type": "{ Bucket: string; Key: string; }",
+            "param": "params",
+            "paramType": "GetObjectRequest",
+            "origin": null
+          }
+        ],
+        "data_flow": [
+          {
+            "variable": "bucket",
+            "declared_type": "string",
+            "origin": "parameter of fetchObjectBody() (line 10)",
+            "downstream_usages": [
+              "line 13"
+            ]
+          },
+          {
+            "variable": "key",
+            "declared_type": "string",
+            "origin": "parameter of fetchObjectBody() (line 11)",
+            "downstream_usages": [
+              "line 13"
+            ]
+          }
+        ],
+        "result": {
+          "binding": null,
+          "type": "Promise<string>",
+          "downstream_usages": [
+            "returned to loadSettings() (fixtures/aws-s3-client-v1/src/app.ts:14)"
+          ]
+        },
+        "enclosing_function": {
+          "name": "fetchObjectBody",
+          "async": true,
+          "return_type": "Promise<string>",
+          "params": [
+            "bucket: string",
+            "key: string"
+          ]
+        },
+        "callers_1hop": [
+          "loadSettings() (fixtures/aws-s3-client-v1/src/app.ts:14, not awaited)"
+        ]
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "const client = createS3Client();\nreturn client.send(new GetObjectCommand({ Bucket: bucket, Key: key })).then((result) => {\n    return result.Body;\n  });\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "statement"
+        }
+      ],
+      "accepted": "const client = createS3Client();\n  return client.send(new GetObjectCommand({ Bucket: bucket, Key: key })).then((result) => {\n      return result.Body;\n    });",
+      "imports": [
+        "aws-s3-v2#GetObjectCommand"
+      ],
+      "dataflow": {
+        "mode": "none",
+        "wrapperPath": null,
+        "diagnosticsBefore": 0,
+        "diagnosticsAfter": 0,
+        "rewrites": []
+      },
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/aws-s3-client-v1/src/app.ts",
+      "fixtures/aws-s3-client-v1/src/io.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [],
+    "complete": true
+  },
+  "impactFixes": [],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 2,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 12,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 3186,
+    "completionTokens": 1101,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/aws-s3-client-v1/src/io.ts": {
+      "before": "import { createS3Client } from \"aws-s3-v1\";\n\n/**\n * Leaf I/O only — AWS SDK v2 getObject().promise().\n * Callers live in app.ts (separate file / DFG edge).\n */\nconst s3 = createS3Client();\n\nexport function fetchObjectBody(\n  bucket: string,\n  key: string\n): Promise<string> {\n  return s3.getObject({ Bucket: bucket, Key: key }).promise().then((result) => {\n    return result.Body;\n  });\n}\n\nexport function loadBanner(bucket: string): Promise<string> {\n  return s3\n    .getObject({ Bucket: bucket, Key: \"banner.txt\" })\n    .promise()\n    .then((body) => body.Body);\n}\n",
+      "after": "import { createS3Client, GetObjectCommand } from \"aws-s3-v2\";\n\n/**\n * Leaf I/O only — AWS SDK v2 getObject().promise().\n * Callers live in app.ts (separate file / DFG edge).\n */\nconst s3 = createS3Client();\n\nexport function fetchObjectBody(\n  bucket: string,\n  key: string\n): Promise<string> {\n  const client = createS3Client();\n  return client.send(new GetObjectCommand({ Bucket: bucket, Key: key })).then((result) => {\n      return result.Body;\n    });\n}\n\nexport function loadBanner(bucket: string): Promise<string> {\n  return s3\n    .send(new GetObjectCommand({ Bucket: bucket, Key: \"banner.txt\" }))\n    .then((body) => body.Body);\n}\n"
+    }
+  },
+  "ms": 7203
+}

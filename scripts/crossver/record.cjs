@@ -24,7 +24,7 @@ const safe = (v) => { try { return JSON.parse(JSON.stringify(v ?? null)); } catc
   const calls = [];
   for (const [file, fn, rawArgs, label] of spec.drivers) {
     const args = rawArgs.map((a) => (spec.encode ? spec.encode(ver, a) : a));
-    cur = { file, fn, label: label ?? JSON.stringify(rawArgs), wire: [], preds: {} };
+    cur = { file, fn, label: label ?? JSON.stringify(rawArgs), args: rawArgs, wire: [], preds: {} };
     for (const p of preds) { try { cur.preds[p] = lib[p](args[0]); } catch { cur.preds[p] = "throws"; } }
     try { const f = require(path.join(dir, file))[fn]; if (typeof f !== "function") throw new Error(`no export ${fn}`);
       cur.out = safe(await f(...args)); cur.threw = false; }

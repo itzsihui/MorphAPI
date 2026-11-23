@@ -1,0 +1,151 @@
+{
+  "scenario": "hmac",
+  "label": "HMAC auth",
+  "arm": "arm1_morphapi",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "webhook-auth-v1#verifyWebhookRequest",
+  "successorModule": "webhook-auth-v2",
+  "oracle": {
+    "exports": 3,
+    "allowed": 8
+  },
+  "steps": [
+    {
+      "file": "fixtures/webhook-client-v1/src/webhook.ts",
+      "line": 10,
+      "text": "verifyWebhookRequest(req)",
+      "slice": {
+        "kind": "expression",
+        "startLine": 8,
+        "text": "verifyWebhookRequest(req)"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nwebhook-auth-v1#verifyWebhookRequest → webhook-auth-v2\n\n## Successor API\n- verifyWebhookRequest: (req: WebhookRequest) => boolean\n- WebhookRequest: WebhookRequest\n- verifyWebhookRequest: (req: WebhookRequest) => boolean\n- WebhookRequest members: query, headers, rawBody\n\n## Slice (expression, line 8)\n```ts\nverifyWebhookRequest(req)\n```\n\n## Facts (TypeScript checker)\n```json\n{\n  \"target_call\": \"verifyWebhookRequest(req)\",\n  \"slice\": {\n    \"file\": \"fixtures/webhook-client-v1/src/webhook.ts\",\n    \"bytes\": [\n      272,\n      297\n    ],\n    \"lines\": [\n      10,\n      10\n    ]\n  },\n  \"resolved_api\": {\n    \"symbol\": \"webhook-auth-v1#verifyWebhookRequest\",\n    \"module\": \"webhook-auth-v1\",\n    \"signature\": \"(req: WebhookRequest): boolean\",\n    \"deprecated\": true,\n    \"deprecated_reason\": \"jsdoc\"\n  },\n  \"successor_api\": [\n    {\n      \"symbol\": \"webhook-auth-v2#verifyWebhookRequest\",\n      \"module\": \"webhook-auth-v2\",\n      \"signature\": \"(req: WebhookRequest) => boolean\"\n    }\n  ],\n  \"arguments\": [\n    {\n      \"index\": 0,\n      \"text\": \"req\",\n      \"type\": \"WebhookRequest\",\n      \"param\": \"req\",\n      \"paramType\": \"WebhookRequest\",\n      \"origin\": \"parameter of authorizeIngress() (line 9)\"\n    }\n  ],\n  \"data_flow\": [\n    {\n      \"variable\": \"req\",\n      \"declared_type\": \"WebhookRequest\",\n      \"origin\": \"parameter of authorizeIngress() (line 9)\",\n      \"downstream_usages\": [\n        \"line 10\"\n      ]\n    }\n  ],\n  \"result\": {\n    \"binding\": null,\n    \"type\": \"boolean\",\n    \"downstream_usages\": [\n      \"returned to handleIngress() (fixtures/webhook-client-v1/src/webhook.ts:14)\"\n    ]\n  },\n  \"enclosing_function\": {\n    \"name\": \"authorizeIngress\",\n    \"async\": false,\n    \"return_type\": \"boolean\",\n    \"params\": [\n      \"req: WebhookRequest\"\n    ]\n  },\n  \"callers_1hop\": [\n    \"handleIngress() (fixtures/webhook-client-v1/src/webhook.ts:14, not awaited)\"\n  ]\n}\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Webhook Auth Migration Guide (v1 → v2)\n\nLegacy integrations authorize webhooks with a static query token\n(`?token=...`). Modern providers require **HMAC request signing**\n(Slack / Shopify style).\n\n## Overview\n\nVerify each request using a signature header derived from a shared secret,\na timestamp, and the raw request body.\n\n## Signing sketch\n\n```ts\nconst base = `v0:${timestamp}:${rawBody}`;\nconst digest = /* HMAC-SHA256(secret, base) as hex */;\nconst expected = `v0=${digest}`;\n// compare signature header to expected with a timing-safe helper\n```\n\nHeaders:\n\n- `x-webhook-signature`\n- `x-webhook-timestamp`\n\nSecret env: `WEBHOOK_SIGNING_SECRET` (replaces `WEBHOOK_TOKEN`).\n\n## Notes\n\n- Replace `webhook-auth-v1` with `webhook-auth-v2`.\n- Remove static `query.token === WEBHOOK_TOKEN` checks.\n- Do not invent provider SDK helpers that are not in this package.\n- Inline compat paths must use the same HMAC scheme (or call the package\n  verifier).\n",
+      "facts": {
+        "target_call": "verifyWebhookRequest(req)",
+        "slice": {
+          "file": "fixtures/webhook-client-v1/src/webhook.ts",
+          "bytes": [
+            272,
+            297
+          ],
+          "lines": [
+            10,
+            10
+          ]
+        },
+        "resolved_api": {
+          "symbol": "webhook-auth-v1#verifyWebhookRequest",
+          "module": "webhook-auth-v1",
+          "signature": "(req: WebhookRequest): boolean",
+          "deprecated": true,
+          "deprecated_reason": "jsdoc"
+        },
+        "successor_api": [
+          {
+            "symbol": "webhook-auth-v2#verifyWebhookRequest",
+            "module": "webhook-auth-v2",
+            "signature": "(req: WebhookRequest) => boolean"
+          }
+        ],
+        "arguments": [
+          {
+            "index": 0,
+            "text": "req",
+            "type": "WebhookRequest",
+            "param": "req",
+            "paramType": "WebhookRequest",
+            "origin": "parameter of authorizeIngress() (line 9)"
+          }
+        ],
+        "data_flow": [
+          {
+            "variable": "req",
+            "declared_type": "WebhookRequest",
+            "origin": "parameter of authorizeIngress() (line 9)",
+            "downstream_usages": [
+              "line 10"
+            ]
+          }
+        ],
+        "result": {
+          "binding": null,
+          "type": "boolean",
+          "downstream_usages": [
+            "returned to handleIngress() (fixtures/webhook-client-v1/src/webhook.ts:14)"
+          ]
+        },
+        "enclosing_function": {
+          "name": "authorizeIngress",
+          "async": false,
+          "return_type": "boolean",
+          "params": [
+            "req: WebhookRequest"
+          ]
+        },
+        "callers_1hop": [
+          "handleIngress() (fixtures/webhook-client-v1/src/webhook.ts:14, not awaited)"
+        ]
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "verifyWebhookRequest(req)\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "verifyWebhookRequest(req)",
+      "imports": [],
+      "dataflow": {
+        "mode": "none",
+        "wrapperPath": null,
+        "diagnosticsBefore": 0,
+        "diagnosticsAfter": 0,
+        "rewrites": []
+      },
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/webhook-client-v1/src/webhook.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [],
+    "complete": true
+  },
+  "impactFixes": [],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 1,
+    "spansMigrated": 1,
+    "attempts": 1,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 4,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 4,
+    "churnRatio": 0,
+    "promptTokens": 1408,
+    "completionTokens": 155,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/webhook-client-v1/src/webhook.ts": {
+      "before": "import verifyWebhookRequest, {\n  type WebhookRequest,\n} from \"webhook-auth-v1\";\n\n/**\n * Webhook ingress using legacy static query token auth.\n * Migrate to webhook-auth-v2 HMAC request signing.\n */\nexport function authorizeIngress(req: WebhookRequest): boolean {\n  return verifyWebhookRequest(req);\n}\n\nexport function handleIngress(req: WebhookRequest): { ok: true } {\n  if (!authorizeIngress(req)) {\n    throw new Error(\"unauthorized webhook\");\n  }\n  return { ok: true };\n}\n\n/** Alternate site — inline token compare (also must migrate). */\nexport function authorizeLegacyCompat(req: WebhookRequest): boolean {\n  const token = req.query.token;\n  return token === process.env.WEBHOOK_TOKEN;\n}\n",
+      "after": "import verifyWebhookRequest, { type WebhookRequest } from \"webhook-auth-v2\";\n\n/**\n * Webhook ingress using legacy static query token auth.\n * Migrate to webhook-auth-v2 HMAC request signing.\n */\nexport function authorizeIngress(req: WebhookRequest): boolean {\n  return verifyWebhookRequest(req);\n}\n\nexport function handleIngress(req: WebhookRequest): { ok: true } {\n  if (!authorizeIngress(req)) {\n    throw new Error(\"unauthorized webhook\");\n  }\n  return { ok: true };\n}\n\n/** Alternate site — inline token compare (also must migrate). */\nexport function authorizeLegacyCompat(req: WebhookRequest): boolean {\n  const token = req.query.token;\n  return token === process.env.WEBHOOK_TOKEN;\n}\n"
+    }
+  },
+  "ms": 2587
+}

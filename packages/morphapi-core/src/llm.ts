@@ -82,7 +82,8 @@ async function anthropicMessages(
     res = await fetch(`${baseUrl}/messages`, {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model, temperature, max_tokens: 4096, system, messages: turns }),
+      // MORPHAPI_TEMPERATURE=none omits the parameter (newer Claude models reject `temperature`).
+      body: JSON.stringify({ model, ...(Number.isFinite(temperature) ? { temperature } : {}), max_tokens: 4096, system, messages: turns }),
     });
     // Retry rate limits and overload with backoff.
     if (res.status !== 429 && res.status !== 529 && res.status < 500) break;

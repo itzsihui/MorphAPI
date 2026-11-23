@@ -1,0 +1,286 @@
+{
+  "scenario": "auth",
+  "label": "JWT→JWKS evasion",
+  "arm": "arm1_morphapi",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "auth-jwt-v1#jwt.verify",
+  "successorModule": "auth-jwt-v2",
+  "oracle": {
+    "exports": 9,
+    "allowed": 127
+  },
+  "steps": [
+    {
+      "file": "fixtures/auth-client-v1/src/verify.ts",
+      "line": 14,
+      "text": "jwt.verify(token, process.env.JWT_SECRET!)",
+      "slice": {
+        "kind": "statement",
+        "startLine": 14,
+        "text": "return jwt.verify(token, process.env.JWT_SECRET!);"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nauth-jwt-v1#jwt.verify → auth-jwt-v2\n\n## Successor API\n- decodeHeader: (token: string) => JwtHeader\n- createJwksClient: (_options: { jwksUri: string; }) => JwksClient\n- JwtPayload: JwtPayload\n- JwtHeader: JwtHeader\n- PublicKey: PublicKey\n- SigningKey: SigningKey\n- JwksClient: JwksClient\n- jwt: { verify(token: string, key: PublicKey): JwtPayload; }\n- jwt: { verify(token: string, key: PublicKey): JwtPayload; }\n- JwtHeader members: alg, kid, typ\n- JwksClient members: getSigningKey\n- SigningKey members: getPublicKey\n- JwtPayload members: sub, aud, iss, exp\n- PublicKey members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@87, at, __brand\n- jwt members: verify\n\n## Slice (statement, line 14)\n```ts\nreturn jwt.verify(token, process.env.JWT_SECRET!);\n```\n\n## Facts (TypeScript checker)\n```json\n{\n  \"target_call\": \"jwt.verify(token, process.env.JWT_SECRET!)\",\n  \"slice\": {\n    \"file\": \"fixtures/auth-client-v1/src/verify.ts\",\n    \"bytes\": [\n      456,\n      498\n    ],\n    \"lines\": [\n      14,\n      14\n    ]\n  },\n  \"resolved_api\": {\n    \"symbol\": \"auth-jwt-v1#verify\",\n    \"module\": \"auth-jwt-v1\",\n    \"signature\": \"(token: string, secret: string): JwtPayload\",\n    \"deprecated\": true,\n    \"deprecated_reason\": \"scenario_meta\"\n  },\n  \"successor_api\": [\n    {\n      \"symbol\": \"auth-jwt-v2#createJwksClient\",\n      \"module\": \"auth-jwt-v2\",\n      \"signature\": \"(_options: { jwksUri: string; }) => JwksClient\"\n    },\n    {\n      \"symbol\": \"auth-jwt-v2#jwt\",\n      \"module\": \"auth-jwt-v2\",\n      \"signature\": \"{ verify(token: string, key: PublicKey): JwtPayload; }\"\n    }\n  ],\n  \"arguments\": [\n    {\n      \"index\": 0,\n      \"text\": \"token\",\n      \"type\": \"string\",\n      \"param\": \"token\",\n      \"paramType\": \"string\",\n      \"origin\": \"parameter of verifyIdToken() (line 12)\"\n    },\n    {\n      \"index\": 1,\n      \"text\": \"process.env.JWT_SECRET!\",\n      \"type\": \"string\",\n      \"param\": \"secret\",\n      \"paramType\": \"string\",\n      \"origin\": null\n    }\n  ],\n  \"data_flow\": [\n    {\n      \"variable\": \"token\",\n      \"declared_type\": \"string\",\n      \"origin\": \"parameter of verifyIdToken() (line 12)\",\n      \"downstream_usages\": [\n        \"line 14\"\n      ]\n    }\n  ],\n  \"result\": {\n    \"binding\": null,\n    \"type\": \"JwtPayload\",\n    \"downstream_usages\": []\n  },\n  \"enclosing_function\": {\n    \"name\": \"verifyIdToken\",\n    \"async\": false,\n    \"return_type\": \"JwtPayload\",\n    \"params\": [\n      \"token: string\"\n    ]\n  },\n  \"callers_1hop\": []\n}\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Auth JWT v2 Migration Guide\n\nLegacy integrations verify tokens with a shared symmetric secret\n(`jwt.verify(token, process.env.JWT_SECRET)`). Modern identity providers\n(Auth0-style) expect JWKS-based verification instead.\n\n## Overview\n\nDecode the JWT header to obtain the key id, fetch the matching signing key\nfrom your JWKS URI, then verify using the public key material from that key.\n\n## Typical pattern\n\n```ts\nimport { jwt, decodeHeader, createJwksClient } from \"auth-jwt-v2\";\n\nconst jwksClient = createJwksClient({\n  jwksUri: process.env.JWKS_URI!,\n});\n\n// 1) Read kid from the token header\n// 2) Await the signing key for that kid\n// 3) Pass the key's public material into jwt.verify\n```\n\n## Notes\n\n- Symmetric `JWT_SECRET` verify is removed in auth-jwt-v2.\n- Prefer the typed JWKS helpers exported by the TypeScript client.\n- Verification becomes asynchronous once you fetch signing keys.\n- Keep existing smoke tests in `verify.test.ts` intact.\n",
+      "facts": {
+        "target_call": "jwt.verify(token, process.env.JWT_SECRET!)",
+        "slice": {
+          "file": "fixtures/auth-client-v1/src/verify.ts",
+          "bytes": [
+            456,
+            498
+          ],
+          "lines": [
+            14,
+            14
+          ]
+        },
+        "resolved_api": {
+          "symbol": "auth-jwt-v1#verify",
+          "module": "auth-jwt-v1",
+          "signature": "(token: string, secret: string): JwtPayload",
+          "deprecated": true,
+          "deprecated_reason": "scenario_meta"
+        },
+        "successor_api": [
+          {
+            "symbol": "auth-jwt-v2#createJwksClient",
+            "module": "auth-jwt-v2",
+            "signature": "(_options: { jwksUri: string; }) => JwksClient"
+          },
+          {
+            "symbol": "auth-jwt-v2#jwt",
+            "module": "auth-jwt-v2",
+            "signature": "{ verify(token: string, key: PublicKey): JwtPayload; }"
+          }
+        ],
+        "arguments": [
+          {
+            "index": 0,
+            "text": "token",
+            "type": "string",
+            "param": "token",
+            "paramType": "string",
+            "origin": "parameter of verifyIdToken() (line 12)"
+          },
+          {
+            "index": 1,
+            "text": "process.env.JWT_SECRET!",
+            "type": "string",
+            "param": "secret",
+            "paramType": "string",
+            "origin": null
+          }
+        ],
+        "data_flow": [
+          {
+            "variable": "token",
+            "declared_type": "string",
+            "origin": "parameter of verifyIdToken() (line 12)",
+            "downstream_usages": [
+              "line 14"
+            ]
+          }
+        ],
+        "result": {
+          "binding": null,
+          "type": "JwtPayload",
+          "downstream_usages": []
+        },
+        "enclosing_function": {
+          "name": "verifyIdToken",
+          "async": false,
+          "return_type": "JwtPayload",
+          "params": [
+            "token: string"
+          ]
+        },
+        "callers_1hop": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "// Note: verification is async now, so verifyIdToken must become `async` and return Promise<JwtPayload>.\nconst jwksClient = createJwksClient({ jwksUri: process.env.JWKS_URI! });\nconst header = decodeHeader(token);\nconst signingKey = await jwksClient.getSigningKey(header.kid!);\nreturn jwt.verify(token, signingKey.getPublicKey());\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "statement"
+        }
+      ],
+      "accepted": "// Note: verification is async now, so verifyIdToken must become `async` and return Promise<JwtPayload>.\n  const jwksClient = createJwksClient({ jwksUri: process.env.JWKS_URI! });\n  const header = decodeHeader(token);\n  const signingKey = await jwksClient.getSigningKey(header.kid!);\n  return jwt.verify(token, signingKey.getPublicKey());",
+      "imports": [
+        "auth-jwt-v2#decodeHeader",
+        "auth-jwt-v2#createJwksClient"
+      ],
+      "dataflow": {
+        "mode": "unresolved",
+        "wrapperPath": null,
+        "diagnosticsBefore": 1,
+        "diagnosticsAfter": 1,
+        "rewrites": []
+      },
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/auth-client-v1/src/verify.ts",
+      "line": 9,
+      "text": "jwt.verify(token, process.env.JWT_SECRET!)",
+      "slice": {
+        "kind": "statement",
+        "startLine": 9,
+        "text": "return jwt.verify(token, process.env.JWT_SECRET!);"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nauth-jwt-v1#jwt.verify → auth-jwt-v2\n\n## Successor API\n- decodeHeader: (token: string) => JwtHeader\n- createJwksClient: (_options: { jwksUri: string; }) => JwksClient\n- JwtPayload: JwtPayload\n- JwtHeader: JwtHeader\n- PublicKey: PublicKey\n- SigningKey: SigningKey\n- JwksClient: JwksClient\n- jwt: { verify(token: string, key: PublicKey): JwtPayload; }\n- jwt: { verify(token: string, key: PublicKey): JwtPayload; }\n- JwtHeader members: alg, kid, typ\n- JwksClient members: getSigningKey\n- SigningKey members: getPublicKey\n- JwtPayload members: sub, aud, iss, exp\n- PublicKey members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@87, at, __brand\n- jwt members: verify\n\n## Slice (statement, line 9)\n```ts\nreturn jwt.verify(token, process.env.JWT_SECRET!);\n```\n\n## Facts (TypeScript checker)\n```json\n{\n  \"target_call\": \"jwt.verify(token, process.env.JWT_SECRET!)\",\n  \"slice\": {\n    \"file\": \"fixtures/auth-client-v1/src/verify.ts\",\n    \"bytes\": [\n      282,\n      324\n    ],\n    \"lines\": [\n      9,\n      9\n    ]\n  },\n  \"resolved_api\": {\n    \"symbol\": \"auth-jwt-v1#verify\",\n    \"module\": \"auth-jwt-v1\",\n    \"signature\": \"(token: string, secret: string): JwtPayload\",\n    \"deprecated\": true,\n    \"deprecated_reason\": \"scenario_meta\"\n  },\n  \"successor_api\": [\n    {\n      \"symbol\": \"auth-jwt-v2#createJwksClient\",\n      \"module\": \"auth-jwt-v2\",\n      \"signature\": \"(_options: { jwksUri: string; }) => JwksClient\"\n    },\n    {\n      \"symbol\": \"auth-jwt-v2#jwt\",\n      \"module\": \"auth-jwt-v2\",\n      \"signature\": \"{ verify(token: string, key: PublicKey): JwtPayload; }\"\n    }\n  ],\n  \"arguments\": [\n    {\n      \"index\": 0,\n      \"text\": \"token\",\n      \"type\": \"string\",\n      \"param\": \"token\",\n      \"paramType\": \"string\",\n      \"origin\": \"parameter of verifyAccessToken() (line 7)\"\n    },\n    {\n      \"index\": 1,\n      \"text\": \"process.env.JWT_SECRET!\",\n      \"type\": \"string\",\n      \"param\": \"secret\",\n      \"paramType\": \"string\",\n      \"origin\": null\n    }\n  ],\n  \"data_flow\": [\n    {\n      \"variable\": \"token\",\n      \"declared_type\": \"string\",\n      \"origin\": \"parameter of verifyAccessToken() (line 7)\",\n      \"downstream_usages\": [\n        \"line 9\"\n      ]\n    }\n  ],\n  \"result\": {\n    \"binding\": null,\n    \"type\": \"JwtPayload\",\n    \"downstream_usages\": []\n  },\n  \"enclosing_function\": {\n    \"name\": \"verifyAccessToken\",\n    \"async\": false,\n    \"return_type\": \"JwtPayload\",\n    \"params\": [\n      \"token: string\"\n    ]\n  },\n  \"callers_1hop\": []\n}\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Auth JWT v2 Migration Guide\n\nLegacy integrations verify tokens with a shared symmetric secret\n(`jwt.verify(token, process.env.JWT_SECRET)`). Modern identity providers\n(Auth0-style) expect JWKS-based verification instead.\n\n## Overview\n\nDecode the JWT header to obtain the key id, fetch the matching signing key\nfrom your JWKS URI, then verify using the public key material from that key.\n\n## Typical pattern\n\n```ts\nimport { jwt, decodeHeader, createJwksClient } from \"auth-jwt-v2\";\n\nconst jwksClient = createJwksClient({\n  jwksUri: process.env.JWKS_URI!,\n});\n\n// 1) Read kid from the token header\n// 2) Await the signing key for that kid\n// 3) Pass the key's public material into jwt.verify\n```\n\n## Notes\n\n- Symmetric `JWT_SECRET` verify is removed in auth-jwt-v2.\n- Prefer the typed JWKS helpers exported by the TypeScript client.\n- Verification becomes asynchronous once you fetch signing keys.\n- Keep existing smoke tests in `verify.test.ts` intact.\n",
+      "facts": {
+        "target_call": "jwt.verify(token, process.env.JWT_SECRET!)",
+        "slice": {
+          "file": "fixtures/auth-client-v1/src/verify.ts",
+          "bytes": [
+            282,
+            324
+          ],
+          "lines": [
+            9,
+            9
+          ]
+        },
+        "resolved_api": {
+          "symbol": "auth-jwt-v1#verify",
+          "module": "auth-jwt-v1",
+          "signature": "(token: string, secret: string): JwtPayload",
+          "deprecated": true,
+          "deprecated_reason": "scenario_meta"
+        },
+        "successor_api": [
+          {
+            "symbol": "auth-jwt-v2#createJwksClient",
+            "module": "auth-jwt-v2",
+            "signature": "(_options: { jwksUri: string; }) => JwksClient"
+          },
+          {
+            "symbol": "auth-jwt-v2#jwt",
+            "module": "auth-jwt-v2",
+            "signature": "{ verify(token: string, key: PublicKey): JwtPayload; }"
+          }
+        ],
+        "arguments": [
+          {
+            "index": 0,
+            "text": "token",
+            "type": "string",
+            "param": "token",
+            "paramType": "string",
+            "origin": "parameter of verifyAccessToken() (line 7)"
+          },
+          {
+            "index": 1,
+            "text": "process.env.JWT_SECRET!",
+            "type": "string",
+            "param": "secret",
+            "paramType": "string",
+            "origin": null
+          }
+        ],
+        "data_flow": [
+          {
+            "variable": "token",
+            "declared_type": "string",
+            "origin": "parameter of verifyAccessToken() (line 7)",
+            "downstream_usages": [
+              "line 9"
+            ]
+          }
+        ],
+        "result": {
+          "binding": null,
+          "type": "JwtPayload",
+          "downstream_usages": []
+        },
+        "enclosing_function": {
+          "name": "verifyAccessToken",
+          "async": false,
+          "return_type": "JwtPayload",
+          "params": [
+            "token: string"
+          ]
+        },
+        "callers_1hop": []
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "const header = decodeHeader(token);\nconst jwksClient = createJwksClient({ jwksUri: process.env.JWKS_URI! });\nconst signingKey = await jwksClient.getSigningKey(header.kid);\nreturn jwt.verify(token, signingKey.getPublicKey());\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "statement"
+        }
+      ],
+      "accepted": "const header = decodeHeader(token);\n  const jwksClient = createJwksClient({ jwksUri: process.env.JWKS_URI! });\n  const signingKey = await jwksClient.getSigningKey(header.kid);\n  return jwt.verify(token, signingKey.getPublicKey());",
+      "imports": [
+        "auth-jwt-v2#decodeHeader",
+        "auth-jwt-v2#createJwksClient"
+      ],
+      "dataflow": {
+        "mode": "none",
+        "wrapperPath": null,
+        "diagnosticsBefore": 0,
+        "diagnosticsAfter": 0,
+        "rewrites": []
+      },
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/auth-client-v1/src/verify.ts"
+    ],
+    "changedFunctions": [
+      {
+        "file": "fixtures/auth-client-v1/src/verify.ts",
+        "name": "verifyAccessToken",
+        "before": "JwtPayload",
+        "after": "Promise<JwtPayload>"
+      },
+      {
+        "file": "fixtures/auth-client-v1/src/verify.ts",
+        "name": "verifyIdToken",
+        "before": "JwtPayload",
+        "after": "Promise<JwtPayload>"
+      }
+    ],
+    "findings": [],
+    "complete": true
+  },
+  "impactFixes": [],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 2,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 17,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 3699,
+    "completionTokens": 1696,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/auth-client-v1/src/verify.ts": {
+      "before": "import { jwt } from \"auth-jwt-v1\";\n\n/**\n * Access-token helpers using legacy symmetric secret verify.\n * Migrate to auth-jwt-v2 JWKS (createJwksClient + getSigningKey + PublicKey).\n */\nexport function verifyAccessToken(token: string) {\n  // Usage site 1 — API bearer token\n  return jwt.verify(token, process.env.JWT_SECRET!);\n}\n\nexport function verifyIdToken(token: string) {\n  // Usage site 2 — OIDC id_token (same secret path in the legacy app)\n  return jwt.verify(token, process.env.JWT_SECRET!);\n}\n",
+      "after": "import { jwt, decodeHeader, createJwksClient } from \"auth-jwt-v2\";\n\n/**\n * Access-token helpers using legacy symmetric secret verify.\n * Migrate to auth-jwt-v2 JWKS (createJwksClient + getSigningKey + PublicKey).\n */\nexport async function verifyAccessToken(token: string) {\n  // Usage site 1 — API bearer token\n  const header = decodeHeader(token);\n  const jwksClient = createJwksClient({ jwksUri: process.env.JWKS_URI! });\n  const signingKey = await jwksClient.getSigningKey(header.kid);\n  return jwt.verify(token, signingKey.getPublicKey());\n}\n\nexport async function verifyIdToken(token: string) {\n  // Usage site 2 — OIDC id_token (same secret path in the legacy app)\n  // Note: verification is async now, so verifyIdToken must become `async` and return Promise<JwtPayload>.\n  const jwksClient = createJwksClient({ jwksUri: process.env.JWKS_URI! });\n  const header = decodeHeader(token);\n  const signingKey = await jwksClient.getSigningKey(header.kid!);\n  return jwt.verify(token, signingKey.getPublicKey());\n}\n"
+    }
+  },
+  "ms": 9716
+}

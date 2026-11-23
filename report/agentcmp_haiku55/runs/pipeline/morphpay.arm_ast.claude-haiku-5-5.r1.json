@@ -1,0 +1,146 @@
+{
+  "scenario": "morphpay",
+  "label": "MorphPay Builder",
+  "arm": "arm_ast",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "morphpay-v1#ChargesApi.create",
+  "successorModule": "morphpay-v2",
+  "oracle": {
+    "exports": 7,
+    "allowed": 140
+  },
+  "steps": [
+    {
+      "file": "fixtures/client-v1/src/checkout.ts",
+      "line": 29,
+      "text": "morphpay.charges.create({\n    amount: 5000,\n    currency: \"usd\",\n    source: cardToken,\n    capture: false,\n  })",
+      "slice": {
+        "kind": "statement",
+        "startLine": 29,
+        "text": "const hold = await morphpay.charges.create({\n    amount: 5000,\n    currency: \"usd\",\n    source: cardToken,\n    capture: false,\n  });"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nmorphpay-v1#ChargesApi.create → morphpay-v2\n\n## Successor API\n- createMorphPay: (apiKey: string) => MorphPayClient\n- CaptureMode: typeof CaptureMode\n- PaymentIntent: { Builder: typeof PaymentIntentBuilder; }\n- PaymentIntentBuilder: typeof PaymentIntentBuilder\n- IntentsApi: IntentsApi\n- MorphPayClient: MorphPayClient\n- createMorphPay: (apiKey: string) => MorphPayClient\n- MorphPayClient members: intents\n- IntentsApi members: confirm\n- CaptureMode members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@108, at, AUTOMATIC, MANUAL\n- PaymentIntent members: id, amount, currency, paymentMethod, captureMode, status, Builder\n- PaymentIntentBuilder members: amount, currency, paymentMethod, captureMode, setAmount, setCurrency, setPaymentMethod, setCaptureMode, build\n\n## Slice (statement, line 29)\n```ts\nconst hold = await morphpay.charges.create({\n    amount: 5000,\n    currency: \"usd\",\n    source: cardToken,\n    capture: false,\n  });\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# MorphPay v2 Migration Guide\n\nMorphPay v1 `charges.create` is deprecated. Migrate to the PaymentIntent flow.\n\n## Overview\n\nCharges are now represented as payment intents. Build an intent, then confirm it.\n\n## Capture behavior\n\nIn v1 you passed `capture: true|false`. In v2, capture is configured via a capture mode enum on the builder.\n\nCommon capture modes used by payment providers include automatic capture after confirmation.\n\n## Typical migration pattern\n\n```ts\nimport createMorphPay, { PaymentIntent, CaptureMode } from \"morphpay-v2\";\n\nconst morphpay = createMorphPay(process.env.MORPHPAY_KEY!);\n\nconst intent = new PaymentIntent.Builder()\n  .setAmount(2000)\n  .setCurrency(\"usd\")\n  .setPaymentMethod(cardToken)\n  .setCaptureMode(/* capture mode */)\n  .build();\n\nawait morphpay.intents.confirm(intent);\n```\n\n## Notes\n\n- Prefer the Builder pattern over the old charges object.\n- Map `source` → `setPaymentMethod`.\n- Map boolean `capture` to the appropriate CaptureMode.\n- Do not call `charges.create` after upgrading the package.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "const hold = await morphpay.intents.confirm(\n  new PaymentIntent.Builder()\n    .setAmount(5000)\n    .setCurrency(\"usd\")\n    .setPaymentMethod(cardToken)\n    .setCaptureMode(CaptureMode.MANUAL)\n    .build()\n);\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "statement"
+        }
+      ],
+      "accepted": "const hold = await morphpay.intents.confirm(\n    new PaymentIntent.Builder()\n      .setAmount(5000)\n      .setCurrency(\"usd\")\n      .setPaymentMethod(cardToken)\n      .setCaptureMode(CaptureMode.MANUAL)\n      .build()\n  );",
+      "imports": [
+        "morphpay-v2#CaptureMode",
+        "morphpay-v2#PaymentIntent"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/client-v1/src/checkout.ts",
+      "line": 11,
+      "text": "morphpay.charges.create({\n    amount: amountCents,\n    currency: \"usd\",\n    source: cardToken,\n    capture: true,\n  })",
+      "slice": {
+        "kind": "statement",
+        "startLine": 11,
+        "text": "const charge = await morphpay.charges.create({\n    amount: amountCents,\n    currency: \"usd\",\n    source: cardToken,\n    capture: true,\n  });"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nmorphpay-v1#ChargesApi.create → morphpay-v2\n\n## Successor API\n- createMorphPay: (apiKey: string) => MorphPayClient\n- CaptureMode: typeof CaptureMode\n- PaymentIntent: { Builder: typeof PaymentIntentBuilder; }\n- PaymentIntentBuilder: typeof PaymentIntentBuilder\n- IntentsApi: IntentsApi\n- MorphPayClient: MorphPayClient\n- createMorphPay: (apiKey: string) => MorphPayClient\n- MorphPayClient members: intents\n- IntentsApi members: confirm\n- CaptureMode members: toString, charAt, charCodeAt, concat, indexOf, lastIndexOf, localeCompare, match, replace, search, slice, split, substring, toLowerCase, toLocaleLowerCase, toUpperCase, toLocaleUpperCase, trim, length, substr, valueOf, codePointAt, includes, endsWith, normalize, repeat, startsWith, anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup, padStart, padEnd, trimEnd, trimStart, trimLeft, trimRight, matchAll, __@iterator@108, at, AUTOMATIC, MANUAL\n- PaymentIntent members: id, amount, currency, paymentMethod, captureMode, status, Builder\n- PaymentIntentBuilder members: amount, currency, paymentMethod, captureMode, setAmount, setCurrency, setPaymentMethod, setCaptureMode, build\n\n## Slice (statement, line 11)\n```ts\nconst charge = await morphpay.charges.create({\n    amount: amountCents,\n    currency: \"usd\",\n    source: cardToken,\n    capture: true,\n  });\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# MorphPay v2 Migration Guide\n\nMorphPay v1 `charges.create` is deprecated. Migrate to the PaymentIntent flow.\n\n## Overview\n\nCharges are now represented as payment intents. Build an intent, then confirm it.\n\n## Capture behavior\n\nIn v1 you passed `capture: true|false`. In v2, capture is configured via a capture mode enum on the builder.\n\nCommon capture modes used by payment providers include automatic capture after confirmation.\n\n## Typical migration pattern\n\n```ts\nimport createMorphPay, { PaymentIntent, CaptureMode } from \"morphpay-v2\";\n\nconst morphpay = createMorphPay(process.env.MORPHPAY_KEY!);\n\nconst intent = new PaymentIntent.Builder()\n  .setAmount(2000)\n  .setCurrency(\"usd\")\n  .setPaymentMethod(cardToken)\n  .setCaptureMode(/* capture mode */)\n  .build();\n\nawait morphpay.intents.confirm(intent);\n```\n\n## Notes\n\n- Prefer the Builder pattern over the old charges object.\n- Map `source` → `setPaymentMethod`.\n- Map boolean `capture` to the appropriate CaptureMode.\n- Do not call `charges.create` after upgrading the package.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "const intent = new PaymentIntent.Builder()\n    .setAmount(amountCents)\n    .setCurrency(\"usd\")\n    .setPaymentMethod(cardToken)\n    .setCaptureMode(CaptureMode.AUTOMATIC)\n    .build();\nconst charge = await morphpay.intents.confirm(intent);\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "statement"
+        }
+      ],
+      "accepted": "const intent = new PaymentIntent.Builder()\n      .setAmount(amountCents)\n      .setCurrency(\"usd\")\n      .setPaymentMethod(cardToken)\n      .setCaptureMode(CaptureMode.AUTOMATIC)\n      .build();\n  const charge = await morphpay.intents.confirm(intent);",
+      "imports": [
+        "morphpay-v2#CaptureMode",
+        "morphpay-v2#PaymentIntent"
+      ],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/client-v1/src/checkout.ts"
+    ],
+    "changedFunctions": [
+      {
+        "file": "fixtures/client-v1/src/checkout.ts",
+        "name": "checkout",
+        "before": "Promise<{ chargeId: string; status: \"succeeded\" | \"pending\" | \"failed\"; captured: boolean; }>",
+        "after": "Promise<{ chargeId: string; status: \"requires_confirmation\" | \"succeeded\" | \"canceled\"; captured: any; }>"
+      }
+    ],
+    "findings": [
+      {
+        "reason": "new_type_error",
+        "file": "fixtures/client-v1/src/checkout.ts",
+        "line": 22,
+        "start": 750,
+        "detail": "TS2339: Property 'captured' does not exist on type 'PaymentIntent'."
+      }
+    ],
+    "complete": false
+  },
+  "impactFixes": [
+    {
+      "reason": "new_type_error",
+      "file": "fixtures/client-v1/src/checkout.ts",
+      "line": 22,
+      "before": "return {\n    chargeId: charge.id,\n    status: charge.status,\n    captured: charge.captured,\n  };",
+      "after": "return {\n    chargeId: charge.id,\n    status: charge.status,\n    captured: charge.captureMode === CaptureMode.AUTOMATIC,\n  };",
+      "attempts": 1,
+      "tries": [
+        {
+          "attempt": 1,
+          "candidate": "return {\n    chargeId: charge.id,\n    status: charge.status,\n    captured: charge.captureMode === CaptureMode.AUTOMATIC,\n  };\n",
+          "ok": true,
+          "findings": [],
+          "warnings": []
+        }
+      ]
+    }
+  ],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 2,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 31,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 3589,
+    "completionTokens": 1323,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/client-v1/src/checkout.ts": {
+      "before": "import createMorphPay from \"morphpay-v1\";\n\n/**\n * Checkout flow using MorphPay v1 Charges API (deprecated).\n * Baseline migration target: morphpay-v2 PaymentIntent Builder.\n */\nexport async function checkout(cardToken: string, amountCents: number) {\n  const morphpay = createMorphPay(process.env.MORPHPAY_KEY ?? \"sk_test_demo\");\n\n  // Usage site 1 — standard charge with capture\n  const charge = await morphpay.charges.create({\n    amount: amountCents,\n    currency: \"usd\",\n    source: cardToken,\n    capture: true,\n  });\n\n  return {\n    chargeId: charge.id,\n    status: charge.status,\n    captured: charge.captured,\n  };\n}\n\nexport async function refundableHold(cardToken: string) {\n  const morphpay = createMorphPay(process.env.MORPHPAY_KEY ?? \"sk_test_demo\");\n\n  // Usage site 2 — auth-only (capture: false)\n  const hold = await morphpay.charges.create({\n    amount: 5000,\n    currency: \"usd\",\n    source: cardToken,\n    capture: false,\n  });\n\n  return hold.id;\n}\n\nasync function main() {\n  const result = await checkout(\"tok_visa\", 2000);\n  console.log(\"checkout ok\", result);\n}\n\nif (require.main === module) {\n  main().catch((err) => {\n    console.error(err);\n    process.exit(1);\n  });\n}\n",
+      "after": "import createMorphPay, { CaptureMode, PaymentIntent } from \"morphpay-v2\";\n\n/**\n * Checkout flow using MorphPay v1 Charges API (deprecated).\n * Baseline migration target: morphpay-v2 PaymentIntent Builder.\n */\nexport async function checkout(cardToken: string, amountCents: number) {\n  const morphpay = createMorphPay(process.env.MORPHPAY_KEY ?? \"sk_test_demo\");\n\n  // Usage site 1 — standard charge with capture\n  const intent = new PaymentIntent.Builder()\n      .setAmount(amountCents)\n      .setCurrency(\"usd\")\n      .setPaymentMethod(cardToken)\n      .setCaptureMode(CaptureMode.AUTOMATIC)\n      .build();\n  const charge = await morphpay.intents.confirm(intent);\n\n  return {\n    chargeId: charge.id,\n    status: charge.status,\n    captured: charge.captureMode === CaptureMode.AUTOMATIC,\n  };\n}\n\nexport async function refundableHold(cardToken: string) {\n  const morphpay = createMorphPay(process.env.MORPHPAY_KEY ?? \"sk_test_demo\");\n\n  // Usage site 2 — auth-only (capture: false)\n  const hold = await morphpay.intents.confirm(\n    new PaymentIntent.Builder()\n      .setAmount(5000)\n      .setCurrency(\"usd\")\n      .setPaymentMethod(cardToken)\n      .setCaptureMode(CaptureMode.MANUAL)\n      .build()\n  );\n\n  return hold.id;\n}\n\nasync function main() {\n  const result = await checkout(\"tok_visa\", 2000);\n  console.log(\"checkout ok\", result);\n}\n\nif (require.main === module) {\n  main().catch((err) => {\n    console.error(err);\n    process.exit(1);\n  });\n}\n"
+    }
+  },
+  "ms": 8330
+}

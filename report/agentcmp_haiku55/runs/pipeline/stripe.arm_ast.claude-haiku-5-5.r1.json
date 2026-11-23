@@ -1,0 +1,107 @@
+{
+  "scenario": "stripe",
+  "label": "Stripe unit shift",
+  "arm": "arm_ast",
+  "model": "claude-haiku-5-5",
+  "deprecatedSpec": "stripe-charge-v1#ChargesApi.create",
+  "successorModule": "stripe-charge-v2",
+  "oracle": {
+    "exports": 6,
+    "allowed": 21
+  },
+  "steps": [
+    {
+      "file": "fixtures/stripe-client-v1/src/charge.ts",
+      "line": 28,
+      "text": "stripe.charges.create({\n    amount: 10.5,\n    currency: \"usd\",\n    source: \"tok_visa\",\n  })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 28,
+        "text": "stripe.charges.create({\n    amount: 10.5,\n    currency: \"usd\",\n    source: \"tok_visa\",\n  })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nstripe-charge-v1#ChargesApi.create → stripe-charge-v2\n\n## Successor API\n- createStripeCharge: (apiKey: string) => StripeChargeClient\n- ChargeCreateParams: ChargeCreateParams\n- Charge: Charge\n- ChargesApi: ChargesApi\n- StripeChargeClient: StripeChargeClient\n- createStripeCharge: (apiKey: string) => StripeChargeClient\n- StripeChargeClient members: charges\n- ChargesApi members: create\n- ChargeCreateParams members: amount, currency, source\n- Charge members: id, amount, currency, status\n\n## Slice (expression, line 28)\n```ts\nstripe.charges.create({\n    amount: 10.5,\n    currency: \"usd\",\n    source: \"tok_visa\",\n  })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Stripe Charge Migration Guide (v1 → v2)\n\nLegacy clients pass `amount` in dollars. Modern charge APIs expect the\nsmallest currency unit (cents for USD).\n\n## Overview\n\nThe call shape is unchanged: `stripe.charges.create({ amount, currency, source })`.\nOnly the **meaning** of `amount` changes.\n\n## Typical pattern\n\n```ts\nimport createStripeCharge from \"stripe-charge-v2\";\n\nconst stripe = createStripeCharge(process.env.STRIPE_CHARGE_KEY!);\n\nconst charge = await stripe.charges.create({\n  amount: 1050, // $10.50 in USD\n  currency: \"usd\",\n  source: cardToken,\n});\n```\n\n## Notes\n\n- Keep the `amount` property name.\n- Prefer integers for USD amounts.\n- Example above uses a literal already expressed in cents.\n- See provider docs for zero-decimal currencies.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "stripe.charges.create({ amount: 1050, currency: \"usd\", source: \"tok_visa\" })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "stripe.charges.create({ amount: 1050, currency: \"usd\", source: \"tok_visa\" })",
+      "imports": [],
+      "dataflow": null,
+      "viaRule": false
+    },
+    {
+      "file": "fixtures/stripe-client-v1/src/charge.ts",
+      "line": 13,
+      "text": "stripe.charges.create({\n    amount: amountDollars,\n    currency: \"usd\",\n    source: cardToken,\n  })",
+      "slice": {
+        "kind": "expression",
+        "startLine": 13,
+        "text": "stripe.charges.create({\n    amount: amountDollars,\n    currency: \"usd\",\n    source: cardToken,\n  })"
+      },
+      "escalated": false,
+      "prompt": "## Migration\nstripe-charge-v1#ChargesApi.create → stripe-charge-v2\n\n## Successor API\n- createStripeCharge: (apiKey: string) => StripeChargeClient\n- ChargeCreateParams: ChargeCreateParams\n- Charge: Charge\n- ChargesApi: ChargesApi\n- StripeChargeClient: StripeChargeClient\n- createStripeCharge: (apiKey: string) => StripeChargeClient\n- StripeChargeClient members: charges\n- ChargesApi members: create\n- ChargeCreateParams members: amount, currency, source\n- Charge members: id, amount, currency, status\n\n## Slice (expression, line 13)\n```ts\nstripe.charges.create({\n    amount: amountDollars,\n    currency: \"usd\",\n    source: cardToken,\n  })\n```\n\n## Migration guide (prose; the Successor API list wins on conflicts)\n# Stripe Charge Migration Guide (v1 → v2)\n\nLegacy clients pass `amount` in dollars. Modern charge APIs expect the\nsmallest currency unit (cents for USD).\n\n## Overview\n\nThe call shape is unchanged: `stripe.charges.create({ amount, currency, source })`.\nOnly the **meaning** of `amount` changes.\n\n## Typical pattern\n\n```ts\nimport createStripeCharge from \"stripe-charge-v2\";\n\nconst stripe = createStripeCharge(process.env.STRIPE_CHARGE_KEY!);\n\nconst charge = await stripe.charges.create({\n  amount: 1050, // $10.50 in USD\n  currency: \"usd\",\n  source: cardToken,\n});\n```\n\n## Notes\n\n- Keep the `amount` property name.\n- Prefer integers for USD amounts.\n- Example above uses a literal already expressed in cents.\n- See provider docs for zero-decimal currencies.\n",
+      "facts": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "candidate": "stripe.charges.create({\n    amount: Math.round(amountDollars * 100),\n    currency: \"usd\",\n    source: cardToken,\n  })\n",
+          "ok": true,
+          "findings": [],
+          "warnings": [],
+          "sliceKind": "expression"
+        }
+      ],
+      "accepted": "stripe.charges.create({\n    amount: Math.round(amountDollars * 100),\n    currency: \"usd\",\n    source: cardToken,\n  })",
+      "imports": [],
+      "dataflow": null,
+      "viaRule": false
+    }
+  ],
+  "impact": {
+    "oneHopFiles": [
+      "fixtures/stripe-client-v1/src/charge.ts"
+    ],
+    "changedFunctions": [],
+    "findings": [],
+    "complete": true
+  },
+  "impactFixes": [],
+  "final": {
+    "leftovers": 0,
+    "deprecatedModuleUses": 0,
+    "newDiagnostics": [],
+    "phantomDiagnostics": 0,
+    "complete": true
+  },
+  "metrics": {
+    "spansFound": 2,
+    "spansMigrated": 2,
+    "attempts": 2,
+    "phantomRejections": 0,
+    "escalations": 0,
+    "dynamicAccessWarnings": 0,
+    "changedLines": 10,
+    "linesOutsideSpans": 0,
+    "importLinesChanged": 2,
+    "churnRatio": 0,
+    "promptTokens": 1419,
+    "completionTokens": 505,
+    "cacheWriteTokens": 0,
+    "cacheReadTokens": 0
+  },
+  "patches": {
+    "fixtures/stripe-client-v1/src/charge.ts": {
+      "before": "import createStripeCharge from \"stripe-charge-v1\";\n\n/**\n * Checkout helpers using legacy dollar amounts.\n * Migrate to stripe-charge-v2 (amount = integer cents).\n */\nexport async function pay(cardToken: string, amountDollars: number) {\n  const stripe = createStripeCharge(\n    process.env.STRIPE_CHARGE_KEY ?? \"sk_test_demo\"\n  );\n\n  // Usage site 1 — variable still in dollars\n  const charge = await stripe.charges.create({\n    amount: amountDollars,\n    currency: \"usd\",\n    source: cardToken,\n  });\n\n  return charge.id;\n}\n\nexport async function payFixed() {\n  const stripe = createStripeCharge(\n    process.env.STRIPE_CHARGE_KEY ?? \"sk_test_demo\"\n  );\n\n  // Usage site 2 — literal dollars ($10.50)\n  const charge = await stripe.charges.create({\n    amount: 10.5,\n    currency: \"usd\",\n    source: \"tok_visa\",\n  });\n\n  return charge.id;\n}\n",
+      "after": "import createStripeCharge from \"stripe-charge-v2\";\n\n/**\n * Checkout helpers using legacy dollar amounts.\n * Migrate to stripe-charge-v2 (amount = integer cents).\n */\nexport async function pay(cardToken: string, amountDollars: number) {\n  const stripe = createStripeCharge(\n    process.env.STRIPE_CHARGE_KEY ?? \"sk_test_demo\"\n  );\n\n  // Usage site 1 — variable still in dollars\n  const charge = await stripe.charges.create({\n    amount: Math.round(amountDollars * 100),\n    currency: \"usd\",\n    source: cardToken,\n  });\n\n  return charge.id;\n}\n\nexport async function payFixed() {\n  const stripe = createStripeCharge(\n    process.env.STRIPE_CHARGE_KEY ?? \"sk_test_demo\"\n  );\n\n  // Usage site 2 — literal dollars ($10.50)\n  const charge = await stripe.charges.create({ amount: 1050, currency: \"usd\", source: \"tok_visa\" });\n\n  return charge.id;\n}\n"
+    }
+  },
+  "ms": 4331
+}

@@ -1,0 +1,42 @@
+Migrate the TypeScript project in the current directory from the deprecated package `stripe-errors-v1` to its successor `stripe-errors-v2` (both are installed in node_modules).
+Deprecated API: stripe-errors-v1#default.charges.create.
+
+Requirements:
+- The project must type-check: `npx tsc --noEmit -p tsconfig.json`.
+- No file may import or require `stripe-errors-v1` any more.
+- Runtime behaviour must stay the same as before the migration.
+- Edit files under src/ only. Do not use `as any`, `: any`, `@ts-ignore`, `@ts-expect-error` or `@ts-nocheck`.
+
+Migration guide for stripe-errors-v2:
+----------------------------------------------------------------
+# Stripe Payment Migration (v2)
+
+Legacy integrations used `charges.create`. Prefer PaymentIntents on the modern client.
+
+## Overview
+
+Create payments with `paymentIntents.create`. Map `source` → `payment_method` and pass
+`confirm: true` when you previously expected an immediate charge result.
+
+## Typical create pattern
+
+```ts
+import Stripe from "stripe-errors-v2";
+
+const stripe = new Stripe(process.env.STRIPE_KEY!);
+
+const intent = await stripe.paymentIntents.create({
+  amount: 2000,
+  currency: "usd",
+  payment_method: source,
+  confirm: true,
+});
+```
+
+## Notes
+
+- Instantiate the client: `const stripe = new Stripe(apiKey)` — then call instance methods.
+- Do not call `Stripe.paymentIntents` as a static.
+- Keep existing try/catch and `instanceof` error handling as-is unless the compiler forces a change.
+
+----------------------------------------------------------------
