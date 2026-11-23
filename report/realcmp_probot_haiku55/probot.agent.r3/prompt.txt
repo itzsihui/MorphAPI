@@ -1,0 +1,135 @@
+This is the source of probot (a framework for GitHub Apps). Its dependency `@octokit/webhooks` has been upgraded from v7 to v9 (package.json and node_modules already updated: 9.8.4 is installed). Update probot's code for v9.
+
+Requirements:
+- `npx tsc --noEmit -p tsconfig.json` must pass.
+- The test suite (`npx jest`) must pass; update tests where the upgrade requires it.
+- probot's behaviour for apps built on it must stay the same.
+- Do not install or upgrade packages. Avoid `any` casts and `@ts-ignore` / `@ts-expect-error` where a typed solution exists.
+
+Migration notes for @octokit/webhooks v7 -> v9:
+----------------------------------------------------------------
+# Upgrading @octokit/webhooks from v7 to v9
+
+Breaking changes, verbatim from the release commits (v8.0.0 and v9.0.0):
+
+BREAKING CHANGE: `createWebhooksApi()` has been removed. Use `new Webhooks()` instead
+
+BREAKING CHANGE: `webhooks.middleware` has been removed. Use `createNodeMiddleware()` instead
+
+BREAKING CHANGE: `createMiddleware` has been removed. Use `createNodeMiddleware()` instead
+
+BREAKING CHANGE: deprecated `path` option for `Webhooks` constructor has been removed. Use `createNodeMiddleware(webhooks, { path })` instead
+
+BREAKING CHANGE: all usage of [`debug`](https://www.npmjs.com/package/debug) has been removed. Use the `log` option instead
+
+BREAKING CHANGE: `webhooks.sign` now default to `sha256` algorithm. In order to continue to use `sha1`, replace
+
+```js
+webhooks.sign(secret, payload)
+```
+
+with
+
+```js
+BREAKING CHANGE: `webhooks.sign()` and `webhooks.verify()` are now asynchronous
+
+BREAKING CHANGE: static `sign` and `verify` methods are no longer exported. Use `@octokit/webhooks-methods` package instead
+
+Co-authored-by: Renovate Bot <bot@renovateapp.com>
+
+Co-authored-by: Renovate Bot <bot@renovateapp.com>
+Co-authored-by: Renovate Bot <bot@renovateapp.com>
+
+BREAKING CHANGE: payload types have been renamed and refactored
+
+BREAKING CHANGE: passing `*` as an event name is no longer supported
+
+BREAKING CHANGE: passing `error` as an event name is no longer supported
+
+Co-authored-by: Oscar Dominguez <dominguez.celada@gmail.com>
+
+
+## createNodeMiddleware() — from the @octokit/webhooks v9.8.4 README
+
+### createNodeMiddleware()
+
+```js
+const { createServer } = require("http");
+const { Webhooks, createNodeMiddleware } = require("@octokit/webhooks");
+
+const webhooks = new Webhooks({
+  secret: "mysecret",
+});
+
+const middleware = createNodeMiddleware(webhooks, { path: "/" });
+
+createServer(middleware).listen(3000);
+// can now receive user authorization callbacks at POST /
+```
+
+<table width="100%">
+  <tbody valign="top">
+    <tr>
+      <td>
+        <code>webhooks</code>
+        <em>
+          Webhooks instance
+        </em>
+      </td>
+      <td>
+        <strong>Required.</strong>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>path</code>
+        <em>
+          string
+        </em>
+      </td>
+      <td>
+        Custom path to match requests against. Defaults to <code>/api/github/webhooks</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>log</code>
+        <em>
+          object
+        </em>
+      </td>
+      <td>
+
+Used for internal logging. Defaults to [`console`](https://developer.mozilla.org/en-US/docs/Web/API/console) with `debug` and `info` doing nothing.
+
+</td>
+    </tr>
+    <tr>
+      <td>
+        <code>onUnhandledRequest</code>
+        <em>
+          function
+        </em>
+      </td>
+      <td>
+
+Defaults to
+
+```js
+function onUnhandledRequest(request, response) {
+  response.writeHead(400, {
+    "content-type": "application/json",
+  });
+  response.end(
+    JSON.stringify({
+      error: error.message,
+    })
+  );
+}
+```
+
+</td>
+    </tr>
+  <tbody>
+</table>
+----------------------------------------------------------------
