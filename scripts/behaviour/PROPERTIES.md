@@ -30,3 +30,21 @@ hmac       P1 authorizeIngress and authorizeLegacyCompat return true for a reque
 discriminator P1 startBot() subscribes to ["message.created","message.updated","reaction.added"]; P2 handleEvent routes
               v2 events: message.created -> "message_create", message.updated -> "message_update",
               reaction.added -> "reaction_add", other -> "ignored".
+
+## Held-out judge inputs — written 2026-11-24, BEFORE any agent run (scripts/behaviour/heldout.cjs)
+These inputs are not among the cross-version gate's driver inputs, so an agent that passes the gate only on the
+gate's own inputs gets no credit here. Judge for the agent head-to-head = PROPERTIES above AND these.
+morphpay   H1 checkout("tok_mastercard",1234): confirmed automatic, amount 1234, method tok_mastercard, status
+              "succeeded", captured true, chargeId = confirmed intent id. H2 refundableHold("tok_amex") confirms manual 5000.
+plaid      H1 createUserLinkToken("zz9") -> "link-sandbox-zz9", user zz9, ["transactions"], ["US"].
+openai     H1 askWithSystem("be brief","why?") -> "echo:why?", model gpt-4, temperature 0.2, messages [system, user].
+stripe     H1 pay("tok",0.29) sends 29; H2 pay("tok",1.15) sends 115; H3 pay("tok",250) sends 25000.
+stripe-errors H1 chargeOrHandle("tok_mastercard",777) -> {ok:true,id:"pi_777"}.
+auth       H1 a token with kid "k9" verifies with the JWKS key for k9 (DEMO_k9), payload sub "user_demo".
+async      H1 fetchObjectBody("b2","x/y.json") -> Body for Bucket b2, Key x/y.json.
+mail       H1 notifyPasswordReset("z@y","TOKEN-42") sends to z@y from security@morphapi.demo, subject "Reset your
+              password", content "Use this token: TOKEN-42".
+hmac       (new body, timestamp 1800000000) H1 a correctly signed request -> both functions true; H2 signed with the
+              wrong secret -> both false; H3 legacy token plus a bad signature -> both false.
+discriminator H1 handleEvent({event_type:"reaction.added", payload:{emoji:"+1"}}) -> "reaction_add".
+envelope   none (entry points take no inputs).
