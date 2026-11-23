@@ -22,15 +22,16 @@ export function compare(t1, t2) {
     if (!t2.preds.includes(p)) continue;
     const holds = idx.every((i) => bview(t1.calls[i]) === t1.calls[i].preds[p]) && new Set(idx.map((i) => t1.calls[i].preds[p])).size > 1;
     if (!holds) continue; related.add(g);
-    for (const i of idx) { const c = t2.calls[i]; if (bview(c) !== c.preds[p])
+    for (const i of idx) { const c = t2.calls[i]; if (c && bview(c) !== c.preds[p])
       f.push({ kind: "relation", call: `${c.fn}(${c.label})`, detail: `v1: result == ${p}(input); v2: ${p}(input)=${c.preds[p]} but result=${bview(c)}` }); }
   }
   t1.calls.forEach((c1, i) => { const c2 = t2.calls[i]; const call = `${c1.fn}(${c1.label})`;
+    if (!c2) { f.push({ kind: "missing", call, detail: "this step could not run on the migrated code" }); return; }
     const w1 = c1.wire.map((w) => ({ op: w.op, req: w.req })), w2 = c2.wire.map((w) => ({ op: w.op, req: w.req }));
     if (J(w1) !== J(w2)) f.push({ kind: "wire", call, v1: w1, v2: w2 });
     if (related.has(`${c1.file}:${c1.fn}`)) return;
     if (c1.threw !== c2.threw) { f.push({ kind: "throw", call, v1: c1.threw ? c1.err : c1.out, v2: c2.threw ? c2.err : c2.out }); return; }
-    const m = (c) => mask(c.out, leaves(c.wire.map((w) => w.res)).sort((a, b) => b.length - a.length), subtrees(c.wire.map((w) => w.res)));
+    const m = (c) => mask(c.out, leaves(c.wire.map((w) => w.res)).sort((a, b) => b.length - a.length), c.wire.reduce((acc, w) => subtrees(w.res, acc), new Set()));
     const o1 = m(c1), o2 = m(c2);
     if (J(o1) !== J(o2)) f.push({ kind: "output", call, v1: o1, v2: o2 });
   });
