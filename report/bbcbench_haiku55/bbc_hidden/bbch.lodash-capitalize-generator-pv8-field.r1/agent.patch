@@ -1,0 +1,255 @@
+diff --git a/generators/app/index.js b/generators/app/index.js
+index 487ce3c..ef5b66c 100644
+--- a/generators/app/index.js
++++ b/generators/app/index.js
+@@ -2,7 +2,7 @@
+ var yeoman = require('yeoman-generator');
+ var chalk = require('chalk');
+ var yosay = require('yosay');
+-var lodash = require('lodash');
++var lodash3 = require('./lodash3Compat');
+ 
+ module.exports = yeoman.generators.Base.extend({
+   prompting: function () {
+@@ -22,8 +22,8 @@ module.exports = yeoman.generators.Base.extend({
+ 
+     this.prompt(prompts, function (props) {
+       this.componentName = props.componentName;
+-      this.componentNamePC = lodash.capitalize(lodash.camelCase(props.componentName));
+-      this.componentNameCC = lodash.camelCase(props.componentName);
++      this.componentNamePC = lodash3.capitalize(lodash3.camelCase(props.componentName));
++      this.componentNameCC = lodash3.camelCase(props.componentName);
+ 
+       done();
+     }.bind(this));
+diff --git a/generators/app/templates/fieldAdapter.tests.js b/generators/app/templates/fieldAdapter.tests.js
+deleted file mode 100644
+index c506722..0000000
+--- a/generators/app/templates/fieldAdapter.tests.js
++++ /dev/null
+@@ -1,46 +0,0 @@
+-import React from "react";
+-import TestUtils from 'react-testutils-additions';
+-
+-import CertificateBuilder from '../../../../testUtilities/builders/certificateBuilder';
+-import httpBackend from '../../../../testUtilities/httpBackend';
+-
+-import <%= componentNamePC %>Adapter from 'editor/components/fields/<%= componentNameCC %>';
+-import <%= componentNameCC %>Store from 'editor/components/fields/<%= componentNameCC %>/<%= componentNameCC %>Store';
+-
+-describe('The <%= componentNamePC %> Adapter', () => {
+-    var component;
+-
+-    beforeAll(done => {
+-        var certificate = new CertificateBuilder("1234")
+-            .build();
+-
+-        var props = {
+-            certificate,
+-            options: {
+-                propertyName: '<%= componentNameCC %>',
+-                resourceKey: '<%= componentNamePC %>'
+-            },
+-            editMode: true
+-        };
+-
+-        httpBackend.mock(/api\/certificates\/1234\/audittrail/, [{}]);
+-
+-        <%= componentNameCC %>Store.listen(state => {
+-            if (state.status === <%= componentNameCC %>Store.statusCodes.READY) {
+-                setTimeout(done);
+-            }
+-        });
+-
+-        component = TestUtils.renderIntoDocument(<<%= componentNamePC %>Adapter {...props} />);
+-    });
+-
+-    it('can be rendered', () => {
+-        expect(component).toBeDefined();
+-    });
+-
+-    it('will render the dropdown', () => {
+-        var controls = TestUtils.find(component, '.form-control');
+-        expect(controls.length).toBe(1);
+-    });
+-
+-});
+diff --git a/generators/app/templates/fieldView.tests.js b/generators/app/templates/fieldView.tests.js
+deleted file mode 100644
+index 5a6083a..0000000
+--- a/generators/app/templates/fieldView.tests.js
++++ /dev/null
+@@ -1,104 +0,0 @@
+-import React from "react";
+-import TestUtils from 'react-testutils-additions';
+-import statusCodes from 'reflux-store-status/statusCodes';
+-
+-import CertificateBuilder from '../../../../testUtilities/builders/certificateBuilder';
+-
+-import <%= componentNamePC %>View from 'editor/components/fields/<%= componentNameCC %>/<%= componentNameCC %>View.jsx';
+-import <%= componentNamePC %>Model from 'editor/components/fields/<%= componentNameCC %>/<%= componentNameCC %>Model.ts';
+-
+-describe('The <%= componentNamePC %> View', () => {
+-    var component, props, onChange;
+-
+-    beforeEach(() => {
+-        var certificate = new CertificateBuilder("1234")
+-            .build();
+-
+-        onChange = jasmine.createSpy('onChange');
+-
+-        props = {
+-            certificate,
+-            onChange,
+-            data: 'SomeAction2',
+-            <%= componentNameCC %>Data: [
+-                new <%= componentNamePC %>Model('eVision', 'SomeAction1', new Date(2015, 0, 1)),
+-                new <%= componentNamePC %>Model('eVision', 'SomeAction2', new Date(2015, 0, 1)),
+-                new <%= componentNamePC %>Model('eVision', 'SomeAction3', new Date(2015, 0, 1))
+-            ],
+-            status: statusCodes.READY,
+-            options: {
+-                propertyName: '<%= componentNameCC %>',
+-                resourceKey: '<%= componentNamePC %>'
+-            },
+-            editMode: true
+-        };
+-    });
+-
+-    describe('When the store is not yet loaded', () => {
+-        beforeEach(() => {
+-            props.status = statusCodes.PENDING;
+-
+-            component = TestUtils.renderIntoDocument(<<%= componentNamePC %>View {...props} />);
+-
+-        });
+-
+-        it('can be rendered', () => {
+-            expect(component).toBeDefined();
+-        });
+-
+-        it('will show the progress indicator', () => {
+-            var indicators = TestUtils.find(component, '.progress-indicator');
+-            expect(indicators.length).toBe(1);
+-        });
+-    });
+-
+-
+-    describe('When the store is loaded', () => {
+-        beforeEach(() => {
+-            component = TestUtils.renderIntoDocument(<<%= componentNamePC %>View {...props} />);
+-        });
+-
+-        it('can be rendered', () => {
+-            expect(component).toBeDefined();
+-        });
+-
+-        it('will render the dropdown', () => {
+-            var view = TestUtils.findOne(component, '.form-control');
+-            expect(React.findDOMNode(view).value).toBe('SomeAction2');
+-        });
+-
+-        it('will have 3 items in the dropdown', () => {
+-            var items = TestUtils.find(component, 'option');
+-            expect(items.length).toBe(3);
+-        });
+-
+-        it('calls the onChange() when the selection is changed', () => {
+-            var select = TestUtils.findOne(component, 'select');
+-            TestUtils.Simulate.change(select, {target: {value: 'SomeAction3'}});
+-
+-            expect(onChange).toHaveBeenCalledWith('<%= componentNameCC %>', 'SomeAction3');
+-        });
+-    });
+-
+-    describe('when not in edit mode', () => {
+-        beforeEach(() => {
+-            props.editMode = false;
+-
+-            component = TestUtils.renderIntoDocument(<<%= componentNamePC %>View {...props} />);
+-        });
+-
+-        it('can be rendered', () => {
+-            expect(component).toBeDefined();
+-        });
+-
+-        it('will just render the data', () => {
+-            var view = TestUtils.findOne(component, '.fieldvalue');
+-            expect(React.findDOMNode(view).innerText).toBe('SomeAction2');
+-        });
+-
+-        it('will not render the dropdown', () => {
+-            var view = TestUtils.find(component, '.form-control');
+-            expect(view.length).toBe(0);
+-        });
+-    });
+-});
+diff --git a/test/test-app.js b/test/test-app.js
+deleted file mode 100644
+index cba024e..0000000
+--- a/test/test-app.js
++++ /dev/null
+@@ -1,63 +0,0 @@
+-'use strict';
+-
+-var path = require('path');
+-var assert = require('yeoman-generator').assert;
+-var helpers = require('yeoman-generator').test;
+-var os = require('os');
+-
+-describe('pv8-field:app', function () {
+-  before(function (done) {
+-    helpers.run(path.join(__dirname, '../generators/app'))
+-      .withPrompts({
+-        componentName: 'field name'
+-      })
+-      .on('end', done);
+-  });
+-
+-  it('creates files', function () {
+-    assert.file([
+-      './scripts/editor/components/fields/fieldName/index.js',
+-      './scripts/editor/components/fields/fieldName/fieldNameActions.ts',
+-      './scripts/editor/components/fields/fieldName/fieldNameAdapter.jsx',
+-      './scripts/editor/components/fields/fieldName/fieldNameModel.ts',
+-      './scripts/editor/components/fields/fieldName/fieldNameStore.ts',
+-      './scripts/editor/components/fields/fieldName/fieldNameView.jsx'
+-    ]);
+-  });
+-
+-  it('exposes the proper component name', function () {
+-    assert.fileContent([
+-      ['./scripts/editor/components/fields/fieldName/index.js', /export default FieldName/]
+-    ]);
+-  });
+-
+-  it('exposes the proper actions name', function () {
+-    assert.fileContent([
+-      ['./scripts/editor/components/fields/fieldName/fieldNameActions.ts', /export default fieldNameActions/]
+-    ]);
+-  });
+-
+-  it('exposes the proper adapter name', function () {
+-    assert.fileContent([
+-      ['./scripts/editor/components/fields/fieldName/fieldNameAdapter.jsx', /export default FieldNameAdapter/]
+-    ]);
+-  });
+-
+-  it('exposes the proper model name', function () {
+-    assert.fileContent([
+-      ['./scripts/editor/components/fields/fieldName/fieldNameModel.ts', /export default FieldNameModel/]
+-    ]);
+-  });
+-
+-  it('exposes the proper store name', function () {
+-    assert.fileContent([
+-      ['./scripts/editor/components/fields/fieldName/fieldNameStore.ts', /export default fieldNameStore/]
+-    ]);
+-  });
+-
+-  it('exposes the proper view name', function () {
+-    assert.fileContent([
+-      ['./scripts/editor/components/fields/fieldName/fieldNameView.jsx', /export default FieldNameView/]
+-    ]);
+-  });
+-});

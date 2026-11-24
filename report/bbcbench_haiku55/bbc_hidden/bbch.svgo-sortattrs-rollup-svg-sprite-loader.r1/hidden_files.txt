@@ -1,0 +1,7 @@
+.github/workflows/build-test.yml
+tests/build/source/example-1.svg
+tests/build/source/example-2.svg
+tests/build/target/dist.js
+tests/build/target/sprite.svg
+tests/emptyInput.ts
+tests/index.test.ts

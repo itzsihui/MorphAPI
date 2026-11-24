@@ -1,0 +1,93 @@
+diff --git a/index.js b/index.js
+index ca30ab7..25bc155 100644
+--- a/index.js
++++ b/index.js
+@@ -28,8 +28,17 @@ function normalizeGlobs(globs) {
+ 	return globs;
+ }
+ 
++function isNegated(glob) {
++	return glob[0] === '!';
++}
++
++// Chokidar 4 no longer expands globs, so we watch the static parent
++// directory of each glob and do the matching ourselves in `findGlob`.
++function watchRoot(glob) {
++	return path.normalize(globParent(glob));
++}
++
+ function watch(globs, options, cb) {
+-	const originalGlobs = globs;
+ 	globs = normalizeGlobs(globs);
+ 
+ 	if (typeof options === 'function') {
+@@ -72,7 +81,7 @@ function watch(globs, options, cb) {
+ 
+ 	outputStream._read = function () { };
+ 
+-	const watcher = chokidar.watch(globs, options);
++	const watcher = chokidar.watch(globs.filter(glob => !isNegated(glob)).map(glob => watchRoot(glob)), options);
+ 
+ 	options.events.forEach(ev => {
+ 		watcher.on(ev, processEvent.bind(undefined, ev));
+@@ -86,7 +95,7 @@ function watch(globs, options, cb) {
+ 	outputStream.add = function (newGlobs) {
+ 		newGlobs = normalizeGlobs(newGlobs)
+ 			.map(glob => resolveGlob(glob));
+-		watcher.add(newGlobs);
++		watcher.add(newGlobs.filter(glob => !isNegated(glob)).map(glob => watchRoot(glob)));
+ 		globs.push(...newGlobs);
+ 	};
+ 
+@@ -96,22 +105,40 @@ function watch(globs, options, cb) {
+ 		this.emit('end');
+ 	};
+ 
++	// Returns the positive glob that matches `filepath` (or one of its parent
++	// directories, so that watching a directory includes its contents), unless
++	// the file is excluded by a negated glob. Returns undefined otherwise.
++	function findGlob(filepath) {
++		const negated = globs.filter(glob => isNegated(glob)).map(glob => glob.slice(1));
++		if (negated.length > 0 && anymatch(negated, filepath)) {
++			return undefined;
++		}
++
++		const positive = globs.filter(glob => !isNegated(glob));
++		let currentFilepath = filepath;
++		for (;;) {
++			const index = anymatch(positive, currentFilepath, true);
++			if (index !== -1) {
++				return positive[index];
++			}
++
++			const parent = path.dirname(currentFilepath);
++			if (parent === currentFilepath) {
++				return undefined;
++			}
++
++			currentFilepath = parent;
++		}
++	}
++
+ 	function processEvent(event, filepath) {
+ 		filepath = resolveFilepath(filepath);
+ 		const fileOptions = assign({}, options);
+ 
+-		let glob;
+-		let currentFilepath = filepath;
+-		while (!(glob = globs[anymatch(globs, currentFilepath, true)]) && currentFilepath !== (currentFilepath = path.dirname(currentFilepath))) {} // eslint-disable-line no-empty
+-
++		// Chokidar reports everything under the watched directories, so ignore
++		// paths that don't match any of the globs.
++		const glob = findGlob(filepath);
+ 		if (!glob) {
+-			fancyLog.info(
+-				colors.cyan('[gulp-watch]'),
+-				colors.yellow('Watched unexpected path. This is likely a bug. Please open this link to report the issue:\n') +
+-				'https://github.com/floatdrop/gulp-watch/issues/new?title=' +
+-				encodeURIComponent('Watched unexpected filepath') + '&body=' +
+-				encodeURIComponent('Node.js version: `' + process.version + ' ' + process.platform + ' ' + process.arch + '`\ngulp-watch version: `' + require('./package.json').version + '`\nGlobs: `' + JSON.stringify(originalGlobs) + '`\nFilepath: `' + filepath + '`\nEvent: `' + event + '`\nProcess CWD: `' + process.cwd() + '`\nOptions:\n```js\n' + JSON.stringify(options, null, 2) + '\n```')
+-			);
+ 			return;
+ 		}
+ 

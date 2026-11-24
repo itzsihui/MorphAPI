@@ -1,0 +1,480 @@
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+deleted file mode 100644
+index 21471d4..0000000
+--- a/.github/workflows/test.yml
++++ /dev/null
+@@ -1,37 +0,0 @@
+-name: Netlify Plugin Sitemap Test
+-
+-on:
+-  push:
+-    branches: [main]
+-    tags: ['*']
+-  pull_request:
+-    types: [opened, synchronize, reopened]
+-
+-jobs:
+-  build:
+-    runs-on: ${{ matrix.os }}
+-    timeout-minutes: 30
+-    strategy:
+-      matrix:
+-        os: [ubuntu-latest, macOS-latest, windows-latest]
+-        node-version: [8.12.0, '*']
+-        exclude:
+-          - os: macOS-latest
+-            node-version: 8.12.0
+-          - os: windows-latest
+-            node-version: 8.12.0
+-      fail-fast: false
+-    steps:
+-      - uses: actions/checkout@v2
+-      - name: Use Node.js ${{ matrix.node-version }}
+-        uses: actions/setup-node@v2
+-        with:
+-          node-version: ${{ matrix.node-version }}
+-          check-latest: true
+-      - name: Install dependencies
+-        run: npm ci
+-      - name: Linting
+-        run: npm run format:ci
+-        if: "${{ matrix.node-version == '*' }}"
+-      - name: Tests
+-        run: npm test
+diff --git a/make_sitemap.js b/make_sitemap.js
+index 3b1be84..7e26c0c 100644
+--- a/make_sitemap.js
++++ b/make_sitemap.js
+@@ -4,7 +4,7 @@ const util = require('util')
+ 
+ const globby = require('globby')
+ const mkdirp = require('mkdirp')
+-const { createSitemap } = require('sitemap')
++const { createSitemap, ErrorLevel } = require('sitemap')
+ 
+ const ensureTrailingSlash = (url) => (url.endsWith('/') ? url : `${url}/`)
+ 
+@@ -55,13 +55,17 @@ const getUrlsFromPaths = ({ paths, distPath, prettyURLs, trailingSlash, changeFr
+       url: (urlPrefix ? urlPrefix + url : url).replace('//', '/'),
+       changefreq: changeFreq,
+       priority,
+-      lastmodrealtime: true,
+       lastmodfile: cwd === undefined ? file : path.resolve(cwd, file),
+     }
+   })
+   return urls
+ }
+ 
++const formatLastmod = (file) => {
++  const { mtime } = fs.statSync(file)
++  return new Date(mtime).toISOString().slice(0, 10)
++}
++
+ const DEFAULT_CHANGE_FREQ = 'weekly'
+ const DEFAULT_PRIORITY = 0.8
+ // 600 sec cache period
+@@ -71,9 +75,17 @@ const DEFAULT_CACHE_TIME = 600000
+ const createSitemapInfo = async function ({ homepage, urls, failBuild }) {
+   try {
+     const hostname = ensureTrailingSlash(homepage)
+-    const sitemap = createSitemap({ hostname, cacheTime: DEFAULT_CACHE_TIME, urls })
+-    await util.promisify(sitemap.toXML.bind(sitemap))()
+-    const xml = sitemap.toString()
++    // sitemap@3 threw on invalid URL options; sitemap@4 only warns unless told to throw
++    const sitemap = createSitemap({ hostname, cacheTime: DEFAULT_CACHE_TIME, urls, level: ErrorLevel.THROW })
++    // sitemap@4 normalizes `lastmodfile` to a full ISO timestamp, while sitemap@3 wrote the
++    // date only (YYYY-MM-DD). Restore the date-only format on the normalized entries.
++    for (const item of sitemap.urls.values()) {
++      if (item.lastmodfile) {
++        item.lastmod = formatLastmod(item.lastmodfile)
++      }
++    }
++    // sitemap@4 `toXML` is synchronous and no longer accepts a callback
++    const xml = sitemap.toXML()
+     return { sitemap, xml }
+   } catch (error) {
+     return failBuild('Could not generate XML sitemap', { error })
+diff --git a/tests/fixtures/children/child-one.html b/tests/fixtures/children/child-one.html
+deleted file mode 100644
+index ad93fd8..0000000
+--- a/tests/fixtures/children/child-one.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Child 1</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Child 1
+-    </body>
+-</html>
+diff --git a/tests/fixtures/children/child-two.html b/tests/fixtures/children/child-two.html
+deleted file mode 100644
+index 0a2544b..0000000
+--- a/tests/fixtures/children/child-two.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Child 2</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Child 2
+-    </body>
+-</html>
+diff --git a/tests/fixtures/children/grandchildren/grandchild-one.html b/tests/fixtures/children/grandchildren/grandchild-one.html
+deleted file mode 100644
+index fa6dbbd..0000000
+--- a/tests/fixtures/children/grandchildren/grandchild-one.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Grand Child 1</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Grand Child 1
+-    </body>
+-</html>
+diff --git a/tests/fixtures/children/grandchildren/grandchild-two.html b/tests/fixtures/children/grandchildren/grandchild-two.html
+deleted file mode 100644
+index 49d35e4..0000000
+--- a/tests/fixtures/children/grandchildren/grandchild-two.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Grand Child 2</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Grand Child 2
+-    </body>
+-</html>
+diff --git a/tests/fixtures/index.html b/tests/fixtures/index.html
+deleted file mode 100644
+index 1869766..0000000
+--- a/tests/fixtures/index.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Home</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Home
+-    </body>
+-</html>
+diff --git a/tests/fixtures/page-one.html b/tests/fixtures/page-one.html
+deleted file mode 100644
+index 82cea96..0000000
+--- a/tests/fixtures/page-one.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Page one</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Page one
+-    </body>
+-</html>
+diff --git a/tests/fixtures/page-three.html b/tests/fixtures/page-three.html
+deleted file mode 100644
+index 4522db5..0000000
+--- a/tests/fixtures/page-three.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Page three</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Page three
+-    </body>
+-</html>
+diff --git a/tests/fixtures/page-two.html b/tests/fixtures/page-two.html
+deleted file mode 100644
+index 0068201..0000000
+--- a/tests/fixtures/page-two.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html class="no-js" lang="">
+-    <head>
+-        <meta charset="utf-8">
+-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+-        <title>Page two</title>
+-        <meta name="description" content="">
+-        <meta name="viewport" content="width=device-width, initial-scale=1">
+-    </head>
+-    <body>
+-      Page two
+-    </body>
+-</html>
+diff --git a/tests/sitemap.test.js b/tests/sitemap.test.js
+deleted file mode 100644
+index 6dc85e3..0000000
+--- a/tests/sitemap.test.js
++++ /dev/null
+@@ -1,226 +0,0 @@
+-const { readFile, unlink } = require('fs')
+-const path = require('path')
+-const { promisify } = require('util')
+-
+-const test = require('ava')
+-const tempy = require('tempy')
+-const { parseString } = require('xml2js')
+-
+-const pParseString = promisify(parseString)
+-const pUnlink = promisify(unlink)
+-const pReadFile = promisify(readFile)
+-
+-const makeSitemap = require('../make_sitemap.js')
+-
+-test.beforeEach((t) => {
+-  t.context.fileName = tempy.file({ name: 'sitemap.xml' })
+-})
+-
+-test.afterEach(async (t) => {
+-  try {
+-    await pUnlink(t.context.fileName)
+-  } catch (_) {}
+-})
+-
+-// Test relative and absolute paths
+-const CONFIGS = [
+-  {
+-    distPath: './fixtures',
+-    testNamePostfix: 'relative path',
+-    cwd: __dirname,
+-    excludePath: './fixtures/children/grandchildren/grandchild-two.html',
+-  },
+-  {
+-    distPath: path.resolve(__dirname, './fixtures'),
+-    testNamePostfix: 'absolute path',
+-    excludePath: path.resolve(__dirname, './fixtures/children/grandchildren/grandchild-two.html'),
+-  },
+-  {
+-    distPath: '.',
+-    testNamePostfix: 'root relative path',
+-    cwd: path.join(__dirname, 'fixtures'),
+-    excludePath: './children/grandchildren/grandchild-two.html',
+-  },
+-]
+-
+-// eslint-disable-next-line max-lines-per-function
+-CONFIGS.forEach(({ distPath, testNamePostfix, cwd, excludePath }) => {
+-  test(`Creates Sitemap with all html files - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    const sitemapData = await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: true,
+-      failBuild() {},
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-    const pages = getPages(xmlData)
+-    t.truthy(sitemapData.sitemapPath)
+-    t.deepEqual(pages, [
+-      'https://site.com/',
+-      'https://site.com/page-one',
+-      'https://site.com/page-three',
+-      'https://site.com/page-two',
+-      'https://site.com/children/child-one',
+-      'https://site.com/children/child-two',
+-      'https://site.com/children/grandchildren/grandchild-one',
+-      'https://site.com/children/grandchildren/grandchild-two',
+-    ])
+-  })
+-
+-  test(`Creates Sitemap with all html files with trailing slash - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    const sitemapData = await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: true,
+-      trailingSlash: true,
+-      failBuild() {},
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-    const pages = getPages(xmlData)
+-    t.truthy(sitemapData.sitemapPath)
+-    t.deepEqual(pages, [
+-      'https://site.com/',
+-      'https://site.com/page-one/',
+-      'https://site.com/page-three/',
+-      'https://site.com/page-two/',
+-      'https://site.com/children/child-one/',
+-      'https://site.com/children/child-two/',
+-      'https://site.com/children/grandchildren/grandchild-one/',
+-      'https://site.com/children/grandchildren/grandchild-two/',
+-    ])
+-  })
+-
+-  test(`Sitemap pretty urls off works correctly - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    const sitemapData = await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: false,
+-      failBuild() {},
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-    const pages = getPages(xmlData)
+-    t.truthy(sitemapData.sitemapPath)
+-    t.deepEqual(pages, [
+-      'https://site.com/index.html',
+-      'https://site.com/page-one.html',
+-      'https://site.com/page-three.html',
+-      'https://site.com/page-two.html',
+-      'https://site.com/children/child-one.html',
+-      'https://site.com/children/child-two.html',
+-      'https://site.com/children/grandchildren/grandchild-one.html',
+-      'https://site.com/children/grandchildren/grandchild-two.html',
+-    ])
+-  })
+-
+-  test(`Sitemap applies changeFreq and priority when configured - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    const defaultChangeFreq = 'daily'
+-    const defaultPriority = 0.9
+-
+-    await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: false,
+-      failBuild() {},
+-      changeFreq: defaultChangeFreq,
+-      priority: defaultPriority,
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-
+-    t.is(xmlData.urlset.url[0].changefreq[0], defaultChangeFreq)
+-    t.is(xmlData.urlset.url[0].priority[0], defaultPriority.toString())
+-  })
+-
+-  test(`Sitemap changefreq and priority defaults to weekly and 0.8 - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: false,
+-      failBuild() {},
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-
+-    t.is(xmlData.urlset.url[0].changefreq[0], 'weekly')
+-    t.is(xmlData.urlset.url[0].priority[0], '0.8')
+-  })
+-
+-  test(`Sitemap exclude works correctly - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    const sitemapData = await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: true,
+-      exclude: [
+-        // Path
+-        excludePath,
+-        // Glob pattern
+-        '**/**/child-one.html',
+-      ],
+-      failBuild() {},
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-    const pages = getPages(xmlData)
+-    t.truthy(sitemapData.sitemapPath)
+-
+-    t.deepEqual(pages, [
+-      'https://site.com/',
+-      'https://site.com/page-one',
+-      'https://site.com/page-three',
+-      'https://site.com/page-two',
+-      // excluded 'https://site.com/children/child-one.html',
+-      'https://site.com/children/child-two',
+-      'https://site.com/children/grandchildren/grandchild-one',
+-      // excluded 'https://site.com/children/grandchildren/grandchild-two.html'
+-    ])
+-  })
+-
+-  test(`Sitemap urlPrefix works correctly - ${testNamePostfix}`, async (t) => {
+-    const { fileName } = t.context
+-    const sitemapData = await makeSitemap({
+-      homepage: 'https://site.com/',
+-      distPath,
+-      prettyURLs: true,
+-      urlPrefix: 'en/',
+-      failBuild() {},
+-      fileName,
+-      cwd,
+-    })
+-    const xmlData = await parseXml(fileName)
+-    const pages = getPages(xmlData)
+-    t.truthy(sitemapData.sitemapPath)
+-    t.deepEqual(pages, [
+-      'https://site.com/en/',
+-      'https://site.com/en/page-one',
+-      'https://site.com/en/page-three',
+-      'https://site.com/en/page-two',
+-      'https://site.com/en/children/child-one',
+-      'https://site.com/en/children/child-two',
+-      'https://site.com/en/children/grandchildren/grandchild-one',
+-      'https://site.com/en/children/grandchildren/grandchild-two',
+-    ])
+-  })
+-})
+-
+-const getPages = (data) => data.urlset.url.map((record) => record.loc[0])
+-
+-const parseXml = async (filePath) => {
+-  const xml = await pReadFile(filePath, 'utf-8')
+-  const parsed = await pParseString(xml)
+-  return parsed
+-}

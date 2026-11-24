@@ -1,0 +1,9 @@
+JUDGE bluebird-promisify-multiargs-balena-request
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): tests/request.spec.coffee tests/tokens.json tests/utils.spec.coffee
+  prod     : yes
+  rerun    : exit 0, counts [58 passing ]
+  patch    : /srv/agentcmp/ws/bbch.bluebird-promisify-multiargs-balena-request.r1/w/.judge/agent.patch
+PASS bluebird-promisify-multiargs-balena-request

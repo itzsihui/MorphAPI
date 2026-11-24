@@ -1,0 +1,9 @@
+JUDGE lodash-capitalize-sails-navigator
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/index.spec.coffee test/index.spec.js test/index.spec.js.map test/mocha.opts
+  prod     : yes
+  rerun    : exit 0, counts [1 pending 29 passing ]
+  patch    : /srv/agentcmp/ws/bbch.lodash-capitalize-sails-navigator.r1/w/.judge/agent.patch
+PASS lodash-capitalize-sails-navigator

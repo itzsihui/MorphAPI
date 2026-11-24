@@ -1,0 +1,15 @@
+diff --git a/helpers/api.js b/helpers/api.js
+index 2a03244..2fe75e5 100644
+--- a/helpers/api.js
++++ b/helpers/api.js
+@@ -154,7 +154,9 @@ var extendRequest = function(req,type,options){
+   req.url = makeURL(options)
+   req.validateResponse = validateResponse
+   req.handleNetworkError = handleNetworkError
+-  P.promisifyAll(req)
++  //request calls back with (err, res, body) so multiArgs is required
++  //to resolve with [res, body] which the callers .spread() over
++  P.promisifyAll(req,{multiArgs: true})
+   return req
+ }
+ 

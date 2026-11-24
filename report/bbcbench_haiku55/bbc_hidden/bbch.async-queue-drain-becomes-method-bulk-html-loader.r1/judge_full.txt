@@ -1,0 +1,9 @@
+JUDGE async-queue-drain-becomes-method-bulk-html-loader
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/index.spec.js test/mock/bing.com.html test/mock/google.com.html test/mock/yahoo.com.html
+  prod     : yes
+  rerun    : exit 0, counts [10 passing ]
+  patch    : /srv/agentcmp/ws/bbch.async-queue-drain-becomes-method-bulk-html-loader.r1/w/.judge/agent.patch
+PASS async-queue-drain-becomes-method-bulk-html-loader

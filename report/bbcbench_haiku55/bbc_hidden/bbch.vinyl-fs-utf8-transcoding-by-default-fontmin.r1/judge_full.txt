@@ -1,0 +1,9 @@
+JUDGE vinyl-fs-utf8-transcoding-by-default-fontmin
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/base.js test/font.js test/subset.js test/svg2ttf.js test/svgs2ttf.js
+  prod     : yes
+  rerun    : exit 1, counts [0 passing 1 failing ]
+  patch    : /srv/agentcmp/ws/bbch.vinyl-fs-utf8-transcoding-by-default-fontmin.r1/w/.judge/agent.patch
+FAIL vinyl-fs-utf8-transcoding-by-default-fontmin

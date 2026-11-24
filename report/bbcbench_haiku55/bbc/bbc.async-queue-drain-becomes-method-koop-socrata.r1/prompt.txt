@@ -1,0 +1,6 @@
+After its dependency `async` was upgraded from 2.6.4 to 3.2.6, this project's tests fail. The project is in src/ (dependencies are installed in src/node_modules, with async at 3.2.6).
+
+Fix the project's own code so that the tests pass with async 3.2.6.
+- Run the tests with `./run_tests.sh` (from this directory). The current failing output is in _FAILING.txt.
+- Do not downgrade, remove or replace async, and do not change package.json, lockfiles or anything in node_modules.
+- Edits to test files are discarded when your work is judged: fix the code under test, not the tests.

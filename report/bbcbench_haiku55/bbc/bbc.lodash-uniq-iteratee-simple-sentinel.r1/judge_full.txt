@@ -1,0 +1,9 @@
+JUDGE lodash-uniq-iteratee-simple-sentinel
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [111 passing ]
+  patch    : /srv/agentcmp/ws/bbc.lodash-uniq-iteratee-simple-sentinel.r1/w/.judge/agent.patch
+PASS lodash-uniq-iteratee-simple-sentinel

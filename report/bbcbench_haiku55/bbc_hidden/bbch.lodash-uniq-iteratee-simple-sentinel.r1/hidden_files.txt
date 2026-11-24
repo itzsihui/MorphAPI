@@ -1,0 +1,7 @@
+tests/redis_config_fetcher_test.js
+tests/redis_replica_test.js
+tests/redis_sentinel_test.js
+tests/redis_watcher_test.js
+tests/util/mockRandom.js
+tests/util/mockSentinel.js
+tests/util_test.js

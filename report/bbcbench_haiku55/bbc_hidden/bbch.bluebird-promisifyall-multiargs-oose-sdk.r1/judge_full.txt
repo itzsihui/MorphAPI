@@ -1,0 +1,9 @@
+JUDGE bluebird-promisifyall-multiargs-oose-sdk
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): assets/test.txt ssl/oose_test.crt ssl/oose_test.csr ssl/oose_test.key ssl/oose_test.pem test/.jshintrc test/Prism.test.js test/api.test.js test/helpers/e2e.js test/mocha.opts test/mock.test.js
+  prod     : yes
+  rerun    : exit 0, counts [52 passing ]
+  patch    : /srv/agentcmp/ws/bbch.bluebird-promisifyall-multiargs-oose-sdk.r1/w/.judge/agent.patch
+PASS bluebird-promisifyall-multiargs-oose-sdk

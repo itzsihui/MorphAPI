@@ -1,0 +1,4 @@
+test/index.spec.coffee
+test/index.spec.js
+test/index.spec.js.map
+test/mocha.opts

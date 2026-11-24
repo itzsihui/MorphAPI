@@ -1,0 +1,9 @@
+JUDGE lodash-thisarg-removed-nodep
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/mock/arg.commented.js test/mock/arg.js test/mock/args.commented.js test/mock/args.js test/mock/circular.js test/mock/no.args.commented.js test/mock/no.args.js test/mock/no.return.js test/mock/npm.js test/mock/num.js test/mock/obj.js test/mock/provider.js test/mock/provider.obj.js test/mock/random.js test/mock/str.js test/spec.js
+  prod     : yes
+  rerun    : exit 0, counts [54 passing ]
+  patch    : /srv/agentcmp/ws/bbch.lodash-thisarg-removed-nodep.r1/w/.judge/agent.patch
+PASS lodash-thisarg-removed-nodep

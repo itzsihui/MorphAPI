@@ -1,0 +1,6 @@
+After its dependency `lodash` was upgraded from 3.8.0 to 4.17.21, this project's tests fail. The project is in src/ (dependencies are installed in src/node_modules, with lodash at 4.17.21).
+
+Fix the project's own code so that the tests pass with lodash 4.17.21.
+- Run the tests with `./run_tests.sh` (from this directory). The current failing output is in _FAILING.txt.
+- Do not downgrade, remove or replace lodash, and do not change package.json, lockfiles or anything in node_modules.
+- Edits to test files are discarded when your work is judged: fix the code under test, not the tests.

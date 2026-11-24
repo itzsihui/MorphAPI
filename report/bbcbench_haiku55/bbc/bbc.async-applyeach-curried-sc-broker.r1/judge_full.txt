@@ -1,0 +1,9 @@
+JUDGE async-applyeach-curried-sc-broker
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [57 passing ]
+  patch    : /srv/agentcmp/ws/bbc.async-applyeach-curried-sc-broker.r1/w/.judge/agent.patch
+PASS async-applyeach-curried-sc-broker

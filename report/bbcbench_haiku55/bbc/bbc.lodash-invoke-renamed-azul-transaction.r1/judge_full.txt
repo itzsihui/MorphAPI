@@ -1,0 +1,9 @@
+JUDGE lodash-invoke-renamed-azul-transaction
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [26 passing ]
+  patch    : /srv/agentcmp/ws/bbc.lodash-invoke-renamed-azul-transaction.r1/w/.judge/agent.patch
+PASS lodash-invoke-renamed-azul-transaction

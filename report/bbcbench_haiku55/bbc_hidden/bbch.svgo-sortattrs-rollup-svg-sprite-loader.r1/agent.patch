@@ -1,0 +1,323 @@
+diff --git a/.github/workflows/build-test.yml b/.github/workflows/build-test.yml
+deleted file mode 100644
+index 5e492e8..0000000
+--- a/.github/workflows/build-test.yml
++++ /dev/null
+@@ -1,43 +0,0 @@
+-# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+-
+-name: build test
+-
+-on:
+-  push:
+-    branches: [dev]
+-  pull_request:
+-    branches: [dev]
+-
+-jobs:
+-  build-and-publish:
+-    runs-on: ubuntu-latest
+-    strategy:
+-      matrix:
+-        node-version: [16.x]
+-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+-
+-    steps:
+-      - uses: actions/checkout@v2
+-
+-      - name: Install rollup.js
+-        uses: pnpm/action-setup@v2.0.1
+-        with:
+-          version: 6.19.0
+-
+-      - name: Use Node.js ${{ matrix.node-version }}
+-        uses: actions/setup-node@v2.4.1
+-        with:
+-          node-version: ${{ matrix.node-version }}
+-          cache: "pnpm"
+-
+-      - run: pnpm install
+-      - run: pnpm run build --if-present
+-      - run: pnpm test
+-
+-      - name: Publish dry run
+-        id: publish
+-        uses: JS-DevTools/npm-publish@v1
+-        with:
+-          token: ${{ secrets.NPM_AUTH_TOKEN }}
+-          dry-run: true
+diff --git a/src/index.ts b/src/index.ts
+index 4005aa6..15c4d62 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,4 +1,4 @@
+-import svgo, { OptimizeOptions, Plugin as SvgoPlugin } from "svgo"
++import { optimize, Config as SvgoConfig } from "svgo"
+ import { promises as fsp } from "fs"
+ import path from "path"
+ 
+@@ -8,7 +8,14 @@ import Sprite, { InlineSprite } from "./buildSprite"
+ 
+ import { inline } from "./inline"
+ 
+-const svgoOptions: OptimizeOptions = {
++type SvgoPlugin = NonNullable<SvgoConfig["plugins"]>[number]
++
++// Plugin names that svgo 3 renamed; keeps options written for svgo 2 working.
++const renamedPlugins: Record<string, string> = {
++  cleanupIDs: "cleanupIds",
++}
++
++const svgoOptions: SvgoConfig = {
+   js2svg: {
+     indent: 2,
+   },
+@@ -17,8 +24,10 @@ const svgoOptions: OptimizeOptions = {
+       name: "preset-default",
+       params: {
+         overrides: {
+-          cleanupIDs: false,
++          cleanupIds: false,
+           removeViewBox: false,
++          // svgo 3 adds sortAttrs to preset-default; svgo 2 did not run it.
++          sortAttrs: false,
+         },
+       },
+     },
+@@ -47,7 +56,8 @@ export function svgSpriteLoader(options: Options = {}): Plugin {
+     if (Object.prototype.hasOwnProperty.call(otherOptions, key)) {
+       const params = otherOptions[key]
+       if (params) {
+-        svgoOptions.plugins!.push({ name: key, params } as SvgoPlugin)
++        const name = renamedPlugins[key] ?? key
++        svgoOptions.plugins!.push({ name, params } as SvgoPlugin)
+       }
+     }
+   }
+@@ -73,7 +83,7 @@ export function svgSpriteLoader(options: Options = {}): Plugin {
+       if (noImport || !isSVG(id)) {
+         return null
+       }
+-      const { data } = svgo.optimize(code, svgoOptions)
++      const { data } = optimize(code, svgoOptions)
+       const interpolatedId =
+         typeof symbolIdQuery === "function" ? symbolIdQuery(id) : interpolateName(outputPath, id, code, symbolIdQuery)
+       const symbol = sprite.add(interpolatedId, data)
+diff --git a/tests/build/source/example-1.svg b/tests/build/source/example-1.svg
+deleted file mode 100644
+index 49baf75..0000000
+--- a/tests/build/source/example-1.svg
++++ /dev/null
+@@ -1,3 +0,0 @@
+-<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+-  <path d="M19 21L15.943 24L4 12L15.943 0L19 3L10 12L19 21Z" fill="currentColor"/>
+-</svg>
+diff --git a/tests/build/source/example-2.svg b/tests/build/source/example-2.svg
+deleted file mode 100644
+index 5da1809..0000000
+--- a/tests/build/source/example-2.svg
++++ /dev/null
+@@ -1,4 +0,0 @@
+-<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+-  <path d="M17.3488 20.3696C16.6297 20.6846 15.8353 20.8594 15 20.8594C11.764 20.8594 9.14062 18.236 9.14062 15C9.14062 11.764 11.764 9.14062 15 9.14062C18.236 9.14062 20.8594 11.764 20.8594 15C20.8594 15.7024 20.7358 16.3759 20.5092 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+-  <path d="M16 1H14C12.8954 1 12 1.89543 12 3C12 4.75558 9.87742 5.63479 8.63604 4.3934C7.85499 3.61235 6.58866 3.61235 5.80761 4.3934L4.3934 5.80761C3.61235 6.58866 3.61235 7.85499 4.3934 8.63604C5.63478 9.87742 4.75558 12 3 12C1.89543 12 1 12.8954 1 14V16C1 17.1046 1.89543 18 3 18C4.75558 18 5.63478 20.1226 4.3934 21.364C3.61235 22.145 3.61235 23.4113 4.3934 24.1924L5.80761 25.6066C6.58866 26.3876 7.85499 26.3876 8.63604 25.6066C9.87742 24.3652 12 25.2444 12 27C12 28.1046 12.8954 29 14 29H16C17.1046 29 18 28.1046 18 27C18 25.2444 20.1226 24.3652 21.364 25.6066C22.145 26.3876 23.4113 26.3876 24.1924 25.6066L25.6066 24.1924C26.3876 23.4113 26.3876 22.145 25.6066 21.364C24.3652 20.1226 25.2444 18 27 18C28.1046 18 29 17.1046 29 16V14C29 12.8954 28.1046 12 27 12C25.2444 12 24.3652 9.87742 25.6066 8.63604C26.3876 7.85499 26.3876 6.58866 25.6066 5.80761L24.1924 4.3934C23.4113 3.61235 22.145 3.61235 21.364 4.3934C20.1226 5.63478 18 4.75558 18 3C18 1.89543 17.1046 1 16 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+-</svg>
+diff --git a/tests/build/target/dist.js b/tests/build/target/dist.js
+deleted file mode 100644
+index a0c39f1..0000000
+--- a/tests/build/target/dist.js
++++ /dev/null
+@@ -1,60 +0,0 @@
+-const example_1 = {id: "example-1", viewBox: "0 0 24 24"};
+-
+-export { example_1 as default, example_1 };
+-;((spriteNodeId, spriteGlobalVarName) => {
+-  let sprite
+-  const isSpriteExists = Object.prototype.hasOwnProperty.call(window, spriteGlobalVarName)
+-  if (isSpriteExists) {
+-    sprite = window[spriteGlobalVarName]
+-  } else {
+-    sprite = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; width: 0; height: 0;" aria-hidden="true"><symbol viewBox="0 0 24 24" id="example-1" class="svg-sprite__symbol"><path d="m19 21-3.057 3L4 12 15.943 0 19 3l-9 9 9 9Z" fill="currentColor"/></symbol><symbol viewBox="0 0 30 30" fill="none" id="example-2" class="svg-sprite__symbol"><path d="M17.349 20.37a5.86 5.86 0 1 1 3.16-3.37" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 1h-2a2 2 0 0 0-2 2c0 1.756-2.123 2.635-3.364 1.393a2 2 0 0 0-2.828 0L4.393 5.808a2 2 0 0 0 0 2.828C5.635 9.877 4.756 12 3 12a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2c1.756 0 2.635 2.123 1.393 3.364a2 2 0 0 0 0 2.828l1.415 1.415a2 2 0 0 0 2.828 0C9.877 24.365 12 25.244 12 27a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2c0-1.756 2.123-2.635 3.364-1.393a2 2 0 0 0 2.828 0l1.415-1.415a2 2 0 0 0 0-2.828C24.365 20.123 25.244 18 27 18a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2c-1.756 0-2.635-2.123-1.393-3.364a2 2 0 0 0 0-2.828l-1.415-1.415a2 2 0 0 0-2.828 0C20.123 5.635 18 4.756 18 3a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>`
+-    window[spriteGlobalVarName] = sprite
+-  }
+-
+-  const loadSprite = () => {
+-    let svgSprite = document.getElementById(spriteNodeId)
+-    if (!svgSprite) {
+-      svgSprite = document.createElement("svg")
+-      document.body.prepend(svgSprite)
+-    }
+-    svgSprite.outerHTML = sprite
+-  }
+-
+-  if (document.readyState === "loading") {
+-    document.addEventListener("DOMContentLoaded", (e) => {
+-      loadSprite()
+-    })
+-  } else {
+-    loadSprite()
+-  }
+-})("__SVG_SPRITE_NODE__", "__SVG_SPRITE__");
+-const example_2 = {id: "example-2", viewBox: "0 0 30 30"};
+-
+-export { example_2 as default, example_2 };
+-;((spriteNodeId, spriteGlobalVarName) => {
+-  let sprite
+-  const isSpriteExists = Object.prototype.hasOwnProperty.call(window, spriteGlobalVarName)
+-  if (isSpriteExists) {
+-    sprite = window[spriteGlobalVarName]
+-  } else {
+-    sprite = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; width: 0; height: 0;" aria-hidden="true"><symbol viewBox="0 0 24 24" id="example-1" class="svg-sprite__symbol"><path d="m19 21-3.057 3L4 12 15.943 0 19 3l-9 9 9 9Z" fill="currentColor"/></symbol><symbol viewBox="0 0 30 30" fill="none" id="example-2" class="svg-sprite__symbol"><path d="M17.349 20.37a5.86 5.86 0 1 1 3.16-3.37" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 1h-2a2 2 0 0 0-2 2c0 1.756-2.123 2.635-3.364 1.393a2 2 0 0 0-2.828 0L4.393 5.808a2 2 0 0 0 0 2.828C5.635 9.877 4.756 12 3 12a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2c1.756 0 2.635 2.123 1.393 3.364a2 2 0 0 0 0 2.828l1.415 1.415a2 2 0 0 0 2.828 0C9.877 24.365 12 25.244 12 27a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2c0-1.756 2.123-2.635 3.364-1.393a2 2 0 0 0 2.828 0l1.415-1.415a2 2 0 0 0 0-2.828C24.365 20.123 25.244 18 27 18a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2c-1.756 0-2.635-2.123-1.393-3.364a2 2 0 0 0 0-2.828l-1.415-1.415a2 2 0 0 0-2.828 0C20.123 5.635 18 4.756 18 3a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>`
+-    window[spriteGlobalVarName] = sprite
+-  }
+-
+-  const loadSprite = () => {
+-    let svgSprite = document.getElementById(spriteNodeId)
+-    if (!svgSprite) {
+-      svgSprite = document.createElement("svg")
+-      document.body.prepend(svgSprite)
+-    }
+-    svgSprite.outerHTML = sprite
+-  }
+-
+-  if (document.readyState === "loading") {
+-    document.addEventListener("DOMContentLoaded", (e) => {
+-      loadSprite()
+-    })
+-  } else {
+-    loadSprite()
+-  }
+-})("__SVG_SPRITE_NODE__", "__SVG_SPRITE__");
+diff --git a/tests/build/target/sprite.svg b/tests/build/target/sprite.svg
+deleted file mode 100644
+index 809c682..0000000
+--- a/tests/build/target/sprite.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><style>.svg-sprite__symbol{display: none;}.svg-sprite__symbol:target{display: inline;}</style><symbol viewBox="0 0 24 24" id="example-1" class="svg-sprite__symbol"><path d="m19 21-3.057 3L4 12 15.943 0 19 3l-9 9 9 9Z" fill="currentColor"/></symbol><symbol viewBox="0 0 30 30" fill="none" id="example-2" class="svg-sprite__symbol"><path d="M17.349 20.37a5.86 5.86 0 1 1 3.16-3.37" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 1h-2a2 2 0 0 0-2 2c0 1.756-2.123 2.635-3.364 1.393a2 2 0 0 0-2.828 0L4.393 5.808a2 2 0 0 0 0 2.828C5.635 9.877 4.756 12 3 12a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2c1.756 0 2.635 2.123 1.393 3.364a2 2 0 0 0 0 2.828l1.415 1.415a2 2 0 0 0 2.828 0C9.877 24.365 12 25.244 12 27a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2c0-1.756 2.123-2.635 3.364-1.393a2 2 0 0 0 2.828 0l1.415-1.415a2 2 0 0 0 0-2.828C24.365 20.123 25.244 18 27 18a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2c-1.756 0-2.635-2.123-1.393-3.364a2 2 0 0 0 0-2.828l-1.415-1.415a2 2 0 0 0-2.828 0C20.123 5.635 18 4.756 18 3a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol></defs><use id="example-1-usage" xlink:href="#example-1" class="svg-sprite-symbol"/><use id="example-2-usage" xlink:href="#example-2" class="svg-sprite-symbol"/></svg>
+\ No newline at end of file
+diff --git a/tests/emptyInput.ts b/tests/emptyInput.ts
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/tests/index.test.ts b/tests/index.test.ts
+deleted file mode 100644
+index dd7b9f8..0000000
+--- a/tests/index.test.ts
++++ /dev/null
+@@ -1,115 +0,0 @@
+-import path from "path"
+-
+-import fs, { promises as fsp } from "fs"
+-import { InputOptions, OutputChunk, rollup, RollupOutput } from "rollup"
+-import typescript from "@rollup/plugin-typescript"
+-import nodeResolve from "@rollup/plugin-node-resolve"
+-
+-import svgSpriteLoader from "../src"
+-import { Options as PluginOptions } from "../src/shared"
+-
+-const outputPath = path.resolve(__dirname, "./dist")
+-
+-async function buildSprite(pluginOptions?: PluginOptions, inputOptions?: InputOptions) {
+-  const { write } = await rollup({
+-    input: "./emptyInput.ts",
+-    plugins: [
+-      nodeResolve(),
+-      svgSpriteLoader(pluginOptions),
+-      typescript({
+-        sourceMap: false,
+-      }),
+-    ],
+-    ...inputOptions,
+-  })
+-  const { output } = await write({ format: "esm", dir: "./dist", name: "dist.js" })
+-  await fsp.writeFile(
+-    path.resolve(outputPath, "./dist.js"),
+-    output
+-      .filter((it) => it.type === "chunk")
+-      .map((it) => (it as OutputChunk).code)
+-      .join(""),
+-    { encoding: "utf-8" }
+-  )
+-}
+-
+-async function isMate(source: string, outputChunk: RollupOutput["output"]) {
+-  for (const chunkOrAsset of outputChunk) {
+-    const { type } = chunkOrAsset
+-    if (type === "asset") {
+-      return chunkOrAsset.source.toString() === source
+-    } else {
+-      return chunkOrAsset.code === source
+-    }
+-  }
+-}
+-
+-beforeEach(() => {
+-  try {
+-    const dist = path.resolve(__dirname, "./dist")
+-    fs.rmSync(dist, { recursive: true })
+-    fs.mkdirSync(dist, { recursive: true })
+-  } catch (e) {
+-    console.log(e)
+-  }
+-})
+-
+-const inputPathGen = (fileName: string | string[]) => {
+-  if (Array.isArray(fileName)) {
+-    return fileName.map((name) => path.resolve(__dirname, "./build/source/", name))
+-  }
+-  return path.resolve(__dirname, "./build/source/", fileName)
+-}
+-
+-/*
+-describe("Edge cases", () => {
+-  test("Set outputPath to file path in extract mode", async () => {
+-    await expect(buildSprite({ outputPath: "./file.js", extract: true })).rejects.toThrow(
+-      "OutputPath must be a valid directory path."
+-    )
+-  })
+-  test("Non existent output path in extract mode", async () => {
+-    await expect(buildSprite({ outputPath: "./path-not-exists", extract: true })).rejects.toThrow(
+-      `No such directory "./path-not-exists".`
+-    )
+-  })
+-  test("No svg file imported", async () => {
+-    const output = await buildSprite({})
+-    await expect(output[0].code).toBe("\n")
+-  })
+-})
+-
+-describe("Compare the minified code", () => {
+-  test("Export extract sprite file", async () => {
+-    const assert = await buildSprite(
+-      { outputPath, extract: true, minify: true },
+-      {
+-        input: inputPath,
+-      }
+-    )
+-    await expect(isMate("./target/extract.svg", assert)).resolves.toBe(true)
+-  })
+-  test("Insert inline sprite code", async () => {
+-    const chunk = await buildSprite({ minify: true })
+-  })
+-})
+-
+-describe("Compare the prettified code", () => {
+-  test("Export extract sprite file", async () => {})
+-})
+-*/
+-
+-describe("extract", () => {
+-  test("extract", async () => {
+-    await buildSprite({ outputPath, extract: true }, { input: inputPathGen(["example-1.svg", "example-2.svg"]) })
+-    const output = await fsp.readFile(path.resolve(outputPath, "./public/sprite.svg"), { encoding: "utf-8" })
+-    const target = await fsp.readFile(path.resolve(__dirname, "./build/target/sprite.svg"), { encoding: "utf-8" })
+-    expect(output === target).toBe(true)
+-  })
+-  test("inline", async () => {
+-    await buildSprite({ outputPath, extract: false }, { input: inputPathGen(["example-1.svg", "example-2.svg"]) })
+-    const output = await fsp.readFile(path.resolve(outputPath, "./dist.js"), { encoding: "utf-8" })
+-    const target = await fsp.readFile(path.resolve(__dirname, "./build/target/dist.js"), { encoding: "utf-8" })
+-    expect(output === target).toBe(true)
+-  })
+-})

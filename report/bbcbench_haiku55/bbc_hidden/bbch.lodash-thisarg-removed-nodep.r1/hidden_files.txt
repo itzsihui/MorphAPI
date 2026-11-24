@@ -1,0 +1,16 @@
+test/mock/arg.commented.js
+test/mock/arg.js
+test/mock/args.commented.js
+test/mock/args.js
+test/mock/circular.js
+test/mock/no.args.commented.js
+test/mock/no.args.js
+test/mock/no.return.js
+test/mock/npm.js
+test/mock/num.js
+test/mock/obj.js
+test/mock/provider.js
+test/mock/provider.obj.js
+test/mock/random.js
+test/mock/str.js
+test/spec.js

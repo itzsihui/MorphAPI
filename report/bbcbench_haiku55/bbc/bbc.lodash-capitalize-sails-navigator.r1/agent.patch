@@ -1,0 +1,35 @@
+diff --git a/index.coffee b/index.coffee
+index 85f5222..9e7b077 100644
+--- a/index.coffee
++++ b/index.coffee
+@@ -168,10 +168,10 @@ do ->
+     route = _currentRoute.substr(1)
+     routeFragments = _.clone(route).split('/')
+ 
+-    guessedControllerName = _.capitalize(_.camelCase(routeFragments.pop()))
++    guessedControllerName = _.upperFirst(_.camelCase(routeFragments.pop()))
+     if routeFragments.length > 0 and not _routeConf.ignoreRootForControllerName
+       root = if _routeConf.rootAsControllerPath then "#{routeFragments.shift()}/" else ''
+-      prefix =_.map(routeFragments, (path)-> _.capitalize(path)).join('')
++      prefix =_.map(routeFragments, (path)-> _.upperFirst(path)).join('')
+       guessedControllerName = root + prefix + guessedControllerName
+ 
+     return _routeConf.controller or "#{guessedControllerName}Controller"
+diff --git a/index.js b/index.js
+index 6b37a53..f99ade6 100644
+--- a/index.js
++++ b/index.js
+@@ -213,11 +213,11 @@
+       var guessedControllerName, prefix, root, route, routeFragments;
+       route = _currentRoute.substr(1);
+       routeFragments = _.clone(route).split('/');
+-      guessedControllerName = _.capitalize(_.camelCase(routeFragments.pop()));
++      guessedControllerName = _.upperFirst(_.camelCase(routeFragments.pop()));
+       if (routeFragments.length > 0 && !_routeConf.ignoreRootForControllerName) {
+         root = _routeConf.rootAsControllerPath ? (routeFragments.shift()) + "/" : '';
+         prefix = _.map(routeFragments, function(path) {
+-          return _.capitalize(path);
++          return _.upperFirst(path);
+         }).join('');
+         guessedControllerName = root + prefix + guessedControllerName;
+       }

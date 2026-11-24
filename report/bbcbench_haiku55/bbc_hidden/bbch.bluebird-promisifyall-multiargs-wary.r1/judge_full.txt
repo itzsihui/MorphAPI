@@ -1,0 +1,9 @@
+JUDGE bluebird-promisifyall-multiargs-wary
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): tests/log.spec.coffee tests/temporal.spec.coffee tests/unit.spec.coffee tests/utils.spec.coffee tests/wary.spec.coffee
+  prod     : yes
+  rerun    : exit 0, counts [18 passing ]
+  patch    : /srv/agentcmp/ws/bbch.bluebird-promisifyall-multiargs-wary.r1/w/.judge/agent.patch
+PASS bluebird-promisifyall-multiargs-wary

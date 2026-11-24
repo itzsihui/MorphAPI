@@ -1,0 +1,3 @@
+generators/app/templates/fieldAdapter.tests.js
+generators/app/templates/fieldView.tests.js
+test/test-app.js

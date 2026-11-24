@@ -1,0 +1,15 @@
+diff --git a/scbroker.js b/scbroker.js
+index d6ef6a0..c406de7 100644
+--- a/scbroker.js
++++ b/scbroker.js
+@@ -232,7 +232,9 @@ SCBroker.prototype._passThroughMiddleware = function (command, socket, cb) {
+   var callbackInvoked = false;
+ 
+   var applyEachMiddleware = function (type, req, cb) {
+-    async.applyEachSeries(self._middleware[type], req, function (err) {
++    // async >= 3 returns a curried function from applyEachSeries(fns, ...args);
++    // the final callback must be supplied by invoking that returned function.
++    async.applyEachSeries(self._middleware[type], req)(function (err) {
+       if (callbackInvoked) {
+         self.emit('warning', new InvalidActionError(`Callback for ${type} middleware was already invoked`));
+       } else {

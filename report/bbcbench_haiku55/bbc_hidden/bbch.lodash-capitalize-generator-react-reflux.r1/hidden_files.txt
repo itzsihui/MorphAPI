@@ -1,0 +1,6 @@
+app/templates/__tests__/home-test.cjsx
+app/templates/__tests__/home-test.jsx
+test/test-actions.js
+test/test-app.js
+test/test-component.js
+test/test-store.js

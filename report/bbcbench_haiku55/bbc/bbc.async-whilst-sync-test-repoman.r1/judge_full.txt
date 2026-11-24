@@ -1,0 +1,9 @@
+JUDGE async-whilst-sync-test-repoman
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [55 passing ]
+  patch    : /srv/agentcmp/ws/bbc.async-whilst-sync-test-repoman.r1/w/.judge/agent.patch
+PASS async-whilst-sync-test-repoman

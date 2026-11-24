@@ -1,0 +1,6 @@
+This project's dependency `lodash` has been upgraded from 3.8.0 to 4.17.21. The project is in src/ (dependencies are installed in src/node_modules, with lodash at 4.17.21).
+
+Update the project's own code for lodash 4.17.21 so that the project behaves exactly as it did with 3.8.0.
+- The project's test suite is not included in this workspace.
+- Do not downgrade, remove or replace lodash, and do not change package.json, lockfiles or anything in node_modules.
+- Edits to test files are discarded when your work is judged.

@@ -1,0 +1,6 @@
+This project's dependency `svgo` has been upgraded from 2.8.3 to 3.0.2. The project is in src/ (dependencies are installed in src/node_modules, with svgo at 3.0.2).
+
+Update the project's own code for svgo 3.0.2 so that the project behaves exactly as it did with 2.8.3.
+- The project's test suite is not included in this workspace.
+- Do not downgrade, remove or replace svgo, and do not change package.json, lockfiles or anything in node_modules.
+- Edits to test files are discarded when your work is judged.

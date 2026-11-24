@@ -1,0 +1,15 @@
+diff --git a/make_sitemap.js b/make_sitemap.js
+index 3b1be84..5ba50db 100644
+--- a/make_sitemap.js
++++ b/make_sitemap.js
+@@ -72,8 +72,8 @@ const createSitemapInfo = async function ({ homepage, urls, failBuild }) {
+   try {
+     const hostname = ensureTrailingSlash(homepage)
+     const sitemap = createSitemap({ hostname, cacheTime: DEFAULT_CACHE_TIME, urls })
+-    await util.promisify(sitemap.toXML.bind(sitemap))()
+-    const xml = sitemap.toString()
++    // sitemap@4 `toXML()` is synchronous and returns the XML string (no callback)
++    const xml = sitemap.toXML()
+     return { sitemap, xml }
+   } catch (error) {
+     return failBuild('Could not generate XML sitemap', { error })

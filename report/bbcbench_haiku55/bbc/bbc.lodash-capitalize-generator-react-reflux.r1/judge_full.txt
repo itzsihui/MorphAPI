@@ -1,0 +1,9 @@
+JUDGE lodash-capitalize-generator-react-reflux
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [52 passing ]
+  patch    : /srv/agentcmp/ws/bbc.lodash-capitalize-generator-react-reflux.r1/w/.judge/agent.patch
+PASS lodash-capitalize-generator-react-reflux

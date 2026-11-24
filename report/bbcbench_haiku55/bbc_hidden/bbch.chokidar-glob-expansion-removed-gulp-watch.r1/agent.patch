@@ -1,0 +1,812 @@
+diff --git a/index.js b/index.js
+index ca30ab7..644be97 100644
+--- a/index.js
++++ b/index.js
+@@ -4,6 +4,7 @@ const path = require('path');
+ const PluginError = require('plugin-error');
+ const fancyLog = require('fancy-log');
+ const colors = require('ansi-colors');
++const fs = require('fs');
+ const chokidar = require('chokidar');
+ const Duplex = require('readable-stream').Duplex;
+ const vinyl = require('vinyl-file');
+@@ -12,6 +13,27 @@ const anymatch = require('anymatch');
+ const globParent = require('glob-parent');
+ const normalize = require('normalize-path');
+ 
++// chokidar >= 4 no longer accepts glob patterns: they are treated as literal paths.
++// To keep the behaviour of chokidar 3, we watch the static base directory of every
++// glob (recursively) and filter the reported paths against the globs ourselves.
++const globChars = /[*?[\]{}()]/;
++
++function isWithin(child, parent) {
++	return child === parent || child.startsWith(parent.endsWith('/') ? parent : parent + '/');
++}
++
++function isDirectory(filepath, stats) {
++	if (stats) {
++		return stats.isDirectory();
++	}
++
++	try {
++		return fs.statSync(filepath).isDirectory();
++	} catch (err) {
++		return false;
++	}
++}
++
+ function normalizeGlobs(globs) {
+ 	if (!globs) {
+ 		throw new PluginError('gulp-watch', 'glob argument required');
+@@ -61,6 +83,66 @@ function watch(globs, options, cb) {
+ 
+ 	globs = globs.map(glob => resolveGlob(glob));
+ 
++	// Derived from `globs` by `rebuildMatchers()`.
++	let includes = [];
++	let excludes = [];
++	let bases = [];
++
++	function rebuildMatchers() {
++		const include = [];
++		const exclude = [];
++		const roots = [];
++
++		globs.forEach(glob => {
++			if (glob[0] === '!') {
++				exclude.push(glob.slice(1));
++				return;
++			}
++
++			if (globChars.test(glob)) {
++				include.push(glob);
++				roots.push(normalize(globParent(glob)));
++			} else {
++				// Plain path: match the path itself and everything below it.
++				include.push(glob, glob + '/**');
++				roots.push(glob);
++			}
++		});
++
++		const unique = [...new Set(roots)];
++		includes = include;
++		excludes = exclude;
++		// A base nested in another base is already covered by a recursive watch of its ancestor.
++		bases = unique.filter(root => !unique.some(other => other !== root && isWithin(root, other)));
++	}
++
++	const userIgnored = options.ignored === undefined ? [] : [].concat(options.ignored);
++
++	function isIgnored(filepath, stats) {
++		if (userIgnored.length > 0 && anymatch(userIgnored, [filepath, stats])) {
++			return true;
++		}
++
++		const normalized = normalize(filepath);
++
++		if (anymatch(excludes, normalized)) {
++			return true;
++		}
++
++		if (bases.includes(normalized) || anymatch(includes, normalized)) {
++			return false;
++		}
++
++		// Directories that may contain matching files must be traversed.
++		if (!isDirectory(filepath, stats)) {
++			return true;
++		}
++
++		return !bases.some(base => isWithin(normalized, base) || isWithin(base, normalized));
++	}
++
++	rebuildMatchers();
++
+ 	const baseForced = Boolean(options.base);
+ 	const outputStream = new Duplex({objectMode: true, allowHalfOpen: true});
+ 
+@@ -72,7 +154,7 @@ function watch(globs, options, cb) {
+ 
+ 	outputStream._read = function () { };
+ 
+-	const watcher = chokidar.watch(globs, options);
++	const watcher = chokidar.watch(bases, assign({}, options, {ignored: isIgnored}));
+ 
+ 	options.events.forEach(ev => {
+ 		watcher.on(ev, processEvent.bind(undefined, ev));
+@@ -86,11 +168,37 @@ function watch(globs, options, cb) {
+ 	outputStream.add = function (newGlobs) {
+ 		newGlobs = normalizeGlobs(newGlobs)
+ 			.map(glob => resolveGlob(glob));
+-		watcher.add(newGlobs);
++		const previousBases = bases;
+ 		globs.push(...newGlobs);
++		rebuildMatchers();
++		const added = bases.filter(base => !previousBases.includes(base));
++		if (added.length > 0) {
++			watcher.add(added);
++		}
++	};
++
++	outputStream.unwatch = function (oldGlobs) {
++		oldGlobs = normalizeGlobs(oldGlobs)
++			.map(glob => resolveGlob(glob));
++		const previousBases = bases;
++		oldGlobs.forEach(glob => {
++			const index = globs.indexOf(glob);
++			if (index !== -1) {
++				globs.splice(index, 1);
++			}
++		});
++		rebuildMatchers();
++		const removed = previousBases.filter(base => !bases.includes(base));
++		const added = bases.filter(base => !previousBases.includes(base));
++		if (removed.length > 0) {
++			watcher.unwatch(removed);
++		}
++
++		if (added.length > 0) {
++			watcher.add(added);
++		}
+ 	};
+ 
+-	outputStream.unwatch = watcher.unwatch.bind(watcher);
+ 	outputStream.close = function () {
+ 		watcher.close();
+ 		this.emit('end');
+diff --git a/test/fixtures/folder/index.js b/test/fixtures/folder/index.js
+deleted file mode 100644
+index 5bfbbdf..0000000
+--- a/test/fixtures/folder/index.js
++++ /dev/null
+@@ -1 +0,0 @@
+-wadap
+\ No newline at end of file
+diff --git a/test/fixtures/index.js b/test/fixtures/index.js
+deleted file mode 100644
+index 5bfbbdf..0000000
+--- a/test/fixtures/index.js
++++ /dev/null
+@@ -1 +0,0 @@
+-wadap
+\ No newline at end of file
+diff --git a/test/test-api.js b/test/test-api.js
+deleted file mode 100644
+index e79b674..0000000
+--- a/test/test-api.js
++++ /dev/null
+@@ -1,86 +0,0 @@
+-/* global describe, it, afterEach */
+-/* eslint max-nested-callbacks: [1, 5] */
+-
+-const fs = require('fs');
+-const watch = require('..');
+-const join = require('path').join;
+-const touch = require('./util/touch');
+-const rimraf = require('rimraf');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('api', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', () => {
+-			rimraf.sync(fixtures('new.js'));
+-			done();
+-		});
+-		w.close();
+-	});
+-
+-	describe('Basic functionality', () => {
+-		it('should normalize reported paths for modified files with non-normalized absolute glob', done => {
+-			w = watch(fixtures('../fixtures/*.js'), file => {
+-				file.path.should.eql(fixtures('index.js'));
+-				done();
+-			}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-		});
+-
+-		it('should normalize reported paths for modified files with non-normalized relative glob', done => {
+-			w = watch('test/fixtures/../fixtures/*.js', file => {
+-				file.path.should.eql(fixtures('index.js'));
+-				done();
+-			}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-		});
+-
+-		it('should normalize reported paths for removed files with non-normalized absolute glob', done => {
+-			touch(fixtures('index.js'), 'fixtures index', () => {
+-				w = watch(fixtures('../fixtures/*.js'), file => {
+-					file.path.should.eql(fixtures('index.js'));
+-					done();
+-				}).on('ready', () => {
+-					fs.unlinkSync(fixtures('index.js'));
+-				});
+-			})();
+-		});
+-
+-		it('should normalize reported paths for removed files with non-normalized relative glob', done => {
+-			touch(fixtures('index.js'), 'fixtures index', () => {
+-				w = watch('test/fixtures/../fixtures/*.js', file => {
+-					file.path.should.eql(fixtures('index.js'));
+-					done();
+-				}).on('ready', () => {
+-					fs.unlinkSync(fixtures('index.js'));
+-				});
+-			})();
+-		});
+-	});
+-
+-	describe('add', () => {
+-		it('should emit added file', done => {
+-			w = watch(fixtures('folder'));
+-			w.add(fixtures('*.js'));
+-			w.on('data', file => {
+-				file.relative.should.eql('new.js');
+-				file.event.should.eql('add');
+-				done();
+-			}).on('ready', touch(fixtures('new.js')));
+-		});
+-
+-		it('should emit change event on file change', done => {
+-			w = watch(fixtures('*/*.js'));
+-			w.add(fixtures('*.js'));
+-			w.on('ready', touch(fixtures('index.js')));
+-			w.on('data', file => {
+-				file.relative.should.eql('index.js');
+-				done();
+-			});
+-		});
+-	});
+-});
+diff --git a/test/test-base.js b/test/test-base.js
+deleted file mode 100644
+index 83e47fb..0000000
+--- a/test/test-base.js
++++ /dev/null
+@@ -1,37 +0,0 @@
+-/* global describe, it, afterEach */
+-
+-const watch = require('..');
+-const path = require('path');
+-const touch = require('./util/touch');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return path.join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('base', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', done);
+-		w.close();
+-	});
+-
+-	it('should be determined by glob', done => {
+-		w = watch(fixtures('**/*.js'), file => {
+-			file.relative.should.eql(path.normalize('folder/index.js'));
+-			file.base.should.eql(fixtures(''));
+-			done();
+-		}).on('ready', touch(fixtures('folder/index.js')));
+-	});
+-
+-	it('should be overridden by option', done => {
+-		const explicitBase = fixtures('folder');
+-		w = watch(fixtures('**/*.js'), {base: explicitBase}, file => {
+-			file.relative.should.eql('index.js');
+-			file.base.should.eql(explicitBase);
+-			done();
+-		}).on('ready', touch(fixtures('folder/index.js')));
+-	});
+-});
+diff --git a/test/test-callback.js b/test/test-callback.js
+deleted file mode 100644
+index 2fb7a46..0000000
+--- a/test/test-callback.js
++++ /dev/null
+@@ -1,75 +0,0 @@
+-/* global describe, it, afterEach */
+-
+-const watch = require('..');
+-const path = require('path');
+-const fs = require('fs');
+-const rimraf = require('rimraf');
+-const touch = require('./util/touch');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return path.join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('callback', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', () => {
+-			rimraf.sync(fixtures('newDir'));
+-			done();
+-		});
+-		w.close();
+-	});
+-
+-	it('should be called on add event', done => {
+-		w = watch(fixtures('*.js'), file => {
+-			file.relative.should.eql('index.js');
+-			file.event.should.eql('change');
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-
+-	it('should be called on non-glob pattern', done => {
+-		w = watch(fixtures('index.js'), file => {
+-			file.relative.should.eql('index.js');
+-			file.event.should.eql('change');
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-
+-	it('should be called on add event in new directory', done => {
+-		w = watch(fixtures('**/*.ts'), file => {
+-			file.relative.should.eql(path.normalize('newDir/index.ts'));
+-			done();
+-		}).on('ready', () => {
+-			fs.mkdirSync(fixtures('newDir'));
+-			touch(fixtures('newDir/index.ts'))();
+-		});
+-	});
+-
+-	it('unlinked `file.path` should be absolute (absolute glob)', done => {
+-		fs.mkdirSync(fixtures('newDir'));
+-		touch(fixtures('newDir/index.ts'), () => {
+-			w = watch(fixtures('**/*.ts'), {base: 'newDir/'}, file => {
+-				file.path.should.eql(path.normalize(fixtures('newDir/index.ts')));
+-				done();
+-			}).on('ready', () => {
+-				fs.unlinkSync(fixtures('newDir/index.ts'));
+-			});
+-		})();
+-	});
+-
+-	it('unlinked `file.path` should be absolute (relative glob)', done => {
+-		fs.mkdirSync(fixtures('newDir'));
+-		touch(fixtures('newDir/index.ts'), () => {
+-			w = watch('test/fixtures/**/*.ts', {base: 'newDir/'}, file => {
+-				file.path.should.eql(path.normalize(fixtures('newDir/index.ts')));
+-				done();
+-			}).on('ready', () => {
+-				fs.unlinkSync(fixtures('newDir/index.ts'));
+-			});
+-		})();
+-	});
+-});
+diff --git a/test/test-cwd.js b/test/test-cwd.js
+deleted file mode 100644
+index a191003..0000000
+--- a/test/test-cwd.js
++++ /dev/null
+@@ -1,77 +0,0 @@
+-/* global describe, it, afterEach */
+-
+-const watch = require('..');
+-const path = require('path');
+-const touch = require('./util/touch');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return path.join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('cwd', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', done);
+-		w.close();
+-	});
+-
+-	it('should respect opts.cwd', done => {
+-		w = watch('index.js', {cwd: fixtures('')}, file => {
+-			file.relative.should.eql('index.js');
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-
+-	it('should emit file outside opts.cwd using relative glob', done => {
+-		w = watch('../index.js', {cwd: fixtures('folder')}, file => {
+-			file.relative.should.eql('index.js');
+-			file.contents.toString().should.equal('fixtures index');
+-			done();
+-		}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-	});
+-
+-	it('should emit file outside opts.cwd using absolute glob', done => {
+-		w = watch(fixtures('index.js'), {cwd: fixtures('folder')}, file => {
+-			file.relative.should.eql('index.js');
+-			file.contents.toString().should.equal('fixtures index');
+-			done();
+-		}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-	});
+-
+-	it('should normalized reported paths with non-normalized cwd and non-normalized relative glob', done => {
+-		w = watch('../fixtures/index.js', {cwd: fixtures('../util')}, file => {
+-			file.path.should.eql(fixtures('index.js'));
+-			done();
+-		}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-	});
+-
+-	it('should normalized reported paths with non-normalized cwd and non-normalized absolute glob', done => {
+-		w = watch(fixtures('../fixtures/index.js'), {cwd: fixtures('../util')}, file => {
+-			file.path.should.eql(fixtures('index.js'));
+-			done();
+-		}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-	});
+-
+-	it('should normalized reported paths with non-normalized relative glob outside implicit cwd', done => {
+-		const cwd = process.cwd();
+-		process.chdir(fixtures('../util'));
+-		w = watch('../fixtures/index.js', file => {
+-			process.chdir(cwd);
+-			file.path.should.eql(fixtures('index.js'));
+-			done();
+-		}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-	});
+-
+-	it('should normalized reported paths with non-normalized absolute glob outside implicit cwd', done => {
+-		const cwd = process.cwd();
+-		process.chdir(fixtures('../util'));
+-		w = watch(fixtures('../fixtures/index.js'), {cwd: fixtures('../util')}, file => {
+-			process.chdir(cwd);
+-			file.path.should.eql(fixtures('index.js'));
+-			done();
+-		}).on('ready', touch(fixtures('index.js'), 'fixtures index'));
+-	});
+-});
+diff --git a/test/test-dir.js b/test/test-dir.js
+deleted file mode 100644
+index cb6b24c..0000000
+--- a/test/test-dir.js
++++ /dev/null
+@@ -1,40 +0,0 @@
+-/* global describe, it, afterEach */
+-
+-const watch = require('..');
+-const path = require('path');
+-const fs = require('fs');
+-const rimraf = require('rimraf');
+-const touch = require('./util/touch');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return path.join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('dir', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', () => {
+-			rimraf.sync(fixtures('newDir'));
+-			done();
+-		});
+-		w.close();
+-	});
+-
+-	it('should watch files inside directory', done => {
+-		fs.mkdirSync(fixtures('newDir'));
+-		touch(fixtures('newDir/index.js'))();
+-		w = watch(fixtures('newDir'), file => {
+-			file.relative.should.eql(path.normalize('newDir/index.js'));
+-			done();
+-		}).on('ready', () => {
+-			touch(fixtures('newDir/index.js'))('new content');
+-		});
+-	});
+-
+-	it('should watch directory creation');
+-
+-	it('should watch directory removal');
+-});
+diff --git a/test/test-ignore.js b/test/test-ignore.js
+deleted file mode 100644
+index ea561e5..0000000
+--- a/test/test-ignore.js
++++ /dev/null
+@@ -1,37 +0,0 @@
+-/* global describe, it, afterEach */
+-
+-const watch = require('..');
+-const join = require('path').join;
+-const rimraf = require('rimraf');
+-const touch = require('./util/touch');
+-const fs = require('fs');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('ignore', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', () => {
+-			rimraf.sync(fixtures('temp'));
+-			done();
+-		});
+-		w.close();
+-	});
+-
+-	it('should ignore files', done => {
+-		w = watch([fixtures('**/*.ts'), '!**/*.js'], () => {
+-			done('Ignored file was watched');
+-		});
+-
+-		w.on('ready', () => {
+-			fs.mkdirSync(fixtures('temp'));
+-			touch(fixtures('temp/index.js'))();
+-			setTimeout(done, 200);
+-		});
+-	});
+-});
+diff --git a/test/test-log.js b/test/test-log.js
+deleted file mode 100644
+index 9163160..0000000
+--- a/test/test-log.js
++++ /dev/null
+@@ -1,61 +0,0 @@
+-/* global beforeEach, afterEach, describe, it */
+-
+-const proxyquire = require('proxyquire');
+-const fancyLogStub = {
+-	info() { }
+-};
+-const watch = proxyquire('..', {
+-	'fancy-log': fancyLogStub
+-});
+-const sinon = require('sinon');
+-
+-const path = require('path');
+-const touch = require('./util/touch');
+-const strip = require('strip-ansi');
+-
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return path.join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('log', () => {
+-	let w;
+-
+-	beforeEach(() => {
+-		sinon.spy(fancyLogStub, 'info');
+-	});
+-
+-	afterEach(done => {
+-		fancyLogStub.info.restore();
+-		w.on('end', done);
+-		w.close();
+-	});
+-
+-	it('should print file name', done => {
+-		w = watch(fixtures('*.js'), {verbose: true});
+-		w.once('data', () => {
+-			fancyLogStub.info.calledOnce.should.be.eql(true);
+-			strip(fancyLogStub.info.firstCall.args.join(' ')).should.eql('index.js was changed');
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-
+-	it('should print relative file name', done => {
+-		w = watch(fixtures('**/*.js'), {verbose: true});
+-		w.once('data', () => {
+-			strip(fancyLogStub.info.firstCall.args.join(' ')).should.eql(path.normalize('folder/index.js') + ' was changed');
+-			done();
+-		}).on('ready', touch(fixtures('folder/index.js')));
+-	});
+-
+-	it('should print custom watcher name', done => {
+-		w = watch(fixtures('*.js'), {name: 'Watch', verbose: true});
+-		w.once('data', () => {
+-			fancyLogStub.info.calledOnce.should.be.eql(true);
+-			strip(fancyLogStub.info.firstCall.args.join(' ')).should.eql('Watch saw index.js was changed');
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-});
+diff --git a/test/test-opts.js b/test/test-opts.js
+deleted file mode 100644
+index e34bf41..0000000
+--- a/test/test-opts.js
++++ /dev/null
+@@ -1,18 +0,0 @@
+-/* global describe, it */
+-
+-const watch = require('..');
+-const join = require('path').join;
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('opts', () => {
+-	it('should not mutate the options object', () => {
+-		const options = {};
+-		watch(fixtures('index.js'), options).close();
+-		options.should.have.keys(...[]);
+-	});
+-});
+diff --git a/test/test-stream.js b/test/test-stream.js
+deleted file mode 100644
+index d69c4ef..0000000
+--- a/test/test-stream.js
++++ /dev/null
+@@ -1,78 +0,0 @@
+-/* global describe, it, afterEach */
+-
+-const watch = require('..');
+-const join = require('path').join;
+-const touch = require('./util/touch');
+-const fs = require('fs');
+-const rimraf = require('rimraf');
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('stream', () => {
+-	let w;
+-
+-	afterEach(done => {
+-		w.on('end', () => {
+-			rimraf.sync(fixtures('new.js'));
+-			done();
+-		});
+-		w.close();
+-	});
+-
+-	it('should emit ready and end', done => {
+-		w = watch(fixtures('*.js'));
+-		w.on('ready', () => {
+-			done();
+-		});
+-	});
+-
+-	it('should emit added file', done => {
+-		w = watch('test/fixtures/*.js');
+-		w.on('data', file => {
+-			file.relative.should.eql('new.js');
+-			file.event.should.eql('add');
+-			done();
+-		}).on('ready', touch(fixtures('new.js')));
+-	});
+-
+-	it('should emit change event on file change', done => {
+-		w = watch(fixtures('*.js'));
+-		w.on('ready', touch(fixtures('index.js')));
+-		w.on('data', file => {
+-			file.relative.should.eql('index.js');
+-			done();
+-		});
+-	});
+-
+-	it('should emit changed file with stream contents', done => {
+-		w = watch(fixtures('*.js'), {buffer: false});
+-		w.on('data', file => {
+-			file.contents.should.have.property('readable', true);
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-
+-	it('should emit changed file with stats', done => {
+-		w = watch(fixtures('*.js'), {buffer: false});
+-		w.on('data', file => {
+-			file.should.have.property('stat');
+-			done();
+-		}).on('ready', touch(fixtures('index.js')));
+-	});
+-
+-	it.skip('should emit deleted file with stats', done => {
+-		touch(fixtures('created.js'), () => {
+-			w = watch(fixtures('**/*.js'), {buffer: false});
+-			w.on('data', file => {
+-				file.should.have.property('contents', null);
+-				done();
+-			}).on('ready', () => {
+-				fs.unlinkSync(fixtures('created.js'));
+-			});
+-		})();
+-	});
+-});
+diff --git a/test/test-watch.js b/test/test-watch.js
+deleted file mode 100644
+index e553db3..0000000
+--- a/test/test-watch.js
++++ /dev/null
+@@ -1,37 +0,0 @@
+-/* global describe, it */
+-
+-const watch = require('..');
+-const join = require('path').join;
+-// eslint-disable-next-line import/no-unassigned-import
+-require('should');
+-
+-function fixtures(glob) {
+-	return join(__dirname, 'fixtures', glob);
+-}
+-
+-describe('watch', () => {
+-	it('should throw on invalid glob argument', () => {
+-		// eslint-disable-next-line no-use-extend-native/no-use-extend-native
+-		(function () {
+-			watch();
+-		}).should.throw();
+-		// eslint-disable-next-line no-use-extend-native/no-use-extend-native
+-		(function () {
+-			watch(1);
+-		}).should.throw();
+-		// eslint-disable-next-line no-use-extend-native/no-use-extend-native
+-		(function () {
+-			watch({});
+-		}).should.throw();
+-	});
+-
+-	it('should return passThrough stream', done => {
+-		const stream = watch(fixtures('*.js'));
+-		stream.on('data', object => {
+-			object.should.be.eql(1);
+-			stream.on('end', done);
+-			stream.close();
+-		});
+-		stream.write(1);
+-	});
+-});
+diff --git a/test/util/set-default-options.js b/test/util/set-default-options.js
+deleted file mode 100644
+index 3a38508..0000000
+--- a/test/util/set-default-options.js
++++ /dev/null
+@@ -1,7 +0,0 @@
+-'use strict';
+-
+-const watch = require('../..');
+-
+-if (process.platform === 'win32') {
+-	watch._defaultOptions.ignorePermissionErrors = true;
+-}
+diff --git a/test/util/touch.js b/test/util/touch.js
+deleted file mode 100644
+index decb42e..0000000
+--- a/test/util/touch.js
++++ /dev/null
+@@ -1,15 +0,0 @@
+-const fs = require('fs');
+-
+-module.exports = function (path, content, cb) {
+-	if (typeof content === 'function') {
+-		cb = content;
+-		content = undefined;
+-	}
+-
+-	cb = cb || function () {};
+-
+-	return function () {
+-		fs.writeFileSync(path, content || 'wadap');
+-		cb();
+-	};
+-};

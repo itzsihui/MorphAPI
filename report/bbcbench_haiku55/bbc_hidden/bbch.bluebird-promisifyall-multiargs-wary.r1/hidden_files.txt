@@ -1,0 +1,5 @@
+tests/log.spec.coffee
+tests/temporal.spec.coffee
+tests/unit.spec.coffee
+tests/utils.spec.coffee
+tests/wary.spec.coffee

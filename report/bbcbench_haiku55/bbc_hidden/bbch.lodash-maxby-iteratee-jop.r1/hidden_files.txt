@@ -1,0 +1,5 @@
+test/integration.js
+test/processor.js
+test/resources/employees.json
+test/resources/people.json
+test/resources/simple.json

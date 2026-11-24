@@ -1,0 +1,936 @@
+diff --git a/index.js b/index.js
+index 35c27d4..3c5de94 100644
+--- a/index.js
++++ b/index.js
+@@ -12,6 +12,18 @@ var inherits = require('util').inherits;
+ var bufferToVinyl = require('buffer-to-vinyl');
+ var vfs = require('vinyl-fs');
+ 
++/**
++ * vinyl-fs 4.x transcodes file contents as UTF-8 by default (and strips the
++ * BOM), which corrupts binary font files. vinyl-fs 3.x passed raw Buffers
++ * through untouched, so keep that behaviour unless the caller overrides it.
++ *
++ * @param {Object} [opt] options passed by the caller
++ * @return {Object} options with raw (non-transcoded) encoding as default
++ */
++function rawOptions(opt) {
++    return Object.assign({encoding: false}, opt);
++}
++
+ /**
+  * Initialize Fontmin
+  *
+@@ -113,8 +125,11 @@ Fontmin.prototype.createStream = function () {
+     }
+ 
+     if (this.dest()) {
++        var destArgs = Array.prototype.slice.call(this.dest());
++        destArgs[1] = rawOptions(destArgs[1]);
++
+         this.streams.push(
+-            vfs.dest.apply(vfs, this.dest())
++            vfs.dest.apply(vfs, destArgs)
+         );
+     }
+ 
+@@ -133,7 +148,10 @@ Fontmin.prototype.getFiles = function () {
+         return bufferToVinyl.stream(this._src[0]);
+     }
+ 
+-    return vfs.src.apply(vfs, this.src());
++    var srcArgs = Array.prototype.slice.call(this.src());
++    srcArgs[1] = rawOptions(srcArgs[1]);
++
++    return vfs.src.apply(vfs, srcArgs);
+ };
+ 
+ /**
+diff --git a/test/base.js b/test/base.js
+deleted file mode 100644
+index 07d433e..0000000
+--- a/test/base.js
++++ /dev/null
+@@ -1,146 +0,0 @@
+-/**
+- * @file  fontmin base
+- * @author junmer
+- */
+-
+-/* eslint-env node */
+-
+-var expect = require('chai').expect;
+-var path = require('path');
+-var bufferToVinyl = require('buffer-to-vinyl');
+-var Fontmin = require('../index');
+-var fm = Fontmin;
+-var fontPath = path.resolve(__dirname, '../fonts');
+-
+-describe('Fontmin util', function () {
+-
+-    it('getFontFolder should be string', function () {
+-        expect(Fontmin.util.getFontFolder()).to.be.a('string');
+-    });
+-
+-    it('getFonts should be array', function () {
+-        expect(Fontmin.util.getFonts()).to.be.a('array');
+-    });
+-
+-});
+-
+-
+-describe('Fontmin base', function () {
+-
+-    it('should run when no cb', function (done) {
+-
+-        fm()
+-            .src(fontPath + '/**.empty')
+-            .run()
+-            .on('end', function () {
+-                done();
+-            });
+-    });
+-
+-
+-    it('should not dest when src buffer', function (done) {
+-
+-        fm()
+-            .src(new Buffer(''))
+-            .dest(fontPath + '/dest')
+-            .run(function (err, files, stream) {
+-                done();
+-            });
+-    });
+-
+-
+-    it('should run when src null', function (done) {
+-
+-        var plugins = Fontmin.plugins.filter(function (plugin) {
+-            return plugin !== 'svgs2ttf';
+-        });
+-
+-        var works = plugins.length;
+-
+-        function usePlugin(plugin) {
+-
+-            fm()
+-                .src(fontPath + '/SentyBrush.ttf', {read: false})
+-                .use(Fontmin[plugin]())
+-                .run(function (err, files, stream) {
+-
+-                    expect(files.length).equal(1);
+-
+-                    if (0 === --works) {
+-                        done();
+-                    }
+-
+-                });
+-        }
+-
+-        plugins.forEach(usePlugin);
+-
+-    });
+-
+-
+-    it('should dest one when clone false', function (done) {
+-
+-
+-        var plugins = ['ttf2eot', 'ttf2woff', 'ttf2svg'];
+-        var works = plugins.length;
+-
+-        function usePlugin(plugin) {
+-
+-            fm()
+-                .src(fontPath + '/SentyBrush.ttf')
+-                .use(Fontmin.glyph({text: '1'}))
+-                .use(Fontmin[plugin]({clone: false}))
+-                .run(function (err, files, stream) {
+-
+-                    expect(files.length).equal(1);
+-
+-                    if (0 === --works) {
+-                        done();
+-                    }
+-
+-                });
+-        }
+-
+-        plugins.forEach(usePlugin);
+-
+-
+-    });
+-
+-    it('should exclude files not font', function (done) {
+-
+-        fm()
+-            .src(fontPath + '/**.html', {read: false})
+-            .dest(fontPath + '/dest')
+-            .run(function (err, files, stream) {
+-                expect(files.length).equal(1);
+-                done();
+-            });
+-    });
+-
+-    it('should throw `Streaming is not supported`', function (done) {
+-
+-        var plugins = Fontmin.plugins;
+-        var works = plugins.length;
+-
+-        function usePlugin(plugin) {
+-
+-            fm()
+-                .src(fontPath + '/SentyBrush.ttf', {buffer: false})
+-                .use(Fontmin[plugin]('test'))
+-                .run(function (err, files, stream) {
+-
+-                    expect(err).to.match(/Streaming/);
+-
+-                    if (0 === --works) {
+-                        done();
+-                    }
+-
+-                });
+-        }
+-
+-        plugins.forEach(usePlugin);
+-
+-    });
+-
+-
+-});
+diff --git a/test/font.js b/test/font.js
+deleted file mode 100644
+index 71f6efa..0000000
+--- a/test/font.js
++++ /dev/null
+@@ -1,311 +0,0 @@
+-/**
+- * @file  fontmin font
+- * @author junmer
+- */
+-
+-/* eslint-env node */
+-/* global before */
+-
+-var assert = require('chai').assert;
+-var expect = require('chai').expect;
+-
+-var fs = require('fs');
+-var path = require('path');
+-var clean = require('gulp-clean');
+-var isTtf = require('is-ttf');
+-var isOtf = require('is-otf');
+-var isEot = require('is-eot');
+-var isWoff = require('is-woff');
+-var isSvg = require('is-svg');
+-var Fontmin = require('../index');
+-
+-
+-var fontName = 'TpldKhangXiDictTrial';
+-var srcPath = path.resolve(__dirname, '../fonts/' + fontName + '.otf');
+-var destPath = path.resolve(__dirname, '../fonts/dest');
+-var destFile = path.resolve(destPath, fontName);
+-
+-var text = ''
+-    + '天地玄黄    宇宙洪荒    日月盈昃    辰宿列张'
+-    + '寒来暑往    秋收冬藏    闰馀成岁    律吕调阳'
+-    + '云腾致雨    露结为霜    金生丽水    玉出昆冈'
+-    + '剑号巨阙    珠称夜光    果珍李柰    菜重芥姜';
+-
+-function getFile(files, ext) {
+-    var re = new RegExp(ext + '$');
+-    var vf = files.filter(function (file) {
+-        return re.test(file.path);
+-    });
+-    return vf[0];
+-}
+-
+-var outputFiles;
+-
+-before(function (done) {
+-
+-    // clean
+-    new Fontmin()
+-        .src(destPath)
+-        .use(clean())
+-        .run(next);
+-
+-    // minfy
+-    var fontmin = new Fontmin()
+-        .src(srcPath)
+-        .use(Fontmin.otf2ttf({
+-            text: text
+-        }))
+-        .use(Fontmin.glyph({
+-            text: text
+-        }))
+-        .use(Fontmin.ttf2eot())
+-        .use(Fontmin.ttf2woff({deflate: true}))
+-        .use(Fontmin.ttf2svg())
+-        .use(Fontmin.css({
+-            glyph: true,
+-            base64: true,
+-            fontPath: './',
+-            local: true,
+-            fontFamily: function (font, ttf) {
+-                return ttf.name.fontFamily + ' - Transformed';
+-            }
+-        }))
+-        .dest(destPath);
+-
+-
+-    function next() {
+-        fontmin.run(function (err, files, stream) {
+-
+-            if (err) {
+-                console.log(err);
+-                process.exit(-1);
+-            }
+-
+-            outputFiles = files;
+-
+-            done();
+-        });
+-    }
+-
+-});
+-
+-
+-
+-describe('otf2ttf plugin', function () {
+-
+-    it('input should be otf', function () {
+-
+-        var srcBuffer = fs.readFileSync(srcPath);
+-        assert(isOtf(srcBuffer));
+-
+-    });
+-
+-    it('output buffer should be ttf', function () {
+-        assert(isTtf(getFile(outputFiles, 'ttf').contents));
+-    });
+-
+-    it('should keep source when clone true', function (done) {
+-
+-        new Fontmin()
+-            .src(srcPath)
+-            .use(Fontmin.otf2ttf({clone: true, text: 't'}))
+-            .run(function (err, files) {
+-                assert.equal(files.length, 2);
+-                done();
+-            });
+-
+-    });
+-
+-});
+-
+-describe('glyph plugin', function () {
+-
+-    it('output buffer should be ttf', function () {
+-        assert(isTtf(getFile(outputFiles, 'ttf').contents));
+-    });
+-
+-    // it('output ttf should have `cvt ` table', function () {
+-    //     assert(
+-    //         isTtf(
+-    //             getFile(outputFiles, 'ttf').contents, {
+-    //                 tables: ['cvt ']
+-    //             }
+-    //         )
+-    //     );
+-    // });
+-
+-    it('output should miner than input', function () {
+-        var srcBuffer = fs.readFileSync(srcPath);
+-        assert(srcBuffer.length > getFile(outputFiles, 'ttf').contents.length);
+-    });
+-
+-    it('dest file should exist', function () {
+-        assert(
+-            fs.existsSync(destFile + '.ttf')
+-        );
+-    });
+-
+-    it('dest file should be ttf', function () {
+-        try {
+-            assert(
+-                isTtf(
+-                    fs.readFileSync(destFile + '.ttf')
+-                )
+-            );
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-});
+-
+-describe('ttf2eot plugin', function () {
+-
+-    it('output buffer should be eot', function () {
+-        assert(isEot(getFile(outputFiles, 'eot').contents));
+-    });
+-
+-    it('dest file should exist', function () {
+-        assert(
+-            fs.existsSync(destFile + '.eot')
+-        );
+-    });
+-
+-    it('dest file should be eot', function () {
+-        try {
+-            assert(
+-                isEot(
+-                    fs.readFileSync(destFile + '.eot')
+-                )
+-            );
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-});
+-
+-describe('ttf2woff plugin', function () {
+-
+-    it('output buffer should be woff', function () {
+-        assert(isWoff(getFile(outputFiles, 'woff').contents));
+-    });
+-
+-    it('dest file should exist woff', function () {
+-        assert(
+-            fs.existsSync(destFile + '.woff')
+-        );
+-    });
+-
+-    it('dest file should be woff', function () {
+-        try {
+-            assert(
+-                isWoff(
+-                    fs.readFileSync(destFile + '.woff')
+-                )
+-            );
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-});
+-
+-describe('ttf2svg plugin', function () {
+-
+-    it('output buffer should be svg', function () {
+-        assert(isSvg(getFile(outputFiles, 'svg').contents));
+-    });
+-
+-    it('dest file should exist svg', function () {
+-        assert(
+-            fs.existsSync(destFile + '.svg')
+-        );
+-    });
+-
+-    it('dest file should be svg', function () {
+-        try {
+-            assert(
+-                isSvg(
+-                    fs.readFileSync(destFile + '.svg')
+-                )
+-            );
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-});
+-
+-describe('css plugin', function () {
+-
+-    it('dest file should exist css', function () {
+-        assert(
+-            fs.existsSync(destFile + '.css')
+-        );
+-    });
+-
+-    it('dest css should have "@font-face"', function () {
+-        try {
+-            expect(fs.readFileSync(destFile + '.css', {
+-                encoding: 'utf-8'
+-            })).to.have.string('@font-face');
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-    it('dest css should match /\.icon-(\w+):before/', function () {
+-        try {
+-            expect(fs.readFileSync(destFile + '.css', {
+-                encoding: 'utf-8'
+-            })).to.match(/\.icon-(\w+):before/);
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-    it('dest css should have fontPath "./"', function () {
+-        try {
+-            expect(fs.readFileSync(destFile + '.css', {
+-                encoding: 'utf-8'
+-            })).to.have.string('./');
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-
+-    it('dest css should have local()', function () {
+-        try {
+-            expect(fs.readFileSync(destFile + '.css', {
+-                encoding: 'utf-8'
+-            })).to.have.string('local');
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-    it('dest css should have transformed @font-family name', function () {
+-
+-        var content = fs.readFileSync(destFile + '.css', {
+-            encoding: 'utf-8'
+-        });
+-        var matched = content.match(/font-family: \s*"(.*?)"/);
+-        var fontFamily = matched[1];
+-
+-        expect(fontFamily).to.be.a('string')
+-            .that.match(/\s-\sTransformed$/);
+-
+-    });
+-
+-
+-});
+diff --git a/test/subset.js b/test/subset.js
+deleted file mode 100644
+index 9b0fd02..0000000
+--- a/test/subset.js
++++ /dev/null
+@@ -1,158 +0,0 @@
+-/**
+- * @file  fontmin subset
+- * @author junmer
+- */
+-
+-/* eslint-env node */
+-/* global before */
+-
+-var expect = require('chai').expect;
+-
+-var fs = require('fs');
+-var path = require('path');
+-var clean = require('gulp-clean');
+-var isTtf = require('is-ttf');
+-var Fontmin = require('../index');
+-
+-var fontName = 'SentyBrush';
+-var fontDir = path.resolve(__dirname, '../fonts');
+-var srcPath = path.resolve(fontDir, fontName + '.ttf');
+-var destPath = path.resolve(fontDir, 'dest_ttf');
+-
+-// first mined ttf
+-var mined;
+-
+-// first min
+-before(function (done) {
+-
+-    // clean
+-    new Fontmin()
+-        .src(destPath)
+-        .use(clean())
+-        .run(afterClean);
+-
+-    // subset first
+-    var fontmin = new Fontmin()
+-        .src(srcPath)
+-        .use(Fontmin.glyph({
+-            text: 'abcd   efg',
+-            trim: false
+-        }))
+-        .dest(destPath);
+-
+-    function afterClean() {
+-        fontmin.run(function (err, files, stream) {
+-            mined = files[0].contents;
+-            done();
+-        });
+-    }
+-
+-
+-});
+-
+-describe('subset', function () {
+-
+-    it('input is\'t ttf shoud be pass', function (done) {
+-
+-        new Fontmin()
+-            .src(fontDir + '/*.html')
+-            .use(Fontmin.glyph({
+-                text: 'test'
+-            }))
+-            .run(function (err, files) {
+-                var ext = path.extname(files[0].path);
+-                expect(ext).equal('.html');
+-                done();
+-            });
+-
+-    });
+-
+-    it('should be ok when unicodes out of subbset', function () {
+-
+-        // it ttf
+-        expect(isTtf(mined)).to.be.ok;
+-
+-    });
+-
+-    it('dest should be minier ttf', function () {
+-
+-        var srcFile = fs.readFileSync(srcPath);
+-
+-        // minier
+-        expect(mined.length).to.be.below(srcFile.length);
+-
+-    });
+-
+-    it('should has whitespace when trim false', function () {
+-
+-        var TTFReader = require('fonteditor-core').TTFReader;
+-        var b2ab = require('b3b').b2ab;
+-        var ttf = new TTFReader().read(b2ab(mined));
+-
+-        // contain whitespace
+-        expect(ttf.cmap).to.contain.any.keys(['32', '160', '202']);
+-
+-    });
+-
+-    it('should support empty text', function (done) {
+-
+-        new Fontmin()
+-            .src(srcPath)
+-            .use(Fontmin.glyph({
+-                text: ''
+-            }))
+-            .run(done);
+-
+-    });
+-
+-    it('should support use plugin function', function (done) {
+-
+-        new Fontmin()
+-            .src(srcPath)
+-            .use(Fontmin.glyph({
+-                text: 'test',
+-                use: function (ttf) {
+-                    expect(ttf).to.have.any.keys('ttf');
+-                }
+-            }))
+-            .run(done);
+-
+-    });
+-
+-    it('should pass use plugin not function', function (done) {
+-
+-        new Fontmin()
+-            .src(srcPath)
+-            .use(Fontmin.glyph({
+-                use: false
+-            }))
+-            .run(done);
+-
+-    });
+-
+-    it('subset of non-existent character shoud be ttf', function (done) {
+-
+-        var destTtf = path.resolve(destPath, fontName + '.ttf');
+-
+-        var fontmin = new Fontmin()
+-            .src(destTtf)
+-            .use(Fontmin.glyph({
+-                text: '字体里是没有中文字符的',
+-                basicText: true
+-            }));
+-
+-        fontmin.run(function (err, files, stream) {
+-
+-            var twiceMined = files[0].contents;
+-
+-            // it ttf
+-            expect(isTtf(twiceMined)).to.be.ok;
+-
+-            done();
+-        });
+-
+-
+-    });
+-
+-
+-});
+diff --git a/test/svg2ttf.js b/test/svg2ttf.js
+deleted file mode 100644
+index 22e5007..0000000
+--- a/test/svg2ttf.js
++++ /dev/null
+@@ -1,114 +0,0 @@
+-/**
+- * @file  fontmin svg2ttf
+- * @author junmer
+- */
+-
+-/* eslint-env node */
+-/* global before */
+-
+-var assert = require('chai').assert;
+-
+-var fs = require('fs');
+-var path = require('path');
+-var clean = require('gulp-clean');
+-var isTtf = require('is-ttf');
+-var Fontmin = require('../index');
+-
+-var srcPath = path.resolve(__dirname, '../fonts/fontawesome-webfont.svg');
+-var destPath = path.resolve(__dirname, '../fonts/dest_svg');
+-var destFile = destPath + '/fontawesome-webfont';
+-
+-function getFile(files, ext) {
+-    var re = new RegExp(ext + '$');
+-    var vf = files.filter(function (file) {
+-        return re.test(file.path);
+-    });
+-    return vf[0];
+-}
+-
+-var outputFiles;
+-
+-before(function (done) {
+-
+-    // clean
+-    new Fontmin()
+-        .src(destPath)
+-        .use(clean())
+-        .run(next);
+-
+-    // minfy
+-    var fontmin = new Fontmin()
+-        .src(srcPath)
+-        .use(Fontmin.svg2ttf())
+-        .dest(destPath);
+-
+-
+-    function next() {
+-        fontmin.run(function (err, files, stream) {
+-
+-            if (err) {
+-                console.log(err);
+-                process.exit(-1);
+-            }
+-
+-            outputFiles = files;
+-
+-            done();
+-        });
+-    }
+-
+-
+-});
+-
+-
+-describe('svg2ttf plugin', function () {
+-
+-    it('input is\'t svg shoud be pass', function (done) {
+-
+-        new Fontmin()
+-            .src(path.resolve(__dirname, '../fonts/*.html'))
+-            .use(Fontmin.svg2ttf())
+-            .run(function (err, files) {
+-                var ext = path.extname(files[0].path);
+-                assert.equal(ext, '.html');
+-                done();
+-            });
+-
+-    });
+-
+-    it('should dest one when clone false', function (done) {
+-
+-        new Fontmin()
+-            .src(srcPath)
+-            .use(Fontmin.svg2ttf({clone: false}))
+-            .run(function (err, files) {
+-                assert.equal(files.length, 1);
+-                done();
+-            });
+-
+-    });
+-
+-    it('output buffer should be ttf', function () {
+-        assert(isTtf(getFile(outputFiles, 'ttf').contents));
+-    });
+-
+-    it('dest file should exist ttf', function () {
+-        assert(
+-            fs.existsSync(destFile + '.ttf')
+-        );
+-    });
+-
+-    it('dest file should be ttf', function () {
+-        try {
+-            assert(
+-                isTtf(
+-                    fs.readFileSync(destFile + '.ttf')
+-                )
+-            );
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-});
+diff --git a/test/svgs2ttf.js b/test/svgs2ttf.js
+deleted file mode 100644
+index d18831d..0000000
+--- a/test/svgs2ttf.js
++++ /dev/null
+@@ -1,129 +0,0 @@
+-/**
+- * @file  fontmin svgs2ttf
+- * @author junmer
+- */
+-
+-/* eslint-env node */
+-/* global before */
+-
+-var assert = require('chai').assert;
+-
+-var fs = require('fs');
+-var path = require('path');
+-var clean = require('gulp-clean');
+-var isTtf = require('is-ttf');
+-var Fontmin = require('../index');
+-
+-var srcPath = path.resolve(__dirname, '../fonts/svg/*.svg');
+-var destPath = path.resolve(__dirname, '../fonts/dest_svgs');
+-var destFile = destPath + '/iconfont';
+-
+-
+-function getFile(files, ext) {
+-    var re = new RegExp(ext + '$');
+-    var vf = files.filter(function (file) {
+-        return re.test(file.path);
+-    });
+-    return vf[0];
+-}
+-
+-var outputFiles;
+-
+-before(function (done) {
+-
+-    // clean
+-    new Fontmin()
+-        .src(destPath)
+-        .use(clean())
+-        .run(next);
+-
+-
+-
+-    // minfy
+-    var fontmin = new Fontmin()
+-        .src(srcPath)
+-        .use(Fontmin.svgs2ttf('iconfont.ttf'))
+-        .use(Fontmin.ttf2svg())
+-        .use(Fontmin.css({
+-            glyph: true
+-        }))
+-        .dest(destPath);
+-
+-    function next() {
+-
+-        fontmin.run(function (err, files, stream) {
+-
+-            if (err) {
+-                console.log(err);
+-                process.exit(-1);
+-            }
+-
+-            outputFiles = files;
+-
+-            done();
+-        });
+-    }
+-
+-});
+-
+-
+-describe('svgs2ttf plugin', function () {
+-
+-    it('should require root path', function () {
+-        assert.throws(Fontmin.svgs2ttf.bind(), /Missing file option/);
+-    });
+-
+-    it('should require root path in file options', function () {
+-        assert.throws(
+-            Fontmin.svgs2ttf.bind(null, {path: null}), /file options for fontmin-svg2ttf/
+-        );
+-    });
+-
+-    it('set path in file options', function (done) {
+-
+-        new Fontmin()
+-            .src(srcPath)
+-            .use(Fontmin.svgs2ttf({path: 'test.ttf'}))
+-            .run(function (err, files) {
+-                assert(isTtf(files[0].contents));
+-                done();
+-            });
+-    });
+-
+-    it('input is\'t svg shoud be exclude', function (done) {
+-
+-        new Fontmin()
+-            .src(path.resolve(__dirname, '../fonts/*.html'))
+-            .use(Fontmin.svgs2ttf('test.ttf'))
+-            .run(function (err, files) {
+-                assert.equal(files.length, 0);
+-                done();
+-            });
+-
+-    });
+-
+-    it('output buffer should be ttf', function () {
+-        assert(isTtf(getFile(outputFiles, 'ttf').contents));
+-    });
+-
+-
+-    it('dest file should exist ttf', function () {
+-        assert(
+-            fs.existsSync(destFile + '.ttf')
+-        );
+-    });
+-
+-    it('dest file should be ttf', function () {
+-        try {
+-            assert(
+-                isTtf(
+-                    fs.readFileSync(destFile + '.ttf')
+-                )
+-            );
+-        }
+-        catch (ex) {
+-            assert(false);
+-        }
+-    });
+-
+-});

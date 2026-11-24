@@ -1,0 +1,9 @@
+JUDGE lodash-maxby-iteratee-jop
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [OK: 24 assertions ]
+  patch    : /srv/agentcmp/ws/bbc.lodash-maxby-iteratee-jop.r1/w/.judge/agent.patch
+PASS lodash-maxby-iteratee-jop

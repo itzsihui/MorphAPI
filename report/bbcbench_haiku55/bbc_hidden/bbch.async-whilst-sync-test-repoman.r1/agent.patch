@@ -1,0 +1,1740 @@
+diff --git a/lib/generator/github.js b/lib/generator/github.js
+index e3f8b34..1f8194e 100644
+--- a/lib/generator/github.js
++++ b/lib/generator/github.js
+@@ -146,8 +146,10 @@ GitHub.prototype._paginate = function(result, cb) {
+   }
+   process(result);
+ 
+-  function check() {
+-    return self.gh.hasNextPage(result);
++  // async >= 3 invokes the whilst test asynchronously: it must call back
++  // with (err, truth) instead of returning a boolean.
++  function check(cb) {
++    cb(null, self.gh.hasNextPage(result));
+   }
+   function _do(cb) {
+     self.gh.getNextPage(result, function(err, nextPageResult) {
+diff --git a/test-integration/fixtures/.somerepoman_failure.json b/test-integration/fixtures/.somerepoman_failure.json
+deleted file mode 100644
+index 1b0d60e..0000000
+--- a/test-integration/fixtures/.somerepoman_failure.json
++++ /dev/null
+@@ -1,6 +0,0 @@
+-{
+-  "foobar": {
+-    "type": "git",
+-    "url": "http://someinexistinghost/someinexistinguser/someinexistingrepo"
+-  }
+-}
+diff --git a/test-integration/fixtures/.somerepoman_success.json b/test-integration/fixtures/.somerepoman_success.json
+deleted file mode 100644
+index fa9080c..0000000
+--- a/test-integration/fixtures/.somerepoman_success.json
++++ /dev/null
+@@ -1,10 +0,0 @@
+-{
+-  "datagen": {
+-    "type": "git",
+-    "url": "http://github.com/cliffano/datagen"
+-  },
+-  "nestor": {
+-    "type": "git",
+-    "url": "http://github.com/cliffano/nestor"
+-  }
+-}
+diff --git a/test/.jshintrc b/test/.jshintrc
+deleted file mode 100644
+index 1da3099..0000000
+--- a/test/.jshintrc
++++ /dev/null
+@@ -1,5 +0,0 @@
+-{
+-  "esnext": true,
+-  "node": true,
+-  "mocha": true
+-}
+diff --git a/test/cli.js b/test/cli.js
+deleted file mode 100644
+index 9106b72..0000000
+--- a/test/cli.js
++++ /dev/null
+@@ -1,461 +0,0 @@
+-'use strict';
+-
+-var bag = require('bagofcli');
+-var cli = require('../lib/cli');
+-var colors = require('colors/safe');
+-var fs = require('fs');
+-var prompt = require('prompt');
+-var Repoman = new require('../lib/repoman');
+-
+-var mocha = require('mocha');
+-var chai = require('chai');
+-var sinon = require('sinon');
+-var assert = chai.assert;
+-
+-describe('cli', function() {
+-  var commandStub;
+-  var lookupFileStub;
+-
+-  beforeEach(function() {
+-    sinon.spy(console, 'log');
+-    sinon.spy(console, 'error');
+-    sinon.stub(process, 'exit');
+-    commandStub = sinon.stub(bag, 'command');
+-    lookupFileStub = sinon.stub(bag, 'lookupFile');
+-  });
+-
+-  afterEach(function() {
+-    console.log.restore();
+-    console.error.restore();
+-    process.exit.restore();
+-    bag.command.restore();
+-    bag.lookupFile.restore();
+-  });
+-
+-  describe('exec', function() {
+-    it('should contain commands with actions', function(done) {
+-      var mockCommand = function(base, actions) {
+-        assert.isDefined(base);
+-        assert.isDefined(actions.commands.config.action);
+-        assert.isDefined(actions.commands['delete'].action);
+-        assert.isDefined(actions.commands.init.action);
+-        assert.isDefined(actions.commands.get.action);
+-        assert.isDefined(actions.commands.changes.action);
+-        assert.isDefined(actions.commands.save.action);
+-        assert.isDefined(actions.commands.undo.action);
+-        assert.isDefined(actions.commands.exec.action);
+-        assert.isDefined(actions.commands.clean.action);
+-        done();
+-      };
+-      commandStub.callsFake(mockCommand);
+-      cli.exec();
+-    });
+-  });
+-
+-  describe('config', function() {
+-    var configStub;
+-
+-    beforeEach(function() {
+-      sinon.stub(process, 'cwd');
+-      configStub = sinon.stub(Repoman.prototype, 'config');
+-    });
+-
+-    afterEach(function() {
+-      process.cwd.restore();
+-      Repoman.prototype.config.restore();
+-    });
+-
+-    it('should pass empty opts when there is no arg', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.config.action({});
+-      });
+-      configStub.callsFake(function(opts, cb) {
+-        assert.isEmpty(opts);
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should pass bitbucket opts when specified in args', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.config.action({
+-          bitbucketAuthUser: 'someauthuser',
+-          bitbucketAuthPass: 'someauthpass'
+-        });
+-      });
+-      configStub.callsFake(function(opts, cb) {
+-        assert.equal(opts.bitbucket.authUser, 'someauthuser');
+-        assert.equal(opts.bitbucket.authPass, 'someauthpass');
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should pass github opts when specified in args', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.config.action({
+-          githubUser: 'someuser',
+-          githubOrg: 'someorg',
+-          githubAuthUser: 'someauthuser',
+-          githubAuthPass: 'someauthpass'
+-        });
+-      });
+-      configStub.callsFake(function(opts, cb) {
+-        assert.equal(opts.github.user, 'someuser');
+-        assert.equal(opts.github.org, 'someorg');
+-        assert.equal(opts.github.authUser, 'someauthuser');
+-        assert.equal(opts.github.authPass, 'someauthpass');
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should pass gitorious opts when specified in args', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.config.action({
+-          gitoriousUrl: 'http://somehost.com',
+-          gitoriousProject: 'someproject'
+-        });
+-      });
+-      configStub.callsFake(function(opts, cb) {
+-        assert.equal(opts.gitorious.url, 'http://somehost.com');
+-        assert.equal(opts.gitorious.project, 'someproject');
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should pass local opts when specified in args', function() {
+-      process.cwd.returns('somedir');
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.config.action({
+-          local: true
+-        });
+-      });
+-      configStub.callsFake(function(opts, cb) {
+-        assert.equal(opts.local.dir, 'somedir');
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-  });
+-
+-  describe('_exec', function() {
+-    var execStub;
+-    var mockFs;
+-
+-    beforeEach(function() {
+-      mockFs = sinon.mock(fs);
+-      execStub = sinon.stub(Repoman.prototype, 'exec');
+-    });
+-
+-    afterEach(function() {
+-      Repoman.prototype.exec.restore();
+-      mockFs.verify();
+-      mockFs.restore();
+-    });
+-
+-    it('should execute custom command specified in arg if command is exec', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.exec.action('ls -al', { _name: 'exec', parent: {} });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.repoman.json');
+-        return '{}';
+-      });
+-      mockFs.expects('readFileSync').returns('{}');
+-      execStub.callsFake(function(command, opts, cb) {
+-        assert.equal(command, 'ls -al');
+-        assert.equal(opts.failFast, undefined);
+-        assert.equal(opts.regex, undefined);
+-        assert.equal(opts.tags, undefined);
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should pass built-in command as-is', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.exec.action({ _name: 'init', parent: {} });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.repoman.json');
+-        return '{}';
+-      });
+-      mockFs.expects('readFileSync').returns('{}');
+-      execStub.callsFake(function(command, opts, cb) {
+-        assert.equal(command, 'init');
+-        assert.equal(opts.failFast, undefined);
+-        assert.equal(opts.regex, undefined);
+-        assert.equal(opts.tags, undefined);
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should use win32 command when executed on windows', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.exec.action({
+-          _name: 'init',
+-          parent: { platform: 'win32' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.repoman.json');
+-        return '{}';
+-      });
+-      mockFs.expects('readFileSync').returns('{}');
+-      execStub.callsFake(function(command, opts, cb) {
+-        assert.equal(command, 'init');
+-        assert.equal(opts.failFast, undefined);
+-        assert.equal(opts.regex, undefined);
+-        assert.equal(opts.tags, undefined);
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should use custom config file when specified in args', function() {
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.exec.action({
+-          _name: 'init',
+-          parent: {
+-            failFast: true,
+-            regex: '.*github.*',
+-            tags: 'tag1,tag2',
+-            configFile: '.somerepoman.json'
+-          }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.somerepoman.json');
+-        return '{}';
+-      });
+-      mockFs.expects('readFileSync').returns('{}');
+-      execStub.callsFake(function(command, opts, cb) {
+-        assert.equal(command, 'init');
+-        assert.equal(opts.failFast, true);
+-        assert.equal(opts.regex, '.*github.*');
+-        assert.sameMembers(opts.tags, ['tag1', 'tag2']);
+-        cb();
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-  });
+-
+-  describe('list', function() {
+-    var listStub;
+-
+-    beforeEach(function() {
+-      listStub = sinon.stub(Repoman.prototype, 'list');
+-    });
+-
+-    afterEach(function() {
+-      Repoman.prototype.list.restore();
+-    });
+-
+-    it('should log each repo name when there is result array', function() {
+-      listStub.callsFake(function(opts, cb) {
+-        cb(null, ['somerepo1', 'somerepo2']);
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.list.action({
+-          _name: 'list',
+-          parent: { tags: 'somerepo' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.repoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(console.log, 'somerepo1');
+-      sinon.assert.calledWith(console.log, 'somerepo2');
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should not log anything when there is no result', function() {
+-      listStub.callsFake(function(opts, cb) {
+-        cb(null, []);
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.list.action({
+-          _name: 'list',
+-          parent: { configFile: '.somerepoman.json' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.somerepoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-  });
+-
+-  describe('clean', function() {
+-    var cleanStub;
+-    var mockPrompt;
+-
+-    beforeEach(function() {
+-      cleanStub = sinon.stub(Repoman.prototype, 'clean');
+-      mockPrompt = sinon.mock(prompt);
+-    });
+-
+-    afterEach(function() {
+-      mockPrompt.verify();
+-      mockPrompt.restore();
+-      Repoman.prototype.clean.restore();
+-    });
+-
+-    it('should delete nothing when there is no directory to clean up', function() {
+-      cleanStub.callsFake(function(dryRun, cb) {
+-        assert.equal(dryRun, true);
+-        cb(null, null);
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.clean.action({
+-          _name: 'clean',
+-          parent: { configFile: '.somerepoman.json' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.somerepoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(console.log, 'Nothing to delete');
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should delete directories to clean up when user confirms to do so', function() {
+-      mockPrompt
+-        .expects('start')
+-        .once()
+-        .withExactArgs();
+-      mockPrompt
+-        .expects('get')
+-        .once()
+-        .withArgs(['Are you sure? (Y/N)'])
+-        .callsArgWith(1, null, { 'Are you sure? (Y/N)': 'Y' });
+-      cleanStub.callsFake(function(dryRun, cb) {
+-        if (dryRun) {
+-          cb(null, ['dir1', 'dir2']);
+-        } else {
+-          cb();
+-        }
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.clean.action({
+-          _name: 'clean',
+-          parent: { configFile: '.somerepoman.json' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.somerepoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(
+-        console.log,
+-        'The following files/directories will be deleted: %s',
+-        'dir1, dir2'
+-      );
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should not delete directories to clean up when user confirms to not clean', function() {
+-      mockPrompt
+-        .expects('start')
+-        .once()
+-        .withExactArgs();
+-      mockPrompt
+-        .expects('get')
+-        .once()
+-        .withArgs(['Are you sure? (Y/N)'])
+-        .callsArgWith(1, null, { 'Are you sure? (Y/N)': 'N' });
+-      cleanStub.callsFake(function(dryRun, cb) {
+-        assert.equal(dryRun, true);
+-        cb(null, ['dir1', 'dir2']);
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.clean.action({
+-          _name: 'clean',
+-          parent: { configFile: '.somerepoman.json' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.somerepoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(
+-        console.log,
+-        'The following files/directories will be deleted: %s',
+-        'dir1, dir2'
+-      );
+-      sinon.assert.calledWith(console.log, 'Nothing is deleted');
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should not delete directories to clean up when user does not provide confirmation answer', function() {
+-      mockPrompt
+-        .expects('start')
+-        .once()
+-        .withExactArgs();
+-      mockPrompt
+-        .expects('get')
+-        .once()
+-        .withArgs(['Are you sure? (Y/N)'])
+-        .callsArgWith(1, null, { 'Are you sure? (Y/N)': '' });
+-      cleanStub.callsFake(function(dryRun, cb) {
+-        assert.equal(dryRun, true);
+-        cb(null, ['dir1', 'dir2']);
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.clean.action({
+-          _name: 'clean',
+-          parent: { configFile: '.somerepoman.json' }
+-        });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.somerepoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(
+-        console.log,
+-        'The following files/directories will be deleted: %s',
+-        'dir1, dir2'
+-      );
+-      sinon.assert.calledWith(console.log, 'Nothing is deleted');
+-      sinon.assert.calledWith(process.exit, 0);
+-    });
+-
+-    it('should pass error to callback when there is an error during dry run', function() {
+-      cleanStub.callsFake(function(dryRun, cb) {
+-        assert.equal(dryRun, true);
+-        cb(new Error('some error'));
+-      });
+-      commandStub.callsFake(function(base, actions) {
+-        actions.commands.clean.action({ _name: 'clean', parent: {} });
+-      });
+-      lookupFileStub.callsFake(function(file) {
+-        assert.equal(file, '.repoman.json');
+-        return '{}';
+-      });
+-      cli.exec();
+-      sinon.assert.calledWith(console.error, colors.red('some error'));
+-      sinon.assert.calledWith(process.exit, 1);
+-    });
+-  });
+-});
+diff --git a/test/generator/bitbucket.js b/test/generator/bitbucket.js
+deleted file mode 100644
+index cebdc1e..0000000
+--- a/test/generator/bitbucket.js
++++ /dev/null
+@@ -1,102 +0,0 @@
+-'use strict';
+-
+-var bitbucket = require('bitbucket-api');
+-var Bitbucket = require('../../lib/generator/bitbucket');
+-
+-var mocha = require('mocha');
+-var chai = require('chai');
+-var sinon = require('sinon');
+-var assert = chai.assert;
+-
+-describe('bitbucket', function() {
+-  describe('bitbucket - bitbucket', function() {
+-    var bitbucketMock;
+-
+-    beforeEach(function() {
+-      bitbucketMock = sinon.mock(bitbucket);
+-    });
+-
+-    afterEach(function() {
+-      bitbucketMock.verify();
+-      bitbucketMock.restore();
+-    });
+-
+-    it('should authenticate when username and password are specified', function() {
+-      bitbucketMock
+-        .expects('createClient')
+-        .once()
+-        .withExactArgs({ username: 'someuser', password: 'somepassword' });
+-      new Bitbucket('someuser', 'somepassword');
+-    });
+-  });
+-
+-  describe('bitbucket - generate', function() {
+-    beforeEach(function() {
+-      sinon.spy(console, 'log');
+-      sinon.spy(console, 'error');
+-    });
+-
+-    afterEach(function() {
+-      console.log.restore();
+-      console.error.restore();
+-    });
+-
+-    it('should create repoman config with repos', function(done) {
+-      var bitbucket = new Bitbucket('someuser', 'somepassword');
+-      bitbucket.client.repositories = function(cb) {
+-        var result = [
+-          { slug: 'repo1', owner: 'someuser', scm: 'git' },
+-          { slug: 'repo2', owner: 'otheruser', scm: 'git' }
+-        ];
+-        cb(null, result);
+-      };
+-      bitbucket.generate(function(err, result) {
+-        assert.equal(err, null);
+-        assert.equal(
+-          result.repo1.url,
+-          'ssh://git@bitbucket.org/someuser/repo1.git'
+-        );
+-        assert.equal(
+-          result.repo2.url,
+-          'ssh://git@bitbucket.org/otheruser/repo2.git'
+-        );
+-        done();
+-      });
+-    });
+-
+-    it('should log an error message when repo scm is unsupported', function(done) {
+-      var bitbucket = new Bitbucket('someuser', 'somepassword');
+-      bitbucket.client.repositories = function(cb) {
+-        var result = [
+-          { slug: 'repo1', owner: 'someuser', scm: 'someunsupportedscm' },
+-          { slug: 'repo2', owner: 'otheruser', scm: 'git' }
+-        ];
+-        cb(null, result);
+-      };
+-      bitbucket.generate(function(err, result) {
+-        assert.equal(err, null);
+-        assert.equal(
+-          result.repo2.url,
+-          'ssh://git@bitbucket.org/otheruser/repo2.git'
+-        );
+-        sinon.assert.calledWith(
+-          console.error,
+-          'TODO: %s scm is not yet supported',
+-          'someunsupportedscm'
+-        );
+-        done();
+-      });
+-    });
+-
+-    it('should pass error to callback when an error occurs while retrieving repos', function(done) {
+-      var bitbucket = new Bitbucket('someuser', 'somepassword');
+-      bitbucket.client.repositories = function(cb) {
+-        cb(new Error('some error'));
+-      };
+-      bitbucket.generate(function(err, result) {
+-        assert.equal(err.message, 'some error');
+-        done();
+-      });
+-    });
+-  });
+-});
+diff --git a/test/generator/github.js b/test/generator/github.js
+deleted file mode 100644
+index 499d294..0000000
+--- a/test/generator/github.js
++++ /dev/null
+@@ -1,205 +0,0 @@
+-'use strict';
+-
+-var proxyquire = require('proxyquire');
+-
+-var bag = require('bagofrequest');
+-var GithubAuth = require('../../lib/auth/github');
+-var BluePromise = require('bluebird');
+-var dotfile = require('dotfile');
+-
+-var mocha = require('mocha');
+-var chai = require('chai');
+-var sinon = require('sinon');
+-var assert = chai.assert;
+-
+-var githubStub = {
+-  authenticate: sinon.spy(),
+-  repos: {},
+-  hasNextPage: sinon.stub(),
+-  getNextPage: sinon.stub()
+-};
+-var GitHub = proxyquire('../../lib/generator/github', {
+-  '@octokit/rest': function() {
+-    return githubStub;
+-  }
+-});
+-
+-describe('github', function() {
+-  afterEach(function() {
+-    githubStub.authenticate.resetHistory();
+-  });
+-
+-  describe('github', function() {
+-    var bagMock;
+-    var githubAuthMock;
+-
+-    beforeEach(function() {
+-      bagMock = sinon.mock(bag);
+-      githubAuthMock = sinon.mock(GithubAuth.prototype);
+-    });
+-
+-    afterEach(function() {
+-      bagMock.verify();
+-      bagMock.restore();
+-      githubAuthMock.verify();
+-      githubAuthMock.restore();
+-    });
+-
+-    it('should authenticate when username and password are specified', function() {
+-      bagMock
+-        .expects('proxy')
+-        .withExactArgs()
+-        .returns('http://someproxy:1234');
+-      new GitHub(function() {}, 'someuser', 'somepass');
+-      sinon.assert.calledWith(githubStub.authenticate, {
+-        type: 'basic',
+-        username: 'someuser',
+-        password: 'somepass'
+-      });
+-    });
+-
+-    it('should authenticate when username and password are not specified but auth token exists', function(done) {
+-      bagMock
+-        .expects('proxy')
+-        .withExactArgs()
+-        .returns('http://someproxy:1234');
+-      bagMock
+-        .expects('proxy')
+-        .withExactArgs()
+-        .returns('http://someproxy:1234');
+-      var tokenPromise = BluePromise.resolve('tooken');
+-      githubAuthMock
+-        .expects('readAuthToken')
+-        .once()
+-        .returns(tokenPromise);
+-      new GitHub(function() {});
+-      tokenPromise.then(function() {
+-        sinon.assert.calledWith(githubStub.authenticate, {
+-          type: 'oauth',
+-          token: 'tooken'
+-        });
+-        done();
+-      });
+-    });
+-
+-    it('should not authenticate when username and password are not specified', function() {
+-      bagMock
+-        .expects('proxy')
+-        .withExactArgs()
+-        .returns(null);
+-      bagMock
+-        .expects('proxy')
+-        .withExactArgs()
+-        .returns(null);
+-      new GitHub(function() {});
+-      sinon.assert.notCalled(githubStub.authenticate);
+-    });
+-  });
+-
+-  describe('generate', function() {
+-    beforeEach(function() {});
+-
+-    it("should create repoman config with users and orgs' repos", function(done) {
+-      var gitHub = new GitHub(function() {
+-        gitHub.gh.repos.getForUser = function(opts, cb) {
+-          assert.equal(opts.username, 'user1');
+-          assert.equal(opts.page, 1);
+-          assert.equal(opts.per_page, 100);
+-          cb(null, 'someuserresult');
+-        };
+-        gitHub.gh.repos.getForOrg = function(opts, cb) {
+-          assert.equal(opts.org, 'org1');
+-          assert.equal(opts.page, 1);
+-          assert.equal(opts.per_page, 100);
+-          cb(null, 'someorgresult');
+-        };
+-        gitHub._paginate = function(result, cb) {
+-          cb(null, [{ name: 'someapp', clone_url: 'https://somecloneurl' }]);
+-        };
+-        gitHub.generate(['user1'], ['org1'], function(err, result) {
+-          assert.equal(err, null);
+-          assert.deepEqual(result, {
+-            someapp: { url: 'https://somecloneurl' }
+-          });
+-          done();
+-        });
+-      });
+-    });
+-
+-    it('should pass error to callback when an error occurs while retrieving repos', function(done) {
+-      var gitHub = new GitHub(function() {
+-        gitHub.gh.repos.getForUser = function(opts, cb) {
+-          assert.equal(opts.username, 'user1');
+-          assert.equal(opts.page, 1);
+-          assert.equal(opts.per_page, 100);
+-          cb(new Error('some error'));
+-        };
+-        gitHub.gh.repos.getForOrg = function(opts, cb) {
+-          assert.equal(opts.org, 'org1');
+-          assert.equal(opts.page, 1);
+-          assert.equal(opts.per_page, 100);
+-          cb(new Error('some error'));
+-        };
+-        gitHub._paginate = function(result, cb) {
+-          cb(null, [{ name: 'someapp', clone_url: 'https://somecloneurl' }]);
+-        };
+-        gitHub.generate(['user1'], ['org1'], function(err, result) {
+-          assert.equal(err.message, 'some error');
+-          done();
+-        });
+-      });
+-    });
+-  });
+-
+-  describe('_paginate', function() {
+-    beforeEach(function() {
+-      sinon.spy(console, 'log');
+-    });
+-
+-    afterEach(function() {
+-      console.log.restore();
+-    });
+-
+-    it('should log remaining usage and pass result', function(done) {
+-      var result = {
+-        data: ['first'],
+-        meta: {
+-          'x-ratelimit-remaining': 23,
+-          'x-ratelimit-limit': 100
+-        }
+-      };
+-      var nextResult = {
+-        data: ['second'],
+-        meta: {
+-          'x-ratelimit-remaining': 22,
+-          'x-ratelimit-limit': 100
+-        }
+-      };
+-
+-      githubStub.hasNextPage.withArgs(result).returns(true);
+-      githubStub.hasNextPage.withArgs(nextResult).returns(false);
+-      githubStub.getNextPage.withArgs(result).callsArgWith(1, null, nextResult);
+-      var gitHub = new GitHub(function() {
+-        gitHub._paginate(result, function(err, result) {
+-          assert.equal(err, null);
+-          assert.sameMembers(result, ['first', 'second']);
+-
+-          sinon.assert.calledWith(
+-            console.log,
+-            'Remaining GitHub API usage: %s/%s',
+-            23,
+-            100
+-          );
+-          sinon.assert.calledWith(
+-            console.log,
+-            'Remaining GitHub API usage: %s/%s',
+-            22,
+-            100
+-          );
+-
+-          done();
+-        });
+-      });
+-    });
+-  });
+-});
+diff --git a/test/generator/gitorious.js b/test/generator/gitorious.js
+deleted file mode 100644
+index 9dfb712..0000000
+--- a/test/generator/gitorious.js
++++ /dev/null
+@@ -1,69 +0,0 @@
+-'use strict';
+-
+-var gitorioujs = require('gitoriou.js');
+-var Gitorious = require('../../lib/generator/gitorious');
+-
+-var mocha = require('mocha');
+-var chai = require('chai');
+-var sinon = require('sinon');
+-var assert = chai.assert;
+-
+-describe('gitorious', function() {
+-  describe('generate', function() {
+-    var clientMock;
+-    var gitorioujsMock;
+-
+-    beforeEach(function() {
+-      clientMock = { getProject: function(project, cb) {} };
+-      gitorioujsMock = sinon.mock(gitorioujs);
+-    });
+-
+-    afterEach(function() {
+-      gitorioujsMock.verify();
+-      gitorioujsMock.restore();
+-    });
+-
+-    it('should pass error when an error occurs while retrieving project', function(done) {
+-      gitorioujsMock
+-        .expects('Gitorious')
+-        .once()
+-        .withExactArgs({ url: 'http://someurl' })
+-        .returns(clientMock);
+-      sinon.stub(clientMock, 'getProject').callsFake(function(project, cb) {
+-        assert.equal(project, 'someproject');
+-        cb(new Error('some error'));
+-      });
+-      var gitorious = new Gitorious('http://someurl');
+-      gitorious.generate(['someproject'], function(err, config) {
+-        assert.equal(err.message, 'some error');
+-        assert.isEmpty(config);
+-        done();
+-      });
+-    });
+-
+-    it('should pass repo URL when there is no error', function(done) {
+-      gitorioujsMock
+-        .expects('Gitorious')
+-        .once()
+-        .withExactArgs({ url: 'http://someurl' })
+-        .returns(clientMock);
+-      sinon.stub(clientMock, 'getProject').callsFake(function(project, cb) {
+-        assert.equal(project, 'someproject');
+-        var repos = [
+-          { name: 'somerepo1', clone_url: 'somecloneurl1' },
+-          { name: 'somerepo2', clone_url: 'somecloneurl2' }
+-        ];
+-        cb(null, {
+-          project: { repositories: { mainlines: { repository: repos } } }
+-        });
+-      });
+-      var gitorious = new Gitorious('http://someurl');
+-      gitorious.generate(['someproject'], function(err, config) {
+-        assert.equal(err, null);
+-        assert.deepEqual(config.somerepo1, { url: 'somecloneurl1' });
+-        assert.deepEqual(config.somerepo2, { url: 'somecloneurl2' });
+-        done();
+-      });
+-    });
+-  });
+-});
+diff --git a/test/generator/local.js b/test/generator/local.js
+deleted file mode 100644
+index d184fce..0000000
+--- a/test/generator/local.js
++++ /dev/null
+@@ -1,156 +0,0 @@
+-'use strict';
+-
+-var fs = require('fs');
+-var ini = require('ini');
+-var Local = require('../../lib/generator/local');
+-var svnInfo = require('svn-info');
+-
+-var mocha = require('mocha');
+-var chai = require('chai');
+-var sinon = require('sinon');
+-var assert = chai.assert;
+-
+-describe('local', function() {
+-  describe('generate', function() {
+-    var fsMock;
+-    var iniMock;
+-    var svnInfoMock;
+-
+-    beforeEach(function() {
+-      fsMock = sinon.mock(fs);
+-      iniMock = sinon.mock(ini);
+-      svnInfoMock = sinon.mock(svnInfo);
+-    });
+-
+-    afterEach(function() {
+-      fsMock.verify();
+-      fsMock.restore();
+-      iniMock.verify();
+-      iniMock.restore();
+-      svnInfoMock.verify();
+-      svnInfoMock.restore();
+-    });
+-
+-    it('should construct config of git repos using git config remote origin', function(done) {
+-      fsMock
+-        .expects('readdirSync')
+-        .withExactArgs('somedir')
+-        .returns(['repo1', 'repo2']);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo1/.git/config')
+-        .returns(true);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo2/.git/config')
+-        .returns(true);
+-      fsMock
+-        .expects('readFileSync')
+-        .withExactArgs('repo1/.git/config', 'utf-8')
+-        .returns('somedata1');
+-      fsMock
+-        .expects('readFileSync')
+-        .withExactArgs('repo2/.git/config', 'utf-8')
+-        .returns('somedata2');
+-      iniMock
+-        .expects('parse')
+-        .withExactArgs('somedata1')
+-        .returns({
+-          'remote "origin"': { url: 'http://github.com/some/repo1' }
+-        });
+-      iniMock
+-        .expects('parse')
+-        .withExactArgs('somedata2')
+-        .returns({
+-          'remote "origin"': { url: 'http://github.com/some/repo2' }
+-        });
+-
+-      var local = new Local('somedir');
+-
+-      local.generate(function(err, result) {
+-        assert.isNull(err);
+-        assert.equal(result.repo1.type, 'git');
+-        assert.equal(result.repo1.url, 'http://github.com/some/repo1');
+-        assert.equal(result.repo2.type, 'git');
+-        assert.equal(result.repo2.url, 'http://github.com/some/repo2');
+-
+-        done();
+-      });
+-    });
+-
+-    it('should construct config of svn repos using svn info repository root', function(done) {
+-      fsMock
+-        .expects('readdirSync')
+-        .withExactArgs('somedir')
+-        .returns(['repo1', 'repo2']);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo1/.git/config')
+-        .returns(false);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo2/.git/config')
+-        .returns(false);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo1/.svn/entries')
+-        .returns(true);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo2/.svn/entries')
+-        .returns(true);
+-      svnInfoMock
+-        .expects('sync')
+-        .withExactArgs('repo1')
+-        .returns({ repositoryRoot: 'http://svnhub.com/some/repo1' });
+-      svnInfoMock
+-        .expects('sync')
+-        .withExactArgs('repo2')
+-        .returns({ repositoryRoot: 'http://svnhub.com/some/repo2' });
+-
+-      var local = new Local('somedir');
+-
+-      local.generate(function(err, result) {
+-        assert.isNull(err);
+-        assert.equal(result.repo1.type, 'svn');
+-        assert.equal(result.repo1.url, 'http://svnhub.com/some/repo1');
+-        assert.equal(result.repo2.type, 'svn');
+-        assert.equal(result.repo2.url, 'http://svnhub.com/some/repo2');
+-
+-        done();
+-      });
+-    });
+-
+-    it('should pass empty config when repo is neither git nor svn', function(done) {
+-      fsMock
+-        .expects('readdirSync')
+-        .withExactArgs('somedir')
+-        .returns(['repo1', 'repo2']);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo1/.git/config')
+-        .returns(false);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo2/.git/config')
+-        .returns(false);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo1/.svn/entries')
+-        .returns(false);
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('repo2/.svn/entries')
+-        .returns(false);
+-
+-      var local = new Local('somedir');
+-
+-      local.generate(function(err, result) {
+-        assert.isNull(err);
+-        assert.isEmpty(result);
+-
+-        done();
+-      });
+-    });
+-  });
+-});
+diff --git a/test/mocha.opts b/test/mocha.opts
+deleted file mode 100644
+index 4a52320..0000000
+--- a/test/mocha.opts
++++ /dev/null
+@@ -1 +0,0 @@
+---recursive
+diff --git a/test/repoman.js b/test/repoman.js
+deleted file mode 100644
+index ab8d64d..0000000
+--- a/test/repoman.js
++++ /dev/null
+@@ -1,648 +0,0 @@
+-'use strict';
+-
+-var bag = require('bagofcli');
+-var Bitbucket = require('../lib/generator/bitbucket');
+-var fs = require('fs');
+-var fsx = require('fs.extra');
+-var GitHub = require('../lib/generator/github');
+-var GitHubAuth = require('../lib/auth/github');
+-var Gitorious = require('../lib/generator/gitorious');
+-var Local = require('../lib/generator/local');
+-var Repoman = require('../lib/repoman');
+-
+-var mocha = require('mocha');
+-var chai = require('chai');
+-var sinon = require('sinon');
+-var assert = chai.assert;
+-
+-describe('repoman', function() {
+-  beforeEach(function() {
+-    sinon.spy(console, 'log');
+-    sinon.spy(process, 'exit');
+-  });
+-
+-  afterEach(function() {
+-    process.exit.restore();
+-    console.log.restore();
+-  });
+-
+-  describe('config', function() {
+-    var fsMock;
+-    var fsxCopyStub;
+-    var bitbucketMock;
+-    var gitHubMock;
+-    var gitHubAuthMock;
+-    var gitoriousMock;
+-    var localMock;
+-
+-    beforeEach(function() {
+-      bitbucketMock = sinon.mock(Bitbucket.prototype);
+-      gitHubMock = sinon.mock(GitHub.prototype);
+-      gitoriousMock = sinon.mock(Gitorious.prototype);
+-      localMock = sinon.mock(Local.prototype);
+-
+-      fsMock = sinon.mock(fs);
+-      fsxCopyStub = sinon.stub(fsx, 'copy');
+-    });
+-
+-    afterEach(function() {
+-      fsxCopyStub.restore();
+-      fsMock.verify();
+-      fsMock.restore();
+-
+-      bitbucketMock.verify();
+-      bitbucketMock.restore();
+-      gitHubMock.verify();
+-      gitHubMock.restore();
+-      gitoriousMock.verify();
+-      gitoriousMock.restore();
+-      localMock.verify();
+-      localMock.restore();
+-    });
+-
+-    it('should copy sample couchpenter.js file to current directory when init is called', function(done) {
+-      fsxCopyStub.callsFake(function(src, dest, cb) {
+-        assert.isTrue(src.match(/\/examples\/.repoman.json$/).length === 1);
+-        assert.equal(dest, '.repoman.json');
+-        cb();
+-      });
+-      var repoman = new Repoman();
+-      repoman.config({}, function(err, result) {
+-        assert.equal(err, undefined);
+-        sinon.assert.calledWith(
+-          console.log,
+-          'Creating sample configuration file: %s',
+-          '.repoman.json'
+-        );
+-        done();
+-      });
+-    });
+-
+-    it('should create .repoman.json containing repos on bitbucket when bitbucket config is specified', function(done) {
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('.repoman.json')
+-        .returns(false);
+-      bitbucketMock
+-        .expects('generate')
+-        .once()
+-        .withArgs()
+-        .callsArgWith(0, null, { foo: 'bar' });
+-      fsMock
+-        .expects('writeFile')
+-        .once()
+-        .withArgs('.repoman.json', '{\n  "foo": "bar"\n}')
+-        .callsArgWith(2, null);
+-      var repoman = new Repoman();
+-      repoman.config(
+-        { bitbucket: { authUser: 'someuser', authPass: 'somepassword' } },
+-        function(err, result) {
+-          assert.isNull(err);
+-          sinon.assert.calledWith(
+-            console.log,
+-            'Setting configuration file: %s, with Bitbucket repositories',
+-            '.repoman.json'
+-          );
+-          done();
+-        }
+-      );
+-    });
+-
+-    it('should create .repoman.json containing repos on github when github config is specified', function(done) {
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('.repoman.json')
+-        .returns(false);
+-      gitHubMock
+-        .expects('generate')
+-        .once()
+-        .withArgs(['someuser'], ['someorg'])
+-        .callsArgWith(2, null, { foo: 'bar' });
+-      fsMock
+-        .expects('writeFile')
+-        .once()
+-        .withArgs('.repoman.json', '{\n  "foo": "bar"\n}')
+-        .callsArgWith(2, null);
+-      var repoman = new Repoman();
+-      repoman.config({ github: { user: 'someuser', org: 'someorg' } }, function(
+-        err,
+-        result
+-      ) {
+-        assert.isNull(err);
+-        sinon.assert.calledWith(
+-          console.log,
+-          'Setting configuration file: %s, with GitHub repositories',
+-          '.repoman.json'
+-        );
+-        done();
+-      });
+-    });
+-
+-    it('should pass error to callback when an error occurs while creating config containing github repos', function(done) {
+-      gitHubMock
+-        .expects('generate')
+-        .once()
+-        .withArgs([], [])
+-        .callsArgWith(2, new Error('some error'));
+-      var repoman = new Repoman();
+-      repoman.config({ github: {} }, function(err, result) {
+-        assert.equal(err.message, 'some error');
+-        sinon.assert.calledWith(
+-          console.log,
+-          'Setting configuration file: %s, with GitHub repositories',
+-          '.repoman.json'
+-        );
+-        done();
+-      });
+-    });
+-
+-    it('should create .repoman.json containing repos on gitorious when gitorious config is specified', function(done) {
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('.repoman.json')
+-        .returns(true);
+-      gitoriousMock
+-        .expects('generate')
+-        .once()
+-        .withArgs(['someproject1', 'someproject2'])
+-        .callsArgWith(1, null, { foo: 'bar' });
+-      fsMock
+-        .expects('readFileSync')
+-        .once()
+-        .withExactArgs('.repoman.json', 'utf-8')
+-        .returns('{}');
+-      fsMock
+-        .expects('writeFile')
+-        .once()
+-        .withArgs('.repoman.json', '{\n  "foo": "bar"\n}')
+-        .callsArgWith(2, null);
+-
+-      var repoman = new Repoman();
+-      repoman.config(
+-        {
+-          gitorious: {
+-            url: 'http://someurl',
+-            project: 'someproject1,someproject2'
+-          }
+-        },
+-        function(err, result) {
+-          assert.isNull(err);
+-          sinon.assert.calledWith(
+-            console.log,
+-            'Setting configuration file: %s, with Gitorious repositories',
+-            '.repoman.json'
+-          );
+-          done();
+-        }
+-      );
+-    });
+-
+-    it('should create .repoman.json containing repos on local repositories when local config is specified', function(done) {
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('.repoman.json')
+-        .returns(false);
+-      localMock
+-        .expects('generate')
+-        .once()
+-        .withArgs()
+-        .callsArgWith(0, null, { foo: 'bar' });
+-      fsMock
+-        .expects('writeFile')
+-        .once()
+-        .withArgs('.repoman.json', '{\n  "foo": "bar"\n}')
+-        .callsArgWith(2, null);
+-
+-      var repoman = new Repoman();
+-      repoman.config({ local: { dir: 'somedir' } }, function(err, result) {
+-        sinon.assert.calledWith(
+-          console.log,
+-          'Setting configuration file: %s, with local repositories',
+-          '.repoman.json'
+-        );
+-        assert.isNull(err);
+-        done();
+-      });
+-    });
+-
+-    it('should create .repoman.json containing repos on local repositories and remove any repos not existing locally if removeExtraneous is specified', function(done) {
+-      fsMock
+-        .expects('existsSync')
+-        .withExactArgs('.repoman.json')
+-        .returns(true);
+-      fsMock
+-        .expects('readFileSync')
+-        .withExactArgs('.repoman.json', 'utf-8')
+-        .returns('{"some_repo" : {"url" : "git://blah.com"}}');
+-      localMock
+-        .expects('generate')
+-        .once()
+-        .withArgs()
+-        .callsArgWith(0, null, { foo: 'bar' });
+-      fsMock
+-        .expects('writeFile')
+-        .once()
+-        .withArgs('.repoman.json', '{\n  "foo": "bar"\n}')
+-        .callsArgWith(2, null);
+-
+-      var repoman = new Repoman();
+-      repoman.config(
+-        { removeExtraneous: true, local: { dir: 'somedir' } },
+-        function(err, result) {
+-          assert.isNull(err);
+-          sinon.assert.calledWith(
+-            console.log,
+-            'Setting configuration file: %s, with local repositories',
+-            '.repoman.json'
+-          );
+-          done();
+-        }
+-      );
+-    });
+-
+-    it('should pass error to callback when an error occurs while creating config containing gitorious repos', function(done) {
+-      gitoriousMock
+-        .expects('generate')
+-        .once()
+-        .withArgs([])
+-        .callsArgWith(1, new Error('some error'));
+-
+-      var repoman = new Repoman();
+-      repoman.config({ gitorious: { url: 'http://someurl' } }, function(
+-        err,
+-        result
+-      ) {
+-        assert.equal(err.message, 'some error');
+-        sinon.assert.calledWith(
+-          console.log,
+-          'Setting configuration file: %s, with Gitorious repositories',
+-          '.repoman.json'
+-        );
+-        done();
+-      });
+-    });
+-  });
+-
+-  describe('exec', function() {
+-    var repos;
+-    var scms;
+-    var bagExecStub;
+-
+-    beforeEach(function() {
+-      sinon
+-        .stub(process, 'cwd')
+-        .onFirstCall()
+-        .returns('/somedir');
+-      bagExecStub = sinon.stub(bag, 'exec');
+-
+-      repos = {
+-        couchdb: {
+-          type: 'git',
+-          url: 'http://git-wip-us.apache.org/repos/asf/couchdb.git',
+-          tags: ['database', 'apache']
+-        },
+-        httpd: {
+-          type: 'svn',
+-          url: 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/'
+-        }
+-      };
+-      scms = {
+-        git: {
+-          init: 'git clone {{{url}}} {{{workspace}}}/{{{name}}}'
+-        },
+-        svn: {
+-          init: 'svn checkout {{{url}}} {{{workspace}}}/{{{name}}}'
+-        }
+-      };
+-    });
+-
+-    afterEach(function() {
+-      sinon.assert.calledOnce(process.cwd);
+-      bag.exec.restore();
+-      process.cwd.restore();
+-    });
+-
+-    it('should return empty results when there is no repository and scm', function(done) {
+-      var repoman = new Repoman();
+-      repoman.exec('init', { failFast: false }, function cb(err, results) {
+-        assert.equal(err, null);
+-        assert.isEmpty(results);
+-        done();
+-      });
+-    });
+-
+-    it('should log repositories name and execute commands with parameters applied when repositories exist', function(done) {
+-      bagExecStub.callsFake(function(command, fallthrough, cb) {
+-        assert.isTrue(fallthrough);
+-        cb(null, command);
+-      });
+-      var repoman = new Repoman(repos, scms);
+-      repoman.exec('init', { verbose: true }, function cb(err, results) {
+-        assert.equal(
+-          results[0],
+-          'git clone http://git-wip-us.apache.org/repos/asf/couchdb.git /somedir/couchdb'
+-        );
+-        assert.equal(
+-          results[1],
+-          'svn checkout http://svn.apache.org/repos/asf/httpd/httpd/trunk/ /somedir/httpd'
+-        );
+-
+-        sinon.assert.calledWith(console.log, '\n+ %s', 'couchdb');
+-        sinon.assert.calledWith(
+-          console.log,
+-          '> %s',
+-          'git clone http://git-wip-us.apache.org/repos/asf/couchdb.git /somedir/couchdb'
+-        );
+-        sinon.assert.calledWith(console.log, '\n+ %s', 'httpd');
+-        sinon.assert.calledWith(
+-          console.log,
+-          '> %s',
+-          'svn checkout http://svn.apache.org/repos/asf/httpd/httpd/trunk/ /somedir/httpd'
+-        );
+-
+-        done();
+-      });
+-    });
+-
+-    it('should execute command as-is on each repository when command is unsupported', function(done) {
+-      bagExecStub.callsFake(function(command, fallthrough, cb) {
+-        assert.isTrue(fallthrough);
+-        cb(null, command);
+-      });
+-      var repoman = new Repoman(repos, scms);
+-      repoman.exec(
+-        'touch .gitignore; echo "Created {{{workspace}}}/{{{name}}}/.gitignore file";',
+-        { verbose: true },
+-        function cb(err, results) {
+-          assert.equal(results.length, 2);
+-          assert.equal(
+-            results[0],
+-            'cd "/somedir/couchdb" && touch .gitignore; echo "Created /somedir/couchdb/.gitignore file";'
+-          );
+-          assert.equal(
+-            results[1],
+-            'cd "/somedir/httpd" && touch .gitignore; echo "Created /somedir/httpd/.gitignore file";'
+-          );
+-
+-          sinon.assert.calledWith(console.log, '\n+ %s', 'couchdb');
+-          sinon.assert.calledWith(
+-            console.log,
+-            '> %s',
+-            'touch .gitignore; echo "Created /somedir/couchdb/.gitignore file";'
+-          );
+-          sinon.assert.calledWith(console.log, '\n+ %s', 'httpd');
+-          sinon.assert.calledWith(
+-            console.log,
+-            '> %s',
+-            'touch .gitignore; echo "Created /somedir/httpd/.gitignore file";'
+-          );
+-
+-          done();
+-        }
+-      );
+-    });
+-
+-    it('should execute command as-is on matching repository when tag is provided', function(done) {
+-      bagExecStub.callsFake(function(command, fallthrough, cb) {
+-        assert.isTrue(fallthrough);
+-        cb(null, command);
+-      });
+-      var repoman = new Repoman(repos, scms);
+-      repoman.exec(
+-        'touch .gitignore; echo "Created {{{workspace}}}/{{{name}}}/.gitignore file";',
+-        { tags: ['database', 'someothertag'], verbose: true },
+-        function cb(err, results) {
+-          assert.equal(results.length, 1);
+-          assert.equal(
+-            results[0],
+-            'cd "/somedir/couchdb" && touch .gitignore; echo "Created /somedir/couchdb/.gitignore file";'
+-          );
+-
+-          sinon.assert.calledWith(console.log, '\n+ %s', 'couchdb');
+-          sinon.assert.calledWith(
+-            console.log,
+-            '> %s',
+-            'touch .gitignore; echo "Created /somedir/couchdb/.gitignore file";'
+-          );
+-
+-          done();
+-        }
+-      );
+-    });
+-
+-    it('should execute command as-is on matching repository when regex is provided', function(done) {
+-      bagExecStub.callsFake(function(command, fallthrough, cb) {
+-        assert.isTrue(fallthrough);
+-        cb(null, command);
+-      });
+-      var repoman = new Repoman(repos, scms);
+-      repoman.exec(
+-        'touch .gitignore; echo "Created {{{workspace}}}/{{{name}}}/.gitignore file";',
+-        { regex: '.*couchdb.*', verbose: true },
+-        function cb(err, results) {
+-          assert.equal(results.length, 1);
+-          assert.equal(
+-            results[0],
+-            'cd "/somedir/couchdb" && touch .gitignore; echo "Created /somedir/couchdb/.gitignore file";'
+-          );
+-
+-          sinon.assert.calledWith(console.log, '\n+ %s', 'couchdb');
+-          sinon.assert.calledWith(
+-            console.log,
+-            '> %s',
+-            'touch .gitignore; echo "Created /somedir/couchdb/.gitignore file";'
+-          );
+-
+-          done();
+-        }
+-      );
+-    });
+-
+-    it('should not execute any command when neither tags nor regex filters is applicable', function(done) {
+-      bagExecStub.callsFake(function(command, fallthrough, cb) {
+-        assert.isTrue(fallthrough);
+-        cb(null, command);
+-      });
+-      var repoman = new Repoman(repos, scms);
+-      repoman.exec(
+-        'touch .gitignore; echo "Created {{{workspace}}}/{{{name}}}/.gitignore file";',
+-        {
+-          regex: 'blah',
+-          tags: ['inexistingtag1', 'inexistingtag2'],
+-          verbose: true
+-        },
+-        function cb(err, results) {
+-          assert.equal(results.length, 0);
+-          done();
+-        }
+-      );
+-    });
+-  });
+-
+-  describe('list', function() {
+-    var repos;
+-    var scms;
+-
+-    beforeEach(function() {
+-      repos = {
+-        couchdb: {
+-          type: 'git',
+-          url: 'http://git-wip-us.apache.org/repos/asf/couchdb.git',
+-          tags: ['apache']
+-        },
+-        httpd: {
+-          type: 'svn',
+-          url: 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/'
+-        }
+-      };
+-    });
+-
+-    it('should pass repositories keys as list value', function(done) {
+-      var repoman = new Repoman(repos);
+-      repoman.list({}, function(err, result) {
+-        assert.isNull(err);
+-        assert.sameMembers(result, ['couchdb', 'httpd']);
+-        done();
+-      });
+-    });
+-
+-    it('should filter repository by tag', function(done) {
+-      var repoman = new Repoman(repos);
+-      repoman.list({ tags: ['apache'] }, function(err, result) {
+-        assert.isNull(err);
+-        assert.sameMembers(result, ['couchdb']);
+-        done();
+-      });
+-    });
+-
+-    it('should filter repository by regex', function(done) {
+-      var repoman = new Repoman(repos);
+-      repoman.list({ regex: '.*httpd.*' }, function(err, result) {
+-        assert.isNull(err);
+-        assert.sameMembers(result, ['httpd']);
+-        done();
+-      });
+-    });
+-  });
+-
+-  describe('clean', function() {
+-    var fsReaddirStub;
+-    var fsxMock;
+-    var repoman;
+-
+-    beforeEach(function() {
+-      fsReaddirStub = sinon.stub(fs, 'readdir');
+-      fsxMock = sinon.mock(fsx);
+-      sinon
+-        .stub(process, 'cwd')
+-        .onFirstCall()
+-        .returns('/somedir');
+-
+-      var repos = {
+-        couchdb: {
+-          type: 'git',
+-          url: 'http://git-wip-us.apache.org/repos/asf/couchdb.git'
+-        },
+-        httpd: {
+-          type: 'svn',
+-          url: 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/'
+-        }
+-      };
+-
+-      repoman = new Repoman(repos);
+-    });
+-
+-    afterEach(function() {
+-      sinon.assert.calledOnce(process.cwd);
+-      fs.readdir.restore();
+-      fsxMock.verify();
+-      fsxMock.restore();
+-      process.cwd.restore();
+-    });
+-
+-    it('should return a list of non-repo dirs to delete during dry run', function(done) {
+-      var dirs = ['dir1', 'couchdb', 'httpd', 'dir2'];
+-      fsReaddirStub.withArgs('/somedir').callsArgWith(1, null, dirs);
+-      repoman.clean(true, function(err, results) {
+-        assert.isNull(err);
+-        assert.sameMembers(results, ['dir1', 'dir2']);
+-        done();
+-      });
+-    });
+-
+-    it('should remove a list of non-repo dirs during non dry run', function(done) {
+-      var dirs = ['dir1', 'couchdb', 'httpd', 'dir2'];
+-      fsReaddirStub.withArgs('/somedir').callsArgWith(1, null, dirs);
+-      fsxMock
+-        .expects('remove')
+-        .withArgs('dir1')
+-        .callsArgWith(1, null, 'dir1');
+-      fsxMock
+-        .expects('remove')
+-        .withArgs('dir2')
+-        .callsArgWith(1, null, 'dir2');
+-
+-      repoman.clean(false, function(err, results) {
+-        assert.equal(err, null);
+-        assert.sameMembers(results, ['dir1', 'dir2']);
+-
+-        sinon.assert.calledWith(console.log, '- %s has been deleted', 'dir1');
+-        sinon.assert.calledWith(console.log, '- %s has been deleted', 'dir2');
+-
+-        done();
+-      });
+-    });
+-
+-    it('should pass error to callback when an error occurs while reading the workspace dir', function(done) {
+-      var dirs = ['dir1', 'couchdb', 'httpd', 'dir2'];
+-      fsReaddirStub
+-        .withArgs('/somedir')
+-        .callsArgWith(1, new Error('some error'));
+-      repoman.clean(true, function(err, results) {
+-        assert.equal(err.message, 'some error');
+-        done();
+-      });
+-    });
+-  });
+-
+-  describe('_determineRepoType', function() {
+-    var repoman;
+-
+-    beforeEach(function() {
+-      repoman = new Repoman();
+-    });
+-
+-    it('should determine repo type based on keywords when repo config does not have type property', function() {
+-      assert.equal(
+-        repoman._determineRepoType({
+-          url: 'http://git-wip-us.apache.org/repos/asf/couchdb.git'
+-        }),
+-        'git'
+-      );
+-      assert.equal(
+-        repoman._determineRepoType({
+-          url: 'http://svn.apache.org/repos/asf/httpd/httpd/trunk/'
+-        }),
+-        'svn'
+-      );
+-      assert.equal(
+-        repoman._determineRepoType({ url: 'http://somesubversion/repo' }),
+-        'svn'
+-      );
+-    });
+-
+-    it('should default repo type to git when repo config does not have type property and URL does not contain repo keyword', function() {
+-      assert.equal(
+-        repoman._determineRepoType({ url: 'http://unknown/repo' }),
+-        'git'
+-      );
+-    });
+-
+-    it('should use type if specified in repo', function() {
+-      assert.equal(
+-        repoman._determineRepoType({ url: 'http://unknown/repo', type: 'svn' }),
+-        'svn'
+-      );
+-    });
+-  });
+-});

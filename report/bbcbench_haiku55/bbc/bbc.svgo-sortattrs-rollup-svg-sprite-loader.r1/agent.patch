@@ -1,0 +1,42 @@
+diff --git a/src/index.ts b/src/index.ts
+index 4005aa6..2685878 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,4 +1,4 @@
+-import svgo, { OptimizeOptions, Plugin as SvgoPlugin } from "svgo"
++import { optimize, Config as SvgoConfig } from "svgo"
+ import { promises as fsp } from "fs"
+ import path from "path"
+ 
+@@ -8,7 +8,9 @@ import Sprite, { InlineSprite } from "./buildSprite"
+ 
+ import { inline } from "./inline"
+ 
+-const svgoOptions: OptimizeOptions = {
++type SvgoPlugin = NonNullable<SvgoConfig["plugins"]>[number]
++
++const svgoOptions: SvgoConfig = {
+   js2svg: {
+     indent: 2,
+   },
+@@ -17,8 +19,10 @@ const svgoOptions: OptimizeOptions = {
+       name: "preset-default",
+       params: {
+         overrides: {
+-          cleanupIDs: false,
++          cleanupIds: false,
+           removeViewBox: false,
++          // sortAttrs joined preset-default in svgo 3; keep source attribute order as svgo 2 did
++          sortAttrs: false,
+         },
+       },
+     },
+@@ -73,7 +77,7 @@ export function svgSpriteLoader(options: Options = {}): Plugin {
+       if (noImport || !isSVG(id)) {
+         return null
+       }
+-      const { data } = svgo.optimize(code, svgoOptions)
++      const { data } = optimize(code, svgoOptions)
+       const interpolatedId =
+         typeof symbolIdQuery === "function" ? symbolIdQuery(id) : interpolateName(outputPath, id, code, symbolIdQuery)
+       const symbol = sprite.add(interpolatedId, data)

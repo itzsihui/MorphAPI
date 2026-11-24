@@ -1,0 +1,13 @@
+diff --git a/index.js b/index.js
+index abf8605..e71bf51 100644
+--- a/index.js
++++ b/index.js
+@@ -220,7 +220,7 @@ var modelBinder = function(db, req) {
+ var route = function(db, fn) {
+ 
+   var match = fn.toString().match(/function.*?\((.*?)\)/i);
+-  var params = _.invoke(match[1].split(','), 'trim');
++  var params = _.map(match[1].split(','), function(param) { return param.trim(); });
+   var isAzulParam = function(arg) { return arg.match(/^([A-Z]\w*|query)$/); };
+   var isExpressParam = _.negate(isAzulParam);
+ 

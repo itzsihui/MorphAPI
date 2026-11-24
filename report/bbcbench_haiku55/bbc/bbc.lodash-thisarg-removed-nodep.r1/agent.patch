@@ -1,0 +1,86 @@
+diff --git a/nodep.js b/nodep.js
+index 551f9f9..00afaa6 100644
+--- a/nodep.js
++++ b/nodep.js
+@@ -187,7 +187,7 @@ module.exports = function() {
+                         this.dependencies[arg] = dep;
+                     }
+                     return dep;
+-                }, this));
++                }.bind(this)));
+                 if(this.dependencies[name] === undefined) {
+                     this.dependencies[name] = dependency;
+                 }
+@@ -298,7 +298,7 @@ module.exports = function() {
+                     }
+                     index[name] = module.parent.require(path);
+                     index[name].args = args;
+-                }, this);
++                }.bind(this));
+                 // TODO continue here
+                 var checkDep = function(name, stack) {
+                     if(!_.isUndefined(this.dependencies[name])) {
+@@ -309,19 +309,19 @@ module.exports = function() {
+                     }
+                     if(_.every(_.map(index[name].args, function(arg) {
+                         return !!this.dependencies[arg];
+-                    }, this))) {
++                    }.bind(this)))) {
+                         this.applyArgs(name, index[name], index[name].args);
+                     }
+                     var childStack = _.cloneDeep(stack);
+                     childStack.push(name);
+                     _.forEach(index[name].args, function(arg) {
+                         checkDep.apply(this, [arg, _.cloneDeep(childStack)]);
+-                    }, this);
++                    }.bind(this));
+                     this.applyArgs(name, index[name], index[name].args);
+                 };
+                 _.forEach(index, function(dep, name) {
+                     checkDep.apply(this, [name, []]);
+-                }, this);
++                }.bind(this));
+                 return;
+             }
+             var name = this.name(paths);
+@@ -366,19 +366,18 @@ module.exports = function() {
+                                 cwd: module.parent.paths[0].substring(0, module.parent.paths[0].lastIndexOf('/'))
+                             }), function(file) {
+                                 return file.indexOf('.js') === file.length - 3;
+-                            },
+-                            this
++                            }.bind(this)
+                         ), function(file) {
+                             return file.indexOf('/') === 0
+                                     || file.indexOf('./') === 0
+                                     || file.indexOf('../') === 0
+                                 ? file
+                                 : './' + file;
+-                        }, this
++                        }.bind(this)
+                     );
+                 }
+                 return path;
+-            }, this));
++            }.bind(this)));
+         },
+ 
+         /**
+@@ -440,7 +439,7 @@ module.exports = function() {
+                     if(_.isUndefined(this.dependencies[name])) {
+                         this.dependencies[name] = path;
+                     }
+-                }, this);
++                }.bind(this));
+             } else if(_.isString(paths) && glob.hasMagic(paths)) {
+                     this.init([paths]);
+             } else {
+@@ -498,7 +497,7 @@ module.exports = function() {
+                     this.init(instance.dependencies);
+             };
+             if(_.isArray(instances)) {
+-                _.forEach(instances, provide, this);
++                _.forEach(instances, provide.bind(this));
+             } else {
+                 provide.apply(this, [instances]);
+             }

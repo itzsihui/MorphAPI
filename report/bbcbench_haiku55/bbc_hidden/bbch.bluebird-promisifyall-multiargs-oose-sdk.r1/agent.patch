@@ -1,0 +1,911 @@
+diff --git a/assets/test.txt b/assets/test.txt
+deleted file mode 100644
+index f7eb62d..0000000
+--- a/assets/test.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-The fox is brown
+\ No newline at end of file
+diff --git a/helpers/Prism.js b/helpers/Prism.js
+index 25fac5b..3f58fe2 100644
+--- a/helpers/Prism.js
++++ b/helpers/Prism.js
+@@ -9,7 +9,7 @@ var api = require('./api')
+ var UserError = require('./UserError')
+ 
+ //make some promises
+-P.promisifyAll(dns)
++P.promisifyAll(dns,{multiArgs: true})
+ 
+ 
+ 
+diff --git a/helpers/api.js b/helpers/api.js
+index 2a03244..190559e 100644
+--- a/helpers/api.js
++++ b/helpers/api.js
+@@ -154,7 +154,8 @@ var extendRequest = function(req,type,options){
+   req.url = makeURL(options)
+   req.validateResponse = validateResponse
+   req.handleNetworkError = handleNetworkError
+-  P.promisifyAll(req)
++  //multiArgs so callbacks like request(err, res, body) resolve to [res, body]
++  P.promisifyAll(req,{multiArgs: true})
+   return req
+ }
+ 
+diff --git a/mock/index.js b/mock/index.js
+index a0b480a..4660513 100644
+--- a/mock/index.js
++++ b/mock/index.js
+@@ -36,8 +36,8 @@ var user = require('./helpers/user')
+ var UserError = require('../helpers/UserError')
+ 
+ //make some promises
+-P.promisifyAll(fs)
+-P.promisifyAll(server)
++P.promisifyAll(fs,{multiArgs: true})
++P.promisifyAll(server,{multiArgs: true})
+ 
+ //setup
+ app.use(bodyParser.json())
+diff --git a/ssl/oose_test.crt b/ssl/oose_test.crt
+deleted file mode 100644
+index 6d21e0e..0000000
+--- a/ssl/oose_test.crt
++++ /dev/null
+@@ -1,21 +0,0 @@
+------BEGIN CERTIFICATE-----
+-MIIDjDCCAnQCCQCD36orIQqNxjANBgkqhkiG9w0BAQUFADCBhzELMAkGA1UEBhMC
+-VVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFDASBgNVBAcMC0xvcyBBbmdlbGVzMRMw
+-EQYDVQQKDApFU0lURUQgTExDMRIwEAYDVQQDDAlsb2NhbGhvc3QxJDAiBgkqhkiG
+-9w0BCQEWFWRldmVsb3BlcnNAZXNpdGVkLmNvbTAeFw0xNDEyMjMxNjE2MzhaFw0y
+-NjAzMTExNjE2MzhaMIGHMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5p
+-YTEUMBIGA1UEBwwLTG9zIEFuZ2VsZXMxEzARBgNVBAoMCkVTSVRFRCBMTEMxEjAQ
+-BgNVBAMMCWxvY2FsaG9zdDEkMCIGCSqGSIb3DQEJARYVZGV2ZWxvcGVyc0Blc2l0
+-ZWQuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6/jYFDMlOlMC
+-KKhR+UK/Vr4PKhpPC/WcW1t3jVMfuLPhvARgOxNa3Wpg/nAeWxVmWZLDNz2IgOvD
+-GP6e/I8M1JG4QFWC0XF8nx0LA0PfzWuw3j73vrHl8ohPF6n+EeV1ymTryBYFe5+P
+-wJa1gIE0Qq6rN70edigbgYqgEyyE2eNOeDaZHSEgBwBbqUwnKjop1gzbCxqKaRIK
+-RPhoQGw3NnNVs/+pi+xPVNNuZO0/9RJA6aE+Y3T5l8oBMh+JPynwRBoSFXXdKdXK
+-ZHDZE4jOeDjqZiYxY3uSp+hd+hQEdnGmt9E/3oK4DbsCyapDyTO76TvXTyf1OIcr
+-GbJ4l156SwIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQCyRJp+4pXR6xiB0cqjZJ4z
+-I27wKqJmjSkiuXSWmdFtt+3ncdDwgBXRF+j0ff+4WWe2h1ZS/YiznINUQBV4S8Y3
+-7UQauOJefV3UPzoOxxWJ3FzXXxxtDgWhNZi5HWSQOuGrBIh/GPp05U6wn26rbbxf
+-oRwDJddCtRr4/rE7xNMJ6aAw3NsGaL28Ksio8v6c5XWUZLLQPiFK6pW6pUtGaX6U
+-Q5eIlcfZsDaBhV8nWmZUD7nstlEekPXSIMgmUKoaaeGGRC193fShdH7oP5sfTxCT
+-bTKyk2bJJgQMTg6Z2xvWodey4oapmkUuw9K1b+0zMNbUqzP4lQlWOTIbUaVdM+Uh
+------END CERTIFICATE-----
+diff --git a/ssl/oose_test.csr b/ssl/oose_test.csr
+deleted file mode 100644
+index 85feb31..0000000
+--- a/ssl/oose_test.csr
++++ /dev/null
+@@ -1,18 +0,0 @@
+------BEGIN CERTIFICATE REQUEST-----
+-MIICzTCCAbUCAQAwgYcxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlh
+-MRQwEgYDVQQHDAtMb3MgQW5nZWxlczETMBEGA1UECgwKRVNJVEVEIExMQzESMBAG
+-A1UEAwwJbG9jYWxob3N0MSQwIgYJKoZIhvcNAQkBFhVkZXZlbG9wZXJzQGVzaXRl
+-ZC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDr+NgUMyU6UwIo
+-qFH5Qr9Wvg8qGk8L9ZxbW3eNUx+4s+G8BGA7E1rdamD+cB5bFWZZksM3PYiA68MY
+-/p78jwzUkbhAVYLRcXyfHQsDQ9/Na7DePve+seXyiE8Xqf4R5XXKZOvIFgV7n4/A
+-lrWAgTRCrqs3vR52KBuBiqATLITZ4054NpkdISAHAFupTCcqOinWDNsLGoppEgpE
+-+GhAbDc2c1Wz/6mL7E9U025k7T/1EkDpoT5jdPmXygEyH4k/KfBEGhIVdd0p1cpk
+-cNkTiM54OOpmJjFje5Kn6F36FAR2caa30T/egrgNuwLJqkPJM7vpO9dPJ/U4hysZ
+-sniXXnpLAgMBAAGgADANBgkqhkiG9w0BAQUFAAOCAQEALnDQL3cIf7Ql+KQm0wCC
+-hlcfq3Ay8Ah4vfKnFdS85ur6GCvj7IH2O1oP1NTJ7C6CFw7JPChvREZbewvPSOq4
+-VLFyG/wF4aX2hc8sEEKFGZmDUvJzS1yFuefaEZyIFoQR08kEFV+uHQMev8MMiJXg
+-2ACcgTKkICMCpYv7DwyMzyWB9odVX1lywSNfl3wzr9M8Opod6f6W4s54CPzM3BGi
+-kth1Pcod3VTNuac9fZLScdZg2mDUXgZV+yMj1RCXxaOTWsMO9VDgwrD5QTNQgGNL
+-hKhHiPrfm+03mpQC+GbEatZcAsZfbx2mD5Suf+LmlTamoQjQvrFg7V/uH4/Q5WVH
+-iA==
+------END CERTIFICATE REQUEST-----
+diff --git a/ssl/oose_test.key b/ssl/oose_test.key
+deleted file mode 100644
+index f6fce31..0000000
+--- a/ssl/oose_test.key
++++ /dev/null
+@@ -1,27 +0,0 @@
+------BEGIN RSA PRIVATE KEY-----
+-MIIEpAIBAAKCAQEA6/jYFDMlOlMCKKhR+UK/Vr4PKhpPC/WcW1t3jVMfuLPhvARg
+-OxNa3Wpg/nAeWxVmWZLDNz2IgOvDGP6e/I8M1JG4QFWC0XF8nx0LA0PfzWuw3j73
+-vrHl8ohPF6n+EeV1ymTryBYFe5+PwJa1gIE0Qq6rN70edigbgYqgEyyE2eNOeDaZ
+-HSEgBwBbqUwnKjop1gzbCxqKaRIKRPhoQGw3NnNVs/+pi+xPVNNuZO0/9RJA6aE+
+-Y3T5l8oBMh+JPynwRBoSFXXdKdXKZHDZE4jOeDjqZiYxY3uSp+hd+hQEdnGmt9E/
+-3oK4DbsCyapDyTO76TvXTyf1OIcrGbJ4l156SwIDAQABAoIBAFsp1RjgtYY14YSh
+-mqHI1rEFVkh2x4kgR1rIGITh00SBQjloG2FXVehqm7RQznlz6Am8+GxT+nOMIeB7
+-JiL+hP9umJdKMfMGfBXgm4uUYlczPq5t9zqV8fdkD+Jdi0mQs5QQr0Kqt02OVHQc
+-BVzzDaShZIZxKt6NGitOyg7+SQj/2Rxbdfbv+9beYfrM7+IE8bFmYsoJdmYGFGAc
+-zeVW/IHa4hJv/M706Oan3z/DWhIAlku6JNd44KPXaP9MMYvRyWdDuTPjsnUrwqdY
+-HnpKqkKd67BVIpZvWcw06lDtQ7o5KWdybI4I+wuelJm6BO0v/OyzIxV3+DGli1jj
+-+52oWfECgYEA/vkhSe7Bi23sqJ4FCdKj4Eb3HxGfhc6NWXkbd7hq/antur2ah191
+-/j0gS0CNSrh6VPw2+MOdB1G+4+N29EQgfwDJAUY72nWaSO8AV9g9O1sYfZzQpT20
+-TBOvVJOZPHBvdlHWenMrsmzGju0lJxIIq1x4MBa1O5tTc+JCCySLZ4kCgYEA7Owf
+-2g/El2kJlG+uQo0OQc94iXIXiBeOV7JHytie7/48dpR1nzysRToHYgk9sYpCZl5E
+-/K1yFlJ1je+8E9fOjcaBYZ7Q9DTKmR4NcwWDcT/ONZ5NuOxhBV4cmW7Qt9SyypCC
+-E4rPXLLN98vpVfOh/Sj/oj1hu139pGfeEOBBijMCgYAKPmYY+0+pU2RDrf2T1HOj
+-ChbZl7KqBI9nPdddqvoZcN9NNlrj/3DVIw2OGGzUyK6ZhXyL6AgCCEW8ECJyU95e
+-W+C3fWPgNgNZ1MhVvylOni1QtqEnUmBRAiV0J23roLTJsyYDy2bBB1++1EY+2Jmi
+-kNd/Txo+59GlgTyYCALVyQKBgQCIBJPQxEawSnxWfLuFt6ecvrjL5/V8i1GMJW00
+-FqNA0yvxRBA3KEUaxVLhxL5nhCHU1YAztHwQNq0InL7UgYwzNuimm+AIo5pAx9Ee
+-3OZ2iRQhEk46wXJ9+2bd65HmSDWRN9+FyqZ76Kd5ANdoIiQ4zGXexfCq+i4ZSgxi
+-kezuowKBgQDA+sO7RnDKDmkqvg+NEG2CEMLQ3mkNQAPuAuVsqCqKYPRUSr3OKjdH
+-JI3D3GnKfHHZ00Ou10sMXlZuiXQK0ERqCa8HcBstdGmToaX+eEabOE2YUlAcXsk0
+-mKLgS7zZxdGJYuUGaV4FximTaHJVFk7TieolM6cjG8erSjWzyczFiw==
+------END RSA PRIVATE KEY-----
+diff --git a/ssl/oose_test.pem b/ssl/oose_test.pem
+deleted file mode 100644
+index a22de6a..0000000
+--- a/ssl/oose_test.pem
++++ /dev/null
+@@ -1,48 +0,0 @@
+------BEGIN RSA PRIVATE KEY-----
+-MIIEpAIBAAKCAQEA6/jYFDMlOlMCKKhR+UK/Vr4PKhpPC/WcW1t3jVMfuLPhvARg
+-OxNa3Wpg/nAeWxVmWZLDNz2IgOvDGP6e/I8M1JG4QFWC0XF8nx0LA0PfzWuw3j73
+-vrHl8ohPF6n+EeV1ymTryBYFe5+PwJa1gIE0Qq6rN70edigbgYqgEyyE2eNOeDaZ
+-HSEgBwBbqUwnKjop1gzbCxqKaRIKRPhoQGw3NnNVs/+pi+xPVNNuZO0/9RJA6aE+
+-Y3T5l8oBMh+JPynwRBoSFXXdKdXKZHDZE4jOeDjqZiYxY3uSp+hd+hQEdnGmt9E/
+-3oK4DbsCyapDyTO76TvXTyf1OIcrGbJ4l156SwIDAQABAoIBAFsp1RjgtYY14YSh
+-mqHI1rEFVkh2x4kgR1rIGITh00SBQjloG2FXVehqm7RQznlz6Am8+GxT+nOMIeB7
+-JiL+hP9umJdKMfMGfBXgm4uUYlczPq5t9zqV8fdkD+Jdi0mQs5QQr0Kqt02OVHQc
+-BVzzDaShZIZxKt6NGitOyg7+SQj/2Rxbdfbv+9beYfrM7+IE8bFmYsoJdmYGFGAc
+-zeVW/IHa4hJv/M706Oan3z/DWhIAlku6JNd44KPXaP9MMYvRyWdDuTPjsnUrwqdY
+-HnpKqkKd67BVIpZvWcw06lDtQ7o5KWdybI4I+wuelJm6BO0v/OyzIxV3+DGli1jj
+-+52oWfECgYEA/vkhSe7Bi23sqJ4FCdKj4Eb3HxGfhc6NWXkbd7hq/antur2ah191
+-/j0gS0CNSrh6VPw2+MOdB1G+4+N29EQgfwDJAUY72nWaSO8AV9g9O1sYfZzQpT20
+-TBOvVJOZPHBvdlHWenMrsmzGju0lJxIIq1x4MBa1O5tTc+JCCySLZ4kCgYEA7Owf
+-2g/El2kJlG+uQo0OQc94iXIXiBeOV7JHytie7/48dpR1nzysRToHYgk9sYpCZl5E
+-/K1yFlJ1je+8E9fOjcaBYZ7Q9DTKmR4NcwWDcT/ONZ5NuOxhBV4cmW7Qt9SyypCC
+-E4rPXLLN98vpVfOh/Sj/oj1hu139pGfeEOBBijMCgYAKPmYY+0+pU2RDrf2T1HOj
+-ChbZl7KqBI9nPdddqvoZcN9NNlrj/3DVIw2OGGzUyK6ZhXyL6AgCCEW8ECJyU95e
+-W+C3fWPgNgNZ1MhVvylOni1QtqEnUmBRAiV0J23roLTJsyYDy2bBB1++1EY+2Jmi
+-kNd/Txo+59GlgTyYCALVyQKBgQCIBJPQxEawSnxWfLuFt6ecvrjL5/V8i1GMJW00
+-FqNA0yvxRBA3KEUaxVLhxL5nhCHU1YAztHwQNq0InL7UgYwzNuimm+AIo5pAx9Ee
+-3OZ2iRQhEk46wXJ9+2bd65HmSDWRN9+FyqZ76Kd5ANdoIiQ4zGXexfCq+i4ZSgxi
+-kezuowKBgQDA+sO7RnDKDmkqvg+NEG2CEMLQ3mkNQAPuAuVsqCqKYPRUSr3OKjdH
+-JI3D3GnKfHHZ00Ou10sMXlZuiXQK0ERqCa8HcBstdGmToaX+eEabOE2YUlAcXsk0
+-mKLgS7zZxdGJYuUGaV4FximTaHJVFk7TieolM6cjG8erSjWzyczFiw==
+------END RSA PRIVATE KEY-----
+------BEGIN CERTIFICATE-----
+-MIIDjDCCAnQCCQCD36orIQqNxjANBgkqhkiG9w0BAQUFADCBhzELMAkGA1UEBhMC
+-VVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFDASBgNVBAcMC0xvcyBBbmdlbGVzMRMw
+-EQYDVQQKDApFU0lURUQgTExDMRIwEAYDVQQDDAlsb2NhbGhvc3QxJDAiBgkqhkiG
+-9w0BCQEWFWRldmVsb3BlcnNAZXNpdGVkLmNvbTAeFw0xNDEyMjMxNjE2MzhaFw0y
+-NjAzMTExNjE2MzhaMIGHMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5p
+-YTEUMBIGA1UEBwwLTG9zIEFuZ2VsZXMxEzARBgNVBAoMCkVTSVRFRCBMTEMxEjAQ
+-BgNVBAMMCWxvY2FsaG9zdDEkMCIGCSqGSIb3DQEJARYVZGV2ZWxvcGVyc0Blc2l0
+-ZWQuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6/jYFDMlOlMC
+-KKhR+UK/Vr4PKhpPC/WcW1t3jVMfuLPhvARgOxNa3Wpg/nAeWxVmWZLDNz2IgOvD
+-GP6e/I8M1JG4QFWC0XF8nx0LA0PfzWuw3j73vrHl8ohPF6n+EeV1ymTryBYFe5+P
+-wJa1gIE0Qq6rN70edigbgYqgEyyE2eNOeDaZHSEgBwBbqUwnKjop1gzbCxqKaRIK
+-RPhoQGw3NnNVs/+pi+xPVNNuZO0/9RJA6aE+Y3T5l8oBMh+JPynwRBoSFXXdKdXK
+-ZHDZE4jOeDjqZiYxY3uSp+hd+hQEdnGmt9E/3oK4DbsCyapDyTO76TvXTyf1OIcr
+-GbJ4l156SwIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQCyRJp+4pXR6xiB0cqjZJ4z
+-I27wKqJmjSkiuXSWmdFtt+3ncdDwgBXRF+j0ff+4WWe2h1ZS/YiznINUQBV4S8Y3
+-7UQauOJefV3UPzoOxxWJ3FzXXxxtDgWhNZi5HWSQOuGrBIh/GPp05U6wn26rbbxf
+-oRwDJddCtRr4/rE7xNMJ6aAw3NsGaL28Ksio8v6c5XWUZLLQPiFK6pW6pUtGaX6U
+-Q5eIlcfZsDaBhV8nWmZUD7nstlEekPXSIMgmUKoaaeGGRC193fShdH7oP5sfTxCT
+-bTKyk2bJJgQMTg6Z2xvWodey4oapmkUuw9K1b+0zMNbUqzP4lQlWOTIbUaVdM+Uh
+------END CERTIFICATE-----
+diff --git a/test/.jshintrc b/test/.jshintrc
+deleted file mode 100644
+index 11284a2..0000000
+--- a/test/.jshintrc
++++ /dev/null
+@@ -1,29 +0,0 @@
+-{
+-  "asi": true,
+-  "laxcomma": true,
+-  "node": true,
+-  "browser": true,
+-  "esnext": true,
+-  "bitwise": true,
+-  "camelcase": true,
+-  "eqeqeq": true,
+-  "immed": true,
+-  "indent": 2,
+-  "latedef": true,
+-  "newcap": true,
+-  "noarg": true,
+-  "quotmark": "single",
+-  "undef": true,
+-  "unused": true,
+-  "trailing": true,
+-  "smarttabs": true,
+-  "strict": true,
+-  "globals": {
+-    "describe": false,
+-    "it": false,
+-    "before": false,
+-    "beforeEach": false,
+-    "after": false,
+-    "afterEach": false
+-  }
+-}
+\ No newline at end of file
+diff --git a/test/Prism.test.js b/test/Prism.test.js
+deleted file mode 100644
+index 7e71ebd..0000000
+--- a/test/Prism.test.js
++++ /dev/null
+@@ -1,134 +0,0 @@
+-'use strict';
+-var P = require('bluebird')
+-var expect = require('chai').expect
+-var express = require('express')
+-var http = require('http')
+-var path = require('path')
+-
+-var mock = require('../mock')
+-var Prism = require('../helpers/Prism')
+-
+-//prevent bad cert errors during testing
+-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+-
+-var mockConfig = {
+-  prism: {
+-    port: 3000,
+-    host: '127.0.0.1'
+-  }
+-}
+-
+-var mockServerConfig = {
+-  port: 3001,
+-  host: '127.0.0.1'
+-}
+-
+-//setup a mock server to download a file from
+-var app = express()
+-var server = http.createServer(app)
+-
+-app.get('/' + mock.content.filename,function(req,res){
+-  var file = path.resolve(mock.content.file)
+-  res.sendFile(file)
+-})
+-
+-//make some promises
+-P.promisifyAll(server)
+-
+-describe('Prism',function(){
+-  var prism = {}
+-  //spin up an entire cluster here
+-  this.timeout(3000)
+-  //start servers and create a user
+-  before(function(){
+-    prism = new Prism({
+-      username: mock.user.username,
+-      password: mock.user.password
+-    })
+-    return mock.start(mockConfig.prism.port,mockConfig.prism.host)
+-      .then(function(){
+-        return prism.connect(mockConfig.prism.host,mockConfig.prism.port)
+-      })
+-      .then(function(){
+-        return server.listenAsync(mockServerConfig.port,mockServerConfig.host)
+-      })
+-      .then(function(){
+-        return prism.login()
+-      })
+-  })
+-  //remove user and stop services
+-  after(function(){
+-    return prism.logout()
+-      .then(function(){
+-        return P.all([
+-          mock.stop(),
+-          server.closeAsync()
+-        ])
+-      })
+-  })
+-  it('should prepare a request object',function(){
+-    return prism.prepare()
+-      .then(function(client){
+-        expect(client.options.host).to.equal(mockConfig.prism.host)
+-        expect(client.options.port).to.equal(mockConfig.prism.port)
+-      })
+-  })
+-  it('should get content detail',function(){
+-    return prism.contentDetail(mock.content.sha1)
+-      .then(function(result){
+-        expect(result.sha1).to.equal(mock.content.sha1)
+-      })
+-  })
+-  it('should upload content',function(){
+-    return prism.contentUpload(mock.content.file)
+-      .then(function(result){
+-        expect(result.files.file.sha1).to.equal(mock.content.sha1)
+-      })
+-  })
+-  it('should retrieve content',function(){
+-    return prism.contentRetrieve({
+-      url: 'http://' + mockServerConfig.host +
+-        ':' + mockServerConfig.port + '/' + mock.content.filename
+-    })
+-      .then(function(result){
+-        expect(result.sha1).to.equal(mock.content.sha1)
+-      })
+-  })
+-  it('should purchase content',function(){
+-    return prism.contentPurchase(
+-      mock.content.sha1,mock.content.ext,['foo'],mock.purchase.life)
+-      .then(function(result){
+-        expect(result.token).to.equal(mock.purchase.token)
+-      })
+-  })
+-  it('should remove a purchase',function(){
+-    return prism.contentPurchaseRemove(mock.purchase.token)
+-      .then(function(result){
+-        expect(result.token).to.equal(mock.purchase.token)
+-      })
+-  })
+-  it('should output a purchase url',function(){
+-    var url = prism.urlPurchase(mock.purchase)
+-    expect(url).to.equal(
+-      '//' + prism.opts.domain + '/' +
+-      mock.purchase.token + '/' + 'video.' + mock.purchase.ext
+-    )
+-  })
+-  it('should output a static url',function(){
+-    var url = prism.urlStatic(mock.content.sha1,mock.content.ext)
+-    expect(url).to.equal(
+-      '//' + prism.opts.domain + '/static/' +
+-      mock.content.sha1 + '/file.' + mock.content.ext
+-    )
+-  })
+-  it('should connect with a session key',function(){
+-    var prism = new Prism().setSession(mock.user.session.token)
+-    return prism.connect(mockConfig.prism.host,mockConfig.prism.port)
+-      .then(function(){
+-        return prism.contentDetail(mock.content.sha1)
+-      })
+-      .then(function(result){
+-        expect(result).to.be.an('object')
+-      })
+-  })
+-})
+diff --git a/test/api.test.js b/test/api.test.js
+deleted file mode 100644
+index 5d8ee58..0000000
+--- a/test/api.test.js
++++ /dev/null
+@@ -1,135 +0,0 @@
+-'use strict';
+-var P = require('bluebird')
+-var expect = require('chai').expect
+-var express = require('express')
+-var https = require('https')
+-
+-var mock = require('../mock')
+-
+-//prevent bad cert errors during testing
+-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+-
+-var app = express()
+-var server = https.createServer(
+-  {
+-    cert: mock.sslOptions.pem,
+-    key: mock.sslOptions.pem
+-  },
+-  app
+-)
+-
+-//make some promises
+-P.promisifyAll(server)
+-
+-app.post('/valid',function(req,res){
+-  res.json({success: 'valid'})
+-})
+-app.post('/invalid',function(req,res){
+-  res.json({error: 'invalid'})
+-})
+-app.post('/invalid-code/invalid',function(req,res){
+-  res.status(401)
+-  res.json({error: 'invalid'})
+-})
+-app.post('/invalid-code/valid',function(req,res){
+-  res.status(401)
+-  res.json({success: 'valid'})
+-})
+-
+-
+-var api = require('../helpers/api')
+-var NetworkError = require('../helpers/NetworkError')
+-var UserError = require('../helpers/UserError')
+-
+-var throwError = function(message){
+-  throw new Error(message)
+-}
+-
+-var testNetworkErrorCatch = function(message){
+-  return function(){
+-    try {
+-      try {
+-        throwError(message)
+-      } catch(e){
+-        api.handleNetworkError(e)
+-      }
+-    } catch(e){
+-      expect(e).to.be.an.instanceOf(NetworkError)
+-      expect(e.stack).to.match(/api\.test\.js:\d+/)
+-    }
+-  }
+-}
+-
+-
+-describe('api:NetworkError',function(){
+-  for(var i = 0; i < api.tcpErrors.length; i++){
+-    it('should catch tcp error ' + api.tcpErrors[i],
+-      testNetworkErrorCatch(api.tcpErrors[i]))
+-  }
+-  it('should not catch regular errors',function(){
+-    try {
+-      try {
+-        throwError('foo')
+-      } catch(e){
+-        api.handleNetworkError(e)
+-      }
+-    } catch(e){
+-      expect(e).to.not.be.an.instanceOf(NetworkError)
+-      expect(e.stack).to.match(/api\.test\.js:\d+/)
+-    }
+-  })
+-})
+-
+-describe('api:validateResponse',function(){
+-  var client = api.master({
+-    host: '127.0.0.1',
+-    port: 5978
+-  })
+-  before(function(){
+-    return server.listenAsync(5978,'127.0.0.1')
+-  })
+-  after(function(){
+-    return server.closeAsync()
+-  })
+-  it('should hand back valid responses',function(){
+-    return client.postAsync(client.url('/valid'))
+-      .spread(client.validateResponse())
+-      .spread(function(res,body){
+-        expect(body.success).to.equal('valid')
+-      })
+-  })
+-  it('should throw errors',function(){
+-    return client.postAsync(client.url('/invalid'))
+-      .spread(client.validateResponse())
+-      .spread(function(){
+-        throw new Error('Error was not thrown')
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.equal('invalid')
+-      })
+-  })
+-  it('should throw the error on error, invalid response codes',function(){
+-    return client.postAsync(client.url('/invalid-code/invalid'))
+-      .spread(client.validateResponse())
+-      .spread(function(){
+-        throw new Error('Error was not thrown')
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.equal('invalid')
+-      })
+-  })
+-  it('should throw the body on success, invalid response codes',function(){
+-    return client.postAsync(client.url('/invalid-code/valid'))
+-      .spread(client.validateResponse())
+-      .spread(function(){
+-        throw new Error('Error was not thrown')
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.equal(
+-          'Invalid response (401) to ' +
+-          'https://127.0.0.1:5978/invalid-code/valid ' +
+-          'body: { success: \'valid\' }'
+-        )
+-      })
+-  })
+-})
+diff --git a/test/helpers/e2e.js b/test/helpers/e2e.js
+deleted file mode 100644
+index 22e4247..0000000
+--- a/test/helpers/e2e.js
++++ /dev/null
+@@ -1,326 +0,0 @@
+-'use strict';
+-var expect = require('chai').expect
+-var fs = require('graceful-fs')
+-var url = require('url')
+-
+-var api = require('../../helpers/api')
+-var content = require('../../mock/helpers/content')
+-var mock = require('../../mock')
+-var NetworkError = require('../../helpers/NetworkError')
+-var pkg = require('../../package.json')
+-var UserError = require('../../helpers/UserError')
+-
+-//load promises here
+-//var P = require('bluebird')
+-//P.longStackTraces() //enable long stack traces for debugging only
+-
+-
+-/**
+- * API Timeout for outage testing
+- * @type {number}
+- */
+-process.env.REQUEST_TIMEOUT = 10000
+-
+-
+-/**
+- * Store user session
+- * @type {object}
+- */
+-exports.user = {
+-  username: mock.user.username,
+-  password: mock.user.password,
+-  session: {}
+-}
+-
+-
+-/**
+- * Store purchase
+- * @type {object}
+- */
+-exports.purchase = {}
+-
+-
+-/**
+- * Check if a host is up
+- * @param {string} type
+- * @param {object} server
+- * @return {Function}
+- */
+-exports.checkUp = function(type,server){
+-  return function(){
+-    var client = api[type](server[type])
+-    return client.postAsync({url: client.url('/ping'), timeout: 50})
+-      .spread(function(res,body){
+-        expect(body.pong).to.equal('pong')
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Check if a host is down
+- * @param {string} type
+- * @param {object} server
+- * @return {Function}
+- */
+-exports.checkDown = function(type,server){
+-  return function(){
+-    var client = api[type](server[type])
+-    return client.postAsync({url: client.url('/ping'), timeout: 50})
+-      .then(function(){
+-        throw new Error('Server not down')
+-      })
+-      .catch(Error,client.handleNetworkError)
+-      .catch(NetworkError,function(err){
+-        expect(err.message).to.match(/ECONNREFUSED|ETIMEDOUT/)
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Check if public routes work on a prism
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.checkPublic = function(prism){
+-  return function(){
+-    var client = api.prism(prism.prism)
+-    return client
+-      .postAsync(client.url('/'))
+-      .spread(client.validateResponse())
+-      .spread(function(res,body){
+-        expect(body.message).to.equal(
+-          'Welcome to OOSE Mock version ' + pkg.version)
+-        return client.postAsync(client.url('/ping'))
+-      })
+-      .spread(client.validateResponse())
+-      .spread(function(res,body){
+-        expect(body.pong).to.equal('pong')
+-        return client.postAsync(client.url('/user/login'))
+-      })
+-      .spread(client.validateResponse())
+-      .spread(function(res,body){
+-        console.log(body)
+-        throw new Error('Should have thrown an error for no username')
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.equal('No user found')
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Check if protected routes require authentication on a prism
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.checkProtected = function(prism){
+-  return function(){
+-    var client = api.prism(prism.prism)
+-    return client.postAsync(client.url('/user/logout'))
+-      .catch(UserError,function(err){
+-        expect(err.message).to.match(/Invalid response code \(401\) to POST/)
+-        return client.postAsync(client.url('/user/password/reset'))
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.match(/Invalid response code \(401\) to POST/)
+-        return client.postAsync(client.url('/user/session/validate'))
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.match(/Invalid response code \(401\) to POST/)
+-        return client.postAsync(client.url('/content/upload'))
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.match(/Invalid response code \(401\) to POST/)
+-        return client.postAsync(client.url('/content/purchase'))
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.match(/Invalid response code \(401\) to POST/)
+-        return client.postAsync(client.url('/content/remove'))
+-      })
+-      .catch(UserError,function(err){
+-        expect(err.message).to.match(/Invalid response code \(401\) to POST/)
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Login to a prism
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.prismLogin = function(prism){
+-  return function(){
+-    var client = api.prism(prism.prism)
+-    return client.postAsync({
+-      url: client.url('/user/login'),
+-      json: {
+-        username: exports.user.username,
+-        password: exports.user.password
+-      },
+-      localAddress: '127.0.0.1'
+-    })
+-      .spread(function(res,body){
+-        expect(body.session).to.be.an('object')
+-        return body.session
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Logout of a prism
+- * @param {object} prism
+- * @param {object} session
+- * @return {Function}
+- */
+-exports.prismLogout = function(prism,session){
+-  return function(){
+-    var client = api.setSession(session,api.prism(prism.prism))
+-    return client.postAsync({
+-      url: client.url('/user/logout'),
+-      localAddress: '127.0.0.1',
+-      json: true
+-    })
+-      .spread(function(res,body){
+-        expect(body.success).to.equal('User logged out')
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Content upload
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.contentUpload = function(prism){
+-  return function(){
+-    var client = api.setSession(exports.user.session,api.prism(prism.prism))
+-    return client
+-      .postAsync({
+-        url: client.url('/content/upload'),
+-        formData: {
+-          file: fs.createReadStream(content.file)
+-        },
+-        json: true,
+-        localAddress: '127.0.0.1'
+-      })
+-      .spread(function(res,body){
+-        expect(body.files.file.sha1).to.equal(content.sha1)
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Get content detail
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.contentDetail = function(prism){
+-  return function(){
+-    var client = api.setSession(exports.user.session,api.prism(prism.prism))
+-    return client
+-      .postAsync({
+-        url: client.url('/content/detail'),
+-        json: {sha1: content.sha1},
+-        localAddress: '127.0.0.1'
+-      })
+-      .spread(function(res,body){
+-        expect(body.sha1).to.equal(content.sha1)
+-        expect(body.count).to.be.greaterThan(0)
+-        expect(body.exists).to.equal(true)
+-        expect(body.map).to.be.an('array')
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Purchase content
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.contentPurchase = function(prism){
+-  return function(){
+-    var client = api.setSession(exports.user.session,api.prism(prism.prism))
+-    return client
+-      .postAsync({
+-        url: client.url('/content/purchase'),
+-        json: {
+-          sha1: content.sha1,
+-          ext: content.ext,
+-          ip: '127.0.0.1',
+-          referrer: ['localhost']
+-        },
+-        localAddress: '127.0.0.1'
+-      })
+-      .spread(function(res,body){
+-        expect(body.token.length).to.equal(64)
+-        expect(body.ext).to.equal('txt')
+-        expect(body.life).to.equal(21600)
+-        expect(body.sha1).to.equal(content.sha1)
+-        expect(body.referrer).to.be.an('array')
+-        expect(body.referrer[0]).to.equal('localhost')
+-        return body
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Deliver content
+- * @param {object} prism
+- * @param {string} localAddress
+- * @param {string} referrer
+- * @return {Function}
+- */
+-exports.contentDeliver = function(prism,localAddress,referrer){
+-  return function(){
+-    var client = api.prism(prism.prism)
+-    var options = {
+-      url: client.url('/' + exports.purchase.token + '/' + content.filename),
+-      headers: {
+-        'Referer': referrer || 'localhost'
+-      },
+-      followRedirect: false,
+-      localAddress: localAddress || '127.0.0.1'
+-    }
+-    return client.getAsync(options)
+-      .spread(function(res){
+-        expect(res.statusCode).to.equal(302)
+-        var uri = url.parse(res.headers.location)
+-        var host = uri.host.split('.')
+-        expect(host[0]).to.match(/^mock/)
+-        expect(host[1]).to.equal('oose')
+-        expect(uri.pathname).to.equal(
+-          '/' + exports.purchase.token + '/' + content.filename)
+-      })
+-  }
+-}
+-
+-
+-/**
+- * Remove content purchase
+- * @param {object} prism
+- * @return {Function}
+- */
+-exports.contentPurchaseRemove = function(prism){
+-  return function(){
+-    var client = api.setSession(exports.user.session,api.prism(prism.prism))
+-    return client.postAsync({
+-      url: client.url('/content/purchase/remove'),
+-      json: {token: exports.purchase.token},
+-      localAddress: '127.0.0.1'
+-    })
+-      .spread(function(res,body){
+-        expect(body.token).to.equal(exports.purchase.token)
+-        expect(body.count).to.equal(1)
+-        expect(body.success).to.equal('Purchase removed')
+-      })
+-  }
+-}
+diff --git a/test/mocha.opts b/test/mocha.opts
+deleted file mode 100644
+index 585e998..0000000
+--- a/test/mocha.opts
++++ /dev/null
+@@ -1,3 +0,0 @@
+---throw-deprecation
+---reporter spec
+---ui bdd
+\ No newline at end of file
+diff --git a/test/mock.test.js b/test/mock.test.js
+deleted file mode 100644
+index 92fac8d..0000000
+--- a/test/mock.test.js
++++ /dev/null
+@@ -1,58 +0,0 @@
+-'use strict';
+-var e2e = require('./helpers/e2e')
+-var mock = require('../mock')
+-
+-//prevent bad cert errors during testing
+-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+-
+-var mockConfig = {
+-  prism: {
+-    port: 3000,
+-    host: '127.0.0.1'
+-  }
+-}
+-
+-describe('mock',function(){
+-  //spin up an entire cluster here
+-  this.timeout(3000)
+-  //start servers and create a user
+-  before(function(){
+-    return mock.start(mockConfig.prism.port,mockConfig.prism.host)
+-  })
+-  //remove user and stop services
+-  after(function(){
+-    return mock.stop()
+-  })
+-  it('mock should be up',e2e.checkUp('prism',mockConfig))
+-  it('should not require authentication for public functions',
+-    e2e.checkPublic(mockConfig))
+-  it('should require a session for all protected prism functions',
+-    e2e.checkProtected(mockConfig))
+-  it('should login',function(){
+-    return e2e.prismLogin(mockConfig)()
+-      .then(function(session){
+-        e2e.user.session = session
+-      })
+-  })
+-
+-  it('should upload content',e2e.contentUpload(mockConfig))
+-
+-  it('should show content detail publicly',
+-    e2e.contentDetail(mockConfig))
+-
+-  it('should allow purchase of the content',function(){
+-    return e2e.contentPurchase(mockConfig)()
+-      .then(function(result){
+-        e2e.purchase = result
+-      })
+-  })
+-
+-  it('should accept a purchased URL and deliver content on prism1',
+-    e2e.contentDeliver(mockConfig))
+-
+-  it('should allow removal of purchases',
+-    e2e.contentPurchaseRemove(mockConfig))
+-
+-  it('should log out',e2e.prismLogout(mockConfig,mock.user.session))
+-
+-})

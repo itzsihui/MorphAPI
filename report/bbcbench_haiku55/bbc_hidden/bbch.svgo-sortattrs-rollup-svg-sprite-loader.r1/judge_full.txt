@@ -1,0 +1,9 @@
+JUDGE svgo-sortattrs-rollup-svg-sprite-loader
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): .github/workflows/build-test.yml tests/build/source/example-1.svg tests/build/source/example-2.svg tests/build/target/dist.js tests/build/target/sprite.svg tests/emptyInput.ts tests/index.test.ts
+  prod     : yes
+  rerun    : exit 0, counts [Tests:       2 passed |       0 |        0 |       0 | |       0 |        0 |       0 | |      75 |       50 |     100 | |     100 |      100 |     100 | |     100 |      100 |     100 | |     100 |      100 |     100 | |     100 |      100 |     100 | |     100 |      100 |     100 | |     100 |      100 |     100 | ]
+  patch    : /srv/agentcmp/ws/bbch.svgo-sortattrs-rollup-svg-sprite-loader.r1/w/.judge/agent.patch
+PASS svgo-sortattrs-rollup-svg-sprite-loader

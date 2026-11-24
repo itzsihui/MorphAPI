@@ -1,0 +1,815 @@
+diff --git a/actions/index.js b/actions/index.js
+index 28d3eb5..08a50c8 100644
+--- a/actions/index.js
++++ b/actions/index.js
+@@ -25,7 +25,7 @@ var ActionsGenerator = yeoman.generators.Base.extend({
+       if (this.options['coffee-script']) {
+         this.fs.copyTpl(
+           this.templatePath('actions.coffee'),
+-          this.destinationPath('app/scripts/actions/' + path.dirname(this.actionsName) + '/' + _.capitalize(path.basename(this.actionsName)) + 'Actions.coffee'),
++          this.destinationPath('app/scripts/actions/' + path.dirname(this.actionsName) + '/' + _.upperFirst(path.basename(this.actionsName)) + 'Actions.coffee'),
+           this
+         );
+       }
+@@ -35,7 +35,7 @@ var ActionsGenerator = yeoman.generators.Base.extend({
+       if (!this.options['coffee-script']) {
+         this.fs.copyTpl(
+           this.templatePath('actions.js'),
+-          this.destinationPath('app/scripts/actions/' + path.dirname(this.actionsName) + '/' + _.capitalize(path.basename(this.actionsName)) + 'Actions.js'),
++          this.destinationPath('app/scripts/actions/' + path.dirname(this.actionsName) + '/' + _.upperFirst(path.basename(this.actionsName)) + 'Actions.js'),
+           this
+         );
+       }
+diff --git a/actions/templates/actions.coffee b/actions/templates/actions.coffee
+index d32e0c5..5230de9 100644
+--- a/actions/templates/actions.coffee
++++ b/actions/templates/actions.coffee
+@@ -1,8 +1,8 @@
+ Reflux = require 'reflux'
+ 
+-<%= lodash.capitalize(path.basename(actionsName) + 'Actions') %> = Reflux.createActions [
++<%= lodash.upperFirst(path.basename(actionsName) + 'Actions') %> = Reflux.createActions [
+   'queryAll'
+   # Here you can list your actions
+ ]
+ 
+-module.exports = <%= lodash.capitalize(path.basename(actionsName) + 'Actions') %>
++module.exports = <%= lodash.upperFirst(path.basename(actionsName) + 'Actions') %>
+diff --git a/actions/templates/actions.js b/actions/templates/actions.js
+index b3be937..8630185 100644
+--- a/actions/templates/actions.js
++++ b/actions/templates/actions.js
+@@ -1,8 +1,8 @@
+ var Reflux = require('reflux');
+ 
+-var <%= lodash.capitalize(path.basename(actionsName) + 'Actions') %> = Reflux.createActions([
++var <%= lodash.upperFirst(path.basename(actionsName) + 'Actions') %> = Reflux.createActions([
+   'queryAll'
+   // Here you can list your actions
+ ]);
+ 
+-module.exports = <%= lodash.capitalize(path.basename(actionsName) + 'Actions') %>;
++module.exports = <%= lodash.upperFirst(path.basename(actionsName) + 'Actions') %>;
+diff --git a/app/templates/__tests__/home-test.cjsx b/app/templates/__tests__/home-test.cjsx
+deleted file mode 100644
+index 1fd7f40..0000000
+--- a/app/templates/__tests__/home-test.cjsx
++++ /dev/null
+@@ -1,14 +0,0 @@
+-jest.dontMock '../app/scripts/components/home.cjsx'
+-
+-describe 'HomePage', ->
+-  it 'shows text', ->
+-    React = require 'react/addons'
+-    Home = require '../app/scripts/components/home.cjsx'
+-    TestUtils = React.addons.TestUtils
+-
+-    # Render the home component
+-    home = TestUtils.renderIntoDocument <Home />
+-
+-    # Verify that the title is there
+-    title = TestUtils.findRenderedDOMComponentWithTag home, 'h1'
+-    expect(title.getDOMNode().textContent).toEqual '\'Allo, \'Allo!'
+\ No newline at end of file
+diff --git a/app/templates/__tests__/home-test.jsx b/app/templates/__tests__/home-test.jsx
+deleted file mode 100644
+index 4a39b3d..0000000
+--- a/app/templates/__tests__/home-test.jsx
++++ /dev/null
+@@ -1,18 +0,0 @@
+-jest.dontMock('../app/scripts/components/home.jsx');
+-
+-describe('HomePage', function() {
+-  it('shows text', function() {
+-    var React = require('react/addons');
+-    var Home = require('../app/scripts/components/home.jsx');
+-    var TestUtils = React.addons.TestUtils;
+-
+-    // Render the home component
+-    var home = TestUtils.renderIntoDocument(
+-      <Home />
+-    );
+-
+-    // Verify that the title is there
+-    var title = TestUtils.findRenderedDOMComponentWithTag(home, 'h1');
+-    expect(title.getDOMNode().textContent).toEqual('\'Allo, \'Allo!');
+-  });
+-});
+\ No newline at end of file
+diff --git a/component/templates/component.cjsx b/component/templates/component.cjsx
+index 348fdb8..b52ed56 100644
+--- a/component/templates/component.cjsx
++++ b/component/templates/component.cjsx
+@@ -1,6 +1,6 @@
+ React = require 'react'
+ 
+-<%= lodash.capitalize(path.basename(componentName)) %> = React.createClass
++<%= lodash.upperFirst(path.basename(componentName)) %> = React.createClass
+ 
+   render: ->
+ 
+@@ -10,4 +10,4 @@ React = require 'react'
+       </div>
+     )
+ 
+-module.exports = <%= lodash.capitalize(path.basename(componentName)) %>
++module.exports = <%= lodash.upperFirst(path.basename(componentName)) %>
+diff --git a/component/templates/component.jsx b/component/templates/component.jsx
+index fc04186..5852571 100644
+--- a/component/templates/component.jsx
++++ b/component/templates/component.jsx
+@@ -1,6 +1,6 @@
+ var React = require('react');
+ 
+-var <%= lodash.capitalize(path.basename(componentName)) %> = React.createClass({
++var <%= lodash.upperFirst(path.basename(componentName)) %> = React.createClass({
+ 
+   render: function() {
+ 
+@@ -12,4 +12,4 @@ var <%= lodash.capitalize(path.basename(componentName)) %> = React.createClass({
+   }
+ });
+ 
+-module.exports = <%= lodash.capitalize(path.basename(componentName)) %>;
++module.exports = <%= lodash.upperFirst(path.basename(componentName)) %>;
+diff --git a/store/index.js b/store/index.js
+index 830fc80..908eb3b 100644
+--- a/store/index.js
++++ b/store/index.js
+@@ -25,7 +25,7 @@ var StoreGenerator = yeoman.generators.Base.extend({
+       if (this.options['coffee-script']) {
+         this.fs.copyTpl(
+           this.templatePath('store.coffee'),
+-          this.destinationPath('app/scripts/stores/' + path.dirname(this.storeName) + '/' + _.capitalize(path.basename(this.storeName)) + 'Store.coffee'),
++          this.destinationPath('app/scripts/stores/' + path.dirname(this.storeName) + '/' + _.upperFirst(path.basename(this.storeName)) + 'Store.coffee'),
+           this
+         );
+       }
+@@ -35,7 +35,7 @@ var StoreGenerator = yeoman.generators.Base.extend({
+       if (!this.options['coffee-script']) {
+         this.fs.copyTpl(
+           this.templatePath('store.js'),
+-          this.destinationPath('app/scripts/stores/' + path.dirname(this.storeName) + '/' + _.capitalize(path.basename(this.storeName)) + 'Store.js'),
++          this.destinationPath('app/scripts/stores/' + path.dirname(this.storeName) + '/' + _.upperFirst(path.basename(this.storeName)) + 'Store.js'),
+           this
+         );
+       }
+diff --git a/store/templates/store.coffee b/store/templates/store.coffee
+index c2df2c9..874036e 100644
+--- a/store/templates/store.coffee
++++ b/store/templates/store.coffee
+@@ -2,11 +2,11 @@ Reflux = require 'reflux'
+ 
+ data = []
+ 
+-<%= lodash.capitalize(path.basename(storeName) + 'Store') %> = Reflux.createStore
++<%= lodash.upperFirst(path.basename(storeName) + 'Store') %> = Reflux.createStore
+ 
+   init: ->
+-    console.log '<%= lodash.capitalize(path.basename(storeName) + "Store") %> initialized'
++    console.log '<%= lodash.upperFirst(path.basename(storeName) + "Store") %> initialized'
+     # This funciton will be called when the store will be first initialized
+ 
+ 
+-module.exports = <%= lodash.capitalize(path.basename(storeName) + 'Store') %>
++module.exports = <%= lodash.upperFirst(path.basename(storeName) + 'Store') %>
+diff --git a/store/templates/store.js b/store/templates/store.js
+index 1a864f4..e1c3e33 100644
+--- a/store/templates/store.js
++++ b/store/templates/store.js
+@@ -2,13 +2,13 @@ var Reflux = require('reflux');
+ 
+ var data = [];
+ 
+-var <%= lodash.capitalize(path.basename(storeName) + 'Store') %> = Reflux.createStore({
++var <%= lodash.upperFirst(path.basename(storeName) + 'Store') %> = Reflux.createStore({
+ 
+   init: function() {
+-    console.log('<%= lodash.capitalize(path.basename(storeName) + "Store") %> initialized');
++    console.log('<%= lodash.upperFirst(path.basename(storeName) + "Store") %> initialized');
+     // This funciton will be called when the store will be first initialized
+   }
+ 
+ });
+ 
+-module.exports = <%= lodash.capitalize(path.basename(storeName) + 'Store') %>;
++module.exports = <%= lodash.upperFirst(path.basename(storeName) + 'Store') %>;
+diff --git a/test/test-actions.js b/test/test-actions.js
+deleted file mode 100644
+index b92a677..0000000
+--- a/test/test-actions.js
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*global describe, beforeEach, it*/
+-'use strict';
+-
+-var path = require('path');
+-var assert = require('yeoman-generator').assert;
+-var helpers = require('yeoman-generator').test;
+-var os = require('os');
+-
+-describe('react-reflux:actions', function () {
+-  describe('when using javascript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../actions'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withArguments(['user'])
+-      .on('end', done);
+-    });
+-
+-    it('creates the actions', function () {
+-      assert.file([
+-        'app/scripts/actions/UserActions.js',
+-      ]);
+-    });
+-
+-    it('correctly creates variable names', function () {
+-      assert.fileContent('app/scripts/actions/UserActions.js', /var UserActions /);
+-    });
+-  });
+-
+-  describe('when using coffeescript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../actions'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'coffee-script': true })
+-      .withArguments(['user'])
+-      .on('end', done);
+-    });
+-
+-    it('creates the coffee actions', function () {
+-      assert.file([
+-        'app/scripts/actions/UserActions.coffee',
+-      ]);
+-    });
+-
+-    it('correctly creates variable names', function () {
+-      assert.fileContent('app/scripts/actions/UserActions.coffee', /UserActions /);
+-    });
+-  });
+-});
+diff --git a/test/test-app.js b/test/test-app.js
+deleted file mode 100644
+index 82199cd..0000000
+--- a/test/test-app.js
++++ /dev/null
+@@ -1,451 +0,0 @@
+-/*global describe, beforeEach, it*/
+-'use strict';
+-
+-var path = require('path');
+-var assert = require('yeoman-generator').assert;
+-var helpers = require('yeoman-generator').test;
+-var os = require('os');
+-
+-describe('react-reflux:app', function () {
+-  describe('when using no features with gulp', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates files', function () {
+-      assert.file([
+-        'app/favicon.ico',
+-        'app/robots.txt',
+-        'app/404.html',
+-        'app/scripts/app.js',
+-        'app/scripts/router.jsx',
+-        'app/scripts/components/layout.jsx',
+-        'app/scripts/components/home.jsx',
+-        'app/styles/main.css',
+-        'app/index.html',
+-
+-        'gulpfile.js',
+-        'bower.json',
+-        'package.json',
+-        '.editorconfig',
+-        '.jshintrc',
+-        'README.md'
+-      ]);
+-    });
+-
+-    it('doesn\'t create grunt config', function () {
+-      assert.noFile([
+-        'Gruntfile.js'
+-      ]);
+-    });
+-
+-    it('writes metadata to package.json', function () {
+-      assert.fileContent('package.json', /test/);
+-      assert.fileContent('package.json', /A test project/);
+-      assert.fileContent('package.json', /Test Testington/);
+-      assert.fileContent('package.json', /1.0.1/);
+-      assert.fileContent('package.json', /MIT/);
+-    });
+-
+-    it('writes metadata to bower.json', function () {
+-      assert.fileContent('bower.json', /test/);
+-      assert.fileContent('bower.json', /Test Testington/);
+-      assert.fileContent('bower.json', /1.0.1/);
+-      assert.fileContent('bower.json', /MIT/);
+-    });
+-
+-    it('writes metadata to index.html', function () {
+-      assert.fileContent('app/index.html', /A test project/);
+-    });
+-
+-    it('uses css syntax', function () {
+-      assert.fileContent('app/styles/main.css', /.hero-unit h1/);
+-    });
+-  });
+-
+-  describe('when using no features with grunt', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-        ],
+-        buildTool: 'grunt'
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates grunt config', function () {
+-      assert.file([
+-        'Gruntfile.js'
+-      ]);
+-    });
+-
+-    it('doesn\'t create gulp config', function () {
+-      assert.noFile([
+-        'gulpfile.js'
+-      ]);
+-    });
+-  });
+-
+-  describe('when using modernizr', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeModernizr'
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('inserts modernizr to html', function () {
+-      assert.fileContent('app/index.html', /<script src="vendor\/modernizr\/modernizr.js"><\/script>/);
+-    });
+-
+-    it('inserts modernizr to bower', function () {
+-      assert.fileContent('bower.json', /"modernizr"/);
+-    });
+-
+-    it('inserts modernizr to home html component', function () {
+-      assert.fileContent('app/scripts/components/home.jsx', /<li>Modernizr<\/li>/);
+-    });
+-  });
+-
+-  describe('when using CoffeeScript with gulp', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeCoffee'
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates coffee and cjsx files', function () {
+-      assert.file([
+-        'app/scripts/app.coffee',
+-        'app/scripts/router.cjsx',
+-        'app/scripts/components/layout.cjsx',
+-        'app/scripts/components/home.cjsx',
+-
+-        'gulpfile.coffee'
+-      ]);
+-    });
+-
+-    it('doesn\'t create js and jsx files', function () {
+-      assert.noFile([
+-        'app/scripts/app.js',
+-        'app/scripts/router.jsx',
+-        'app/scripts/components/layout.jsx',
+-        'app/scripts/components/home.jsx',
+-
+-        'gulpfile.js',
+-        'Gruntfile.coffee',
+-        'Gruntfile.js'
+-      ]);
+-    });
+-
+-    it('inserts coffeescript requirements to package.json', function () {
+-      assert.fileContent([
+-        ['package.json', /"coffee-reactify"/],
+-        ['package.json', /"coffee-script"/],
+-        ['package.json', /"gulp-rename"/]
+-      ]);
+-    });
+-
+-    it('doesn\'t insert unneeded requirements to package.json', function () {
+-      assert.noFileContent('package.json', /"reactify"/);
+-    });
+-  });
+-
+-  describe('when using CoffeeScript with grunt', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeCoffee'
+-        ],
+-        buildTool: 'grunt'
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates coffee grunt config', function () {
+-      assert.file([
+-        'Gruntfile.coffee'
+-      ]);
+-    });
+-
+-    it('doesn\'t create js or coffee gulp config', function () {
+-      assert.noFile([
+-        'gulpfile.js',
+-        'gulpfile.coffee',
+-        'Gruntfile.js'
+-      ]);
+-    });
+-  });
+-
+-  describe('when using compass with javascript and gulp', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeSass'
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates sass files', function () {
+-      assert.file([
+-        'app/styles/main.scss'
+-      ]);
+-    });
+-
+-    it('doesn\'t create css files', function () {
+-      assert.noFile([
+-        'app/styles/main.css'
+-      ]);
+-    });
+-
+-    it('inserts compass to gulp', function () {
+-      assert.fileContent('gulpfile.js', /'compass'/);
+-    });
+-
+-    it('inserts compass to package.json', function () {
+-      assert.fileContent('package.json', /"gulp-compass"/);
+-    });
+-
+-    it('inserts compass to home html component', function () {
+-      assert.fileContent('app/scripts/components/home.jsx', /<li>Sass with Compass<\/li>/);
+-    });
+-  });
+-
+-  describe('when using compass with javascript and grunt', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeSass'
+-        ],
+-        buildTool: 'grunt'
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('inserts compass to grunt', function () {
+-      assert.fileContent('Gruntfile.js', /compass:/);
+-    });
+-
+-    it('inserts compass to package.json', function () {
+-      assert.fileContent('package.json', /"grunt-contrib-compass"/);
+-    });
+-  });
+-
+-  describe('when using compass with coffeescript and gulp', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeSass',
+-          'includeCoffee'
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('inserts compass to gulp', function () {
+-      assert.fileContent('gulpfile.coffee', /'compass'/);
+-    });
+-  });
+-
+-  describe('when using compass with coffeescript and grunt', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeSass',
+-          'includeCoffee'
+-        ],
+-        buildTool: 'grunt'
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('inserts compass to gulp', function () {
+-      assert.fileContent('Gruntfile.coffee', /compass:/);
+-    });
+-  });
+-
+-  describe('when using jest with javascript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeJest'
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates test file', function () {
+-      assert.file([
+-        '__tests__/home-test.jsx'
+-      ]);
+-    });
+-
+-    it('creates test preprocessor', function () {
+-      assert.file([
+-        'preprocessor.js'
+-      ]);
+-    });
+-
+-    it('contains javascript preprocessor', function () {
+-      assert.fileContent('preprocessor.js', /ReactTools.transform\(src\)/)
+-    });
+-
+-    it('inserts jest to package.json', function () {
+-      assert.fileContent('package.json', /"jest-cli"/);
+-    });
+-
+-    it('inserts react-tools to package.json', function () {
+-      assert.fileContent('package.json', /"react-tools"/);
+-    });
+-
+-    it('inserts test script to package.json', function () {
+-      assert.fileContent('package.json', /"test": ".\/node_modules\/jest-cli\/bin\/jest.js"/);
+-    });
+-
+-    it('inserts jest config to package.json', function () {
+-      assert.fileContent('package.json', /"jest": {/);
+-    });
+-  });
+-
+-  describe('when using jest with coffeescript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../app'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'skip-install': true })
+-      .withPrompts({
+-        projectName: 'test',
+-        desc: 'A test project',
+-        author: 'Test Testington',
+-        version: '1.0.1',
+-        license: 'MIT',
+-        features: [
+-          'includeCoffee',
+-          'includeJest'
+-        ]
+-      })
+-      .on('end', done);
+-    });
+-
+-    it('creates test file', function () {
+-      assert.file([
+-        '__tests__/home-test.cjsx'
+-      ]);
+-    });
+-
+-    it('creates test preprocessor', function () {
+-      assert.file([
+-        'preprocessor.js'
+-      ]);
+-    });
+-
+-    it('contains javascript preprocessor', function () {
+-      assert.fileContent('preprocessor.js', /CoffeeReact.compile\(src, {/)
+-    });
+-
+-    it('inserts jest to package.json', function () {
+-      assert.fileContent('package.json', /"jest-cli"/);
+-    });
+-
+-    it('inserts coffee-react to package.json', function () {
+-      assert.fileContent('package.json', /"coffee-react"/);
+-    });
+-
+-    it('inserts test script to package.json', function () {
+-      assert.fileContent('package.json', /"test": ".\/node_modules\/jest-cli\/bin\/jest.js"/);
+-    });
+-
+-    it('inserts jest config to package.json', function () {
+-      assert.fileContent('package.json', /"jest": {/);
+-    });
+-  });
+-});
+diff --git a/test/test-component.js b/test/test-component.js
+deleted file mode 100644
+index eecf31e..0000000
+--- a/test/test-component.js
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*global describe, beforeEach, it*/
+-'use strict';
+-
+-var path = require('path');
+-var assert = require('yeoman-generator').assert;
+-var helpers = require('yeoman-generator').test;
+-var os = require('os');
+-
+-describe('react-reflux:component', function () {
+-  describe('when using javascript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../component'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withArguments(['dashboard/users'])
+-      .on('end', done);
+-    });
+-
+-    it('creates the component', function () {
+-      assert.file([
+-        'app/scripts/components/dashboard/users.jsx',
+-      ]);
+-    });
+-
+-    it('correctly creates variable names', function () {
+-      assert.fileContent('app/scripts/components/dashboard/users.jsx', /var Users /);
+-    });
+-  });
+-
+-  describe('when using coffeescript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../component'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'coffee-script': true })
+-      .withArguments(['dashboard/users'])
+-      .on('end', done);
+-    });
+-
+-    it('creates the coffee component', function () {
+-      assert.file([
+-        'app/scripts/components/dashboard/users.cjsx',
+-      ]);
+-    });
+-
+-    it('correctly creates variable names', function () {
+-      assert.fileContent('app/scripts/components/dashboard/users.cjsx', /Users /);
+-    });
+-  });
+-});
+diff --git a/test/test-store.js b/test/test-store.js
+deleted file mode 100644
+index 0c4caf6..0000000
+--- a/test/test-store.js
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*global describe, beforeEach, it*/
+-'use strict';
+-
+-var path = require('path');
+-var assert = require('yeoman-generator').assert;
+-var helpers = require('yeoman-generator').test;
+-var os = require('os');
+-
+-describe('react-reflux:store', function () {
+-  describe('when using javascript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../store'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withArguments(['user'])
+-      .on('end', done);
+-    });
+-
+-    it('creates the store', function () {
+-      assert.file([
+-        'app/scripts/stores/UserStore.js',
+-      ]);
+-    });
+-
+-    it('correctly creates variable names', function () {
+-      assert.fileContent('app/scripts/stores/UserStore.js', /var UserStore /);
+-    });
+-  });
+-
+-  describe('when using coffeescript', function () {
+-    before(function (done) {
+-      helpers.run(path.join(__dirname, '../store'))
+-      .inDir(path.join(os.tmpdir(), './temp-test'))
+-      .withOptions({ 'coffee-script': true })
+-      .withArguments(['user'])
+-      .on('end', done);
+-    });
+-
+-    it('creates the coffee store', function () {
+-      assert.file([
+-        'app/scripts/stores/UserStore.coffee',
+-      ]);
+-    });
+-
+-    it('correctly creates variable names', function () {
+-      assert.fileContent('app/scripts/stores/UserStore.coffee', /UserStore /);
+-    });
+-  });
+-});

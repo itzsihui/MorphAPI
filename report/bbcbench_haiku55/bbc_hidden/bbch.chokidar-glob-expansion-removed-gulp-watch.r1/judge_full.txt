@@ -1,0 +1,9 @@
+JUDGE chokidar-glob-expansion-removed-gulp-watch
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/fixtures/folder/index.js test/fixtures/index.js test/test-api.js test/test-base.js test/test-callback.js test/test-cwd.js test/test-dir.js test/test-ignore.js test/test-log.js test/test-opts.js test/test-stream.js test/test-watch.js test/util/set-default-options.js test/util/touch.js
+  prod     : yes
+  rerun    : exit 1, counts []
+  patch    : /srv/agentcmp/ws/bbch.chokidar-glob-expansion-removed-gulp-watch.r1/w/.judge/agent.patch
+FAIL chokidar-glob-expansion-removed-gulp-watch

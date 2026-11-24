@@ -1,0 +1,9 @@
+JUDGE lodash-clone-isdeep-istex-api-faker
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/basic.spec.js
+  prod     : yes
+  rerun    : exit 0, counts [4 passing ]
+  patch    : /srv/agentcmp/ws/bbch.lodash-clone-isdeep-istex-api-faker.r1/w/.judge/agent.patch
+PASS lodash-clone-isdeep-istex-api-faker

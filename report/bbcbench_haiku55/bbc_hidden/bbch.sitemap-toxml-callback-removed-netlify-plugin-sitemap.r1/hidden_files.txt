@@ -1,0 +1,10 @@
+.github/workflows/test.yml
+tests/fixtures/children/child-one.html
+tests/fixtures/children/child-two.html
+tests/fixtures/children/grandchildren/grandchild-one.html
+tests/fixtures/children/grandchildren/grandchild-two.html
+tests/fixtures/index.html
+tests/fixtures/page-one.html
+tests/fixtures/page-three.html
+tests/fixtures/page-two.html
+tests/sitemap.test.js

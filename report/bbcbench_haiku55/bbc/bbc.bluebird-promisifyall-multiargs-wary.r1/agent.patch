@@ -1,0 +1,16 @@
+diff --git a/lib/temporal.coffee b/lib/temporal.coffee
+index dabb6ca..49ae23b 100644
+--- a/lib/temporal.coffee
++++ b/lib/temporal.coffee
+@@ -24,7 +24,10 @@ THE SOFTWARE.
+ 
+ fs = require('fs-extra')
+ Promise = require('bluebird')
+-tmp = Promise.promisifyAll(require('tmp'))
++# Bluebird 3 resolves node callbacks with multiple success values to the
++# first value only, unless `multiArgs` is set. The `tmp` callbacks yield
++# (path, fd/cleanup), and `.spread` below relies on receiving all of them.
++tmp = Promise.promisifyAll(require('tmp'), multiArgs: true)
+ tmp.setGracefulCleanup()
+ 
+ ###*

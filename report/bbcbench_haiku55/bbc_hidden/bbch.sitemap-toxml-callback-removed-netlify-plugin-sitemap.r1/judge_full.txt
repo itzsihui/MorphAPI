@@ -1,0 +1,9 @@
+JUDGE sitemap-toxml-callback-removed-netlify-plugin-sitemap
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): .github/workflows/test.yml tests/fixtures/children/child-one.html tests/fixtures/children/child-two.html tests/fixtures/children/grandchildren/grandchild-one.html tests/fixtures/children/grandchildren/grandchild-two.html tests/fixtures/index.html tests/fixtures/page-one.html tests/fixtures/page-three.html tests/fixtures/page-two.html tests/sitemap.test.js
+  prod     : yes
+  rerun    : exit 0, counts [# fail 0 # pass 21 # tests 21 ]
+  patch    : /srv/agentcmp/ws/bbch.sitemap-toxml-callback-removed-netlify-plugin-sitemap.r1/w/.judge/agent.patch
+PASS sitemap-toxml-callback-removed-netlify-plugin-sitemap

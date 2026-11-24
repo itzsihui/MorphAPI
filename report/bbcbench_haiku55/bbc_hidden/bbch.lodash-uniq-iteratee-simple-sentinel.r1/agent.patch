@@ -1,0 +1,2374 @@
+diff --git a/src/redisSentinel.js b/src/redisSentinel.js
+index 567502a..6c62a6d 100644
+--- a/src/redisSentinel.js
++++ b/src/redisSentinel.js
+@@ -43,7 +43,8 @@ function RedisSentinel(sentinels, options) {
+     watchedNames:       null,
+   };
+ 
+-  this.options = util._.extend(defaults, options);
++  // _.assign (own enumerable props only), matching lodash 3's _.extend. Lodash 4's _.extend is assignIn.
++  this.options = util._.assign(defaults, options);
+ 
+   // Make sure that the outside can't inject a test client:
+   delete this.options._testClient;
+@@ -218,8 +219,10 @@ RedisSentinel.prototype._handleErrorAndReconnect = function _handleErrorAndRecon
+ 
+ 
+ RedisSentinel.prototype._dedupeSentinels = function _dedupeSentinels() {
+-  // Dedupe the list based on "host(lowercase):port":
+-  this.sentinels = util._.uniq(this.sentinels, function (conf) {
++  // Dedupe the list based on "host(lowercase):port".
++  // Lodash 4's _.uniq takes no iteratee (that's 3.x); the iteratee form is _.uniqBy.
++  // Lodash 4 passes only the element to the iteratee (3.x also passed index and array); this one only uses the element.
++  this.sentinels = util._.uniqBy(this.sentinels, function (conf) {
+     return conf.host.toLowerCase() + ":" + conf.port;
+   });
+ };
+diff --git a/src/util.js b/src/util.js
+index b334321..b4346f0 100644
+--- a/src/util.js
++++ b/src/util.js
+@@ -3,7 +3,8 @@ var node_util = require('util')
+ 
+ 
+ // Make a copy of Node's util:
+-var util    = _.extend({}, node_util);
++// (_.assign, not _.extend: in lodash 4 _.extend is assignIn and also copies inherited props.)
++var util    = _.assign({}, node_util);
+ 
+ 
+ /**
+diff --git a/tests/redis_config_fetcher_test.js b/tests/redis_config_fetcher_test.js
+deleted file mode 100644
+index f766382..0000000
+--- a/tests/redis_config_fetcher_test.js
++++ /dev/null
+@@ -1,580 +0,0 @@
+-var RedisConfigFetcher = require('../src/redisConfigFetcher')
+-  , util               = require('../src/util')
+-  , EventEmitter       = require('events').EventEmitter
+-  , expect             = require('expect');
+-
+-
+-function FakeClient() {
+-  this.send_command = function (cmd, args, cb) {
+-    if (!this._send_command) { return; }
+-    process.nextTick(this._send_command.bind(this, cmd, args, cb));
+-  };
+-  this.end = function () {};
+-}
+-util.inherits(FakeClient, EventEmitter);
+-
+-
+-var normal_info
+-  = "# Server\r\nredis_version:2.8.11\r\nredis_git_sha1:00000000\r\nredis_git_dirty:0"
+-  + "\r\nredis_build_id:cd43e547b41f72f\r\nredis_mode:standalone\r\nos:Darwin 13.4.0 "
+-  + "x86_64\r\narch_bits:64\r\nmultiplexing_api:kqueue\r\ngcc_version:4.2.1\r\nproces"
+-  + "s_id:56422\r\nrun_id:8c786b8dd9e86ff83d360ac0c34a7632afbbff66\r\ntcp_port:6379\r"
+-  + "\nuptime_in_seconds:25781\r\nuptime_in_days:0\r\nhz:10\r\nlru_clock:6747792\r\nc"
+-  + "onfig_file:/usr/local/etc/redis.conf\r\n\r\n# Clients\r\nconnected_clients:9\r\n"
+-  + "client_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0"
+-  + "\r\n\r\n# Memory\r\nused_memory:1145552\r\nused_memory_human:1.09M\r\nused_memory"
+-  + "_rss:2015232\r\nused_memory_peak:1499792\r\nused_memory_peak_human:1.43M\r\nused"
+-  + "_memory_lua:33792\r\nmem_fragmentation_ratio:1.76\r\nmem_allocator:libc\r\n\r\n#"
+-  + " Persistence\r\nloading:0\r\nrdb_changes_since_last_save:0\r\nrdb_bgsave_in_prog"
+-  + " ress:0\r\nrdb_last_save_time:1416014109\r\nrdb_last_bgsave_status:ok\r\nrdb_last"
+-  + "_bgsave_time_sec:0\r\nrdb_current_bgsave_time_sec:-1\r\naof_enabled:0\r\naof_rew"
+-  + "rite_in_progress:0\r\naof_rewrite_scheduled:0\r\naof_last_rewrite_time_sec:-1\r"
+-  + "\naof_current_rewrite_time_sec:-1\r\naof_last_bgrewrite_status:ok\r\naof_last_wri"
+-  + "te_status:ok\r\n\r\n# Stats\r\ntotal_connections_received:33\r\ntotal_commands_p"
+-  + "rocessed:343\r\ninstantaneous_ops_per_sec:0\r\nrejected_connections:0\r\nsync_fu"
+-  + "ll:0\r\nsync_partial_ok:0\r\nsync_partial_err:0\r\nexpired_keys:0\r\nevicted_key"
+-  + "s:0\r\nkeyspace_hits:41\r\nkeyspace_misses:126\r\npubsub_channels:0\r\npubsub_pa"
+-  + "tterns:0\r\nlatest_fork_usec:233\r\n\r\n# Replication\r\nrole:master\r\nconnecte"
+-  + "d_slaves:0\r\nmaster_repl_offset:0\r\nrepl_backlog_active:0\r\nrepl_backlog_size"
+-  + ":1048576\r\nrepl_backlog_first_byte_offset:0\r\nrepl_backlog_histlen:0\r\n\r\n# "
+-  + "CPU\r\nused_cpu_sys:1.21\r\nused_cpu_user:1.15\r\nused_cpu_sys_children:0.00\r\n"
+-  + "used_cpu_user_children:0.00\r\n\r\n# Keyspace\r\ndb0:keys=1,expires=0,avg_ttl=0"
+-  + "\r\ndb1:keys=11,expires=5,avg_ttl=101643976\r\ndb3:keys=3,expires=0,avg_ttl=0\r"
+-  + "\ndb4:keys=7,expires=3,avg_ttl=926438415\r\ndb9:keys=1,expires=1,avg_ttl=665737"
+-  + "58";
+-
+-var sentinel_info
+-  = "# Server\r\nredis_version:2.8.11\r\nredis_git_sha1:00000000\r\nredis_git_dirty:0"
+-  + "\r\nredis_build_id:cd43e547b41f72f\r\nredis_mode:sentinel\r\nos:Darwin 13.4.0 x8"
+-  + "6_64\r\narch_bits:64\r\nmultiplexing_api:kqueue\r\ngcc_version:4.2.1\r\nprocess_"
+-  + "id:48377\r\nrun_id:8397fda691ee9289b623c3904e21301ac4ef82ae\r\ntcp_port:9501\r\n"
+-  + "uptime_in_seconds:116301\r\nuptime_in_days:1\r\nhz:16\r\nlru_clock:6748294\r\nco"
+-  + "nfig_file:/Users/lolusername/sentinel-test/a/sentinel.conf\r\n\r\n# Sentinel\r\n"
+-  + "sentinel_masters:3\r\nsentinel_tilt:0\r\nsentinel_running_scripts:0\r\nsentinel_"
+-  + "scripts_queue_length:0\r\nmaster0:name=cache,status=ok,address=127.0.0.1:9203,sl"
+-  + "aves=2,sentinels=5\r\nmaster1:name=main,status=ok,address=127.0.0.1:9001,slaves="
+-  + "1,sentinels=5\r\nmaster2:name=shard,status=ok,address=127.0.0.1:9102,slaves=1,se"
+-  + "ntinels=5";
+-
+-
+-describe("RedisConfigFetcher", function () {
+-  describe("during initialization", function () {
+-    it("emits 'error' on connection error", function (done) {
+-      var client = new FakeClient();
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client
+-      });
+-      rcf.on('error', function (err) {
+-        expect(err.message).toMatch(/lol test/i);
+-        done();
+-      });
+-      client.emit('error', new Error("LOL TEST"));
+-    });
+-
+-    it("emits 'error' on client close", function (done) {
+-      var client = new FakeClient();
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client
+-      });
+-      rcf.on('error', function (err) {
+-        expect(err).toExist();
+-        done();
+-      });
+-      client.emit('end');
+-    });
+-
+-    it("emits 'error' on command timeouts", function (done) {
+-      this.timeout(1000);
+-
+-      var client = new FakeClient();
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-      rcf.on('error', function (err) {
+-
+-        expect(err.message)
+-          .toMatch(/timed out/i)
+-          .toMatch(/INFO/i);
+-
+-        done();
+-      });
+-      client.emit('ready');
+-    });
+-
+-    it("emits 'error' with non-sentinel", function (done) {
+-      var client = new FakeClient();
+-      client.send_command = function (cmd, args, cb) {
+-        expect(cmd).toBe("INFO");
+-        cb(null, normal_info);
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('error', function (err) {
+-        expect(err.message).toMatch(/invalid response/i);
+-        done();
+-      });
+-      client.emit('ready');
+-    });
+-
+-    it("emits 'connected' with sentinel", function (done) {
+-      var client = new FakeClient();
+-      client.send_command = function (cmd, args, cb) {
+-        expect(cmd).toBe("INFO");
+-        cb(null, sentinel_info);
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('connected', done);
+-      client.emit('ready');
+-    });
+-  });
+-
+-  describe("when using isInfoResponseValid", function () {
+-
+-    it("detects null as non-sentinel", function () {
+-      var res = RedisConfigFetcher._isInfoResponseValid(null);
+-      expect(res).toBe(false);
+-    });
+-
+-    it("detects a normal info as non-sentinel", function () {
+-      var res = RedisConfigFetcher._isInfoResponseValid(normal_info);
+-      expect(res).toBe(false);
+-    });
+-
+-    it("detects a sentinel info as such", function () {
+-      var res = RedisConfigFetcher._isInfoResponseValid(sentinel_info);
+-      expect(res).toBe(true);
+-    });
+-  });
+-
+-  describe("when parsing a server list", function () {
+-
+-    var last_log = null;
+-
+-    function _customLogger (msg) {
+-      last_log = msg;
+-    }
+-
+-    var rcf = new RedisConfigFetcher("localhost", 6379, {
+-      customLogger: _customLogger,
+-      debugLogging: true,
+-      _testClient: new FakeClient()
+-    });
+-
+-    beforeEach(function () {
+-      last_log = null;
+-    });
+-
+-    it("rejects bad types", function () {
+-      var res = rcf._parseServerList("Master", null);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Master list rejected: Bad input");
+-    });
+-
+-    it("rejects odd number of items in list", function () {
+-      var res = rcf._parseServerList("Master", [["name", "derp", "foobar"]]);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Master list rejected: Malformed row");
+-    });
+-
+-    it("rejects dupe properties", function () {
+-      var res = rcf._parseServerList("Master", [["name", "derp", "hello", "world", "name", "not derp"]]);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Master list rejected: Row had duplicate property");
+-    });
+-
+-    it("rejects non-numeric ports", function () {
+-      var res = rcf._parseServerList("Master", [["name", "derp", "port", "foobar", "thing", "blahblah"]]);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Master list rejected: Row has a non-numeric port");
+-    });
+-
+-    it("rejects missing name", function () {
+-      var res = rcf._parseServerList("Master", [["port", "1234", "thing", "blahblah"]]);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Master list rejected: Row lacked a name property");
+-    });
+-
+-    it("parses ports as numbers", function () {
+-      var res = rcf._parseServerList("Master", [["name", "derp", "port", "1234", "thing", "blahblah"]]);
+-      expect(!!res).toBe(true);
+-      expect(res[0].port).toBe(1234);
+-      expect(last_log).toBe(null);
+-    });
+-
+-    it("parses flags as array", function () {
+-      var res = rcf._parseServerList("Master", [["name", "derp", "flags", "master,s_down,o_down", "thing", "blahblah"]]);
+-      expect(res).toExist();
+-      expect(res[0].flags)
+-        .toBeAn(Array)
+-        .toContain("master")
+-        .toContain("s_down")
+-        .toContain("o_down");
+-      expect(last_log).toBe(null);
+-    });
+-
+-    it("parses multiple rows", function () {
+-      var res = rcf._parseServerList("Master", [
+-        ["name", "herp", "ip", "127.0.0.1", "flags", "master,s_down,o_down"],
+-        ["name", "derp", "ip", "127.0.0.2", "flags", "master"]
+-      ]);
+-      expect(res).toExist();
+-      expect(res[0].name).toBe("herp");
+-      expect(res[1].name).toBe("derp");
+-      expect(res[0].ip).toBe("127.0.0.1");
+-      expect(res[1].ip).toBe("127.0.0.2");
+-
+-      expect(res[0].flags)
+-        .toBeAn(Array)
+-        .toContain("master")
+-        .toContain("s_down")
+-        .toContain("o_down");
+-
+-      expect(res[1].flags)
+-        .toBeAn(Array)
+-        .toContain("master");
+-
+-      expect(last_log).toBe(null);
+-    });
+-  });
+-
+-  describe("when building a lookup", function () {
+-
+-    var last_log = null;
+-
+-    function _customLogger (msg) {
+-      last_log = msg;
+-    }
+-
+-    var rcf = new RedisConfigFetcher("localhost", 6379, {
+-      customLogger: _customLogger,
+-      debugLogging: true,
+-      _testClient: new FakeClient()
+-    });
+-
+-    beforeEach(function () {
+-      last_log = null;
+-    });
+-
+-    it("passes nulls along without logging", function () {
+-      var res = rcf._buildLookup(null);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe(null);
+-    });
+-
+-    it("fails on non-arrays", function () {
+-      var res = rcf._buildLookup({a: "lol"});
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Failed to build lookup: Non-array provided");
+-    });
+-
+-    it("fails when something lacks a name", function () {
+-      var res = rcf._buildLookup([{a: "lol"}]);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Failed to build lookup: Item # 0 has no name");
+-    });
+-
+-    it("fails with duplicate names", function () {
+-      var res = rcf._buildLookup([{name: "lol"}, {name: "derp"}, {name: "lol"}]);
+-      expect(res).toBe(null);
+-      expect(last_log).toBe("RedisConfigFetcher: Failed to build lookup: Duplicate name in array: lol");
+-    });
+-
+-    it("works when everything is ok", function () {
+-      var res = rcf._buildLookup([{name: "lol", ip: "123.45.67.89"}, {name: "derp", ip: "98.76.54.32"}]);
+-
+-      expect(res)
+-        .toExist()
+-        .toBeAn(Object);
+-
+-      expect(res.lol).toExist();
+-      expect(res.derp).toExist();
+-      expect(res.lol.ip).toBe("123.45.67.89");
+-      expect(res.derp.ip).toBe("98.76.54.32");
+-
+-      expect(last_log).toBe(null);
+-    });
+-  });
+-
+-  describe("when updating configs", function () {
+-
+-    var masters_results = [
+-      ["name", "foo", "ip", "10.0.0.1", "port", "6379", "flags", "master,s_down"]
+-    ];
+-
+-    var slaves_results = [
+-      ["name", "10.0.0.2:6379", "ip", "10.0.0.2", "port", "6379", "flags", "slave"]
+-    ];
+-
+-    function validateResults(name, master, slaves) {
+-      expect(name).toBe("foo");
+-      expect(master.name).toBe("foo");
+-      expect(master.ip).toBe("10.0.0.1");
+-      expect(master.port).toBe(6379);
+-      expect(master.flags).toBeAn(Array);
+-      expect(slaves).toBeAn(Array);
+-      expect(slaves[0].ip).toBe("10.0.0.2");
+-      expect(slaves[0].port).toBe(6379);
+-      expect(slaves[0].flags).toBeAn(Array);
+-    }
+-
+-
+-    it("emits 'error' when timeout from masters command", function (done) {
+-      var client = new FakeClient();
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        // Else, do nothing.
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('error', function (err) {
+-        expect(err.message)
+-          .toMatch(/timed out/i)
+-          .toMatch(/sentinel masters/i);
+-        done();
+-      });
+-
+-      rcf.on('connected', function () {
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-
+-    it("emits 'error' when timeout from slaves command", function (done) {
+-
+-      var client = new FakeClient();
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        if (cmd.toLowerCase() === "sentinel") {
+-          if (args[0].toLowerCase() === "masters") {
+-            return cb(null, masters_results);
+-          }
+-        }
+-        // Else, do nothing.
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('error', function (err) {
+-        expect(err.message)
+-          .toMatch(/timed out/i)
+-          .toMatch(/sentinel slaves foo/i);
+-        done();
+-      });
+-
+-      rcf.on('connected', function () {
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-
+-    it("emits 'error' when bad results from masters command", function (done) {
+-
+-      var client = new FakeClient();
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        if (cmd.toLowerCase() === "sentinel") {
+-          if (args[0].toLowerCase() === "masters") {
+-            return cb(null, [["ip", "123.45.6.7"]]);
+-          }
+-        }
+-        // Else, do nothing.
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('error', function (err) {
+-        expect(err.message).toMatch(/parsing master/i);
+-        done();
+-      });
+-
+-      rcf.on('connected', function () {
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-
+-    it("emits 'error' when bad results from slaves command", function (done) {
+-
+-      var client = new FakeClient();
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        if (cmd.toLowerCase() === "sentinel") {
+-          switch(args[0].toLowerCase()) {
+-            case "masters": return cb(null, masters_results);
+-            case "slaves":  return cb(null, [["ip", "not.an.ip.address"]]);
+-          }
+-        }
+-        // Else, do nothing.
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('error', function (err) {
+-        expect(err.message).toMatch(/parsing slave/i);
+-        done();
+-      });
+-
+-      rcf.on('connected', function () {
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-
+-    it("emits 'config' with correct values", function (done) {
+-
+-      var client = new FakeClient();
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        if (cmd.toLowerCase() === "sentinel") {
+-          switch(args[0].toLowerCase()) {
+-            case "masters": return cb(null, masters_results);
+-            case "slaves":  return cb(null, slaves_results);
+-          }
+-        }
+-        // Else, do nothing.
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('config', function (name, master, slaves) {
+-        validateResults(name, master, slaves);
+-        done();
+-      });
+-
+-      rcf.on('connected', function () {
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-
+-    it("only emits 'config's for replicas that exist", function (done) {
+-
+-      var client = new FakeClient();
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        if (cmd.toLowerCase() === "sentinel") {
+-          switch(args[0].toLowerCase()) {
+-            case "masters": return cb(null, masters_results);
+-            case "slaves":  return cb(null, slaves_results);
+-          }
+-        }
+-        // Else, do nothing.
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50,
+-        watchedNames: ["foo", "bar"]
+-      });
+-
+-      var seen_foo = false
+-        , seen_bar = false;
+-
+-      // Override the log to catch the warning about bar:
+-      rcf._log = function () {
+-        var msg = [].slice.call(arguments, 0).map(String).join(" ");
+-
+-        if (/warning.*watchedNames.*bar/i.test(msg)) {
+-          seen_bar = true;
+-
+-        } else if(/Done fetching configs/i.test(msg)) {
+-          var err = seen_foo && seen_bar ? null : new Error("Things omitted");
+-          return done(err);
+-        }
+-      };
+-
+-      // Register for 'config' events to catch info about foo:
+-      rcf.on('config', function (name, master, slaves) {
+-        validateResults(name, master, slaves);
+-        seen_foo = true;
+-      });
+-
+-      rcf.on('connected', function () {
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-
+-    it("runs one update at a time", function (done) {
+-
+-      var client = new FakeClient();
+-
+-      // A command starts with the MASTERS command, and ends with the CONFIG message.
+-      // Just make sure that we don't do things out-of-order:
+-
+-      // Do this 10 times
+-      var cmd_running = false;
+-      var cmd_count = 0;
+-
+-      client._send_command = function (cmd, args, cb) {
+-        if (cmd === "INFO") { return cb(null, sentinel_info); }
+-        if (cmd.toLowerCase() === "sentinel") {
+-          switch(args[0].toLowerCase()) {
+-            case "masters":
+-              if (++cmd_count > 10) { throw new Error("Update Configs was run too many times"); }
+-              if (cmd_running     ) { throw new Error("Update Configs ran while another one was going"); }
+-              cmd_running = true;
+-              if (cmd_count <= 9) { rcf.updateConfigs(); }
+-              return cb(null, masters_results);
+-            case "slaves":
+-              if (cmd_count <= 9) { rcf.updateConfigs(); }
+-              return cb(null, slaves_results);
+-          }
+-        }
+-      };
+-
+-      var rcf = new RedisConfigFetcher('localhost', 6379, {
+-        _testClient: client,
+-        commandTimeout: 50
+-      });
+-
+-      rcf.on('config', function (name, master, slaves) {
+-        if (!cmd_running) { throw new Error("Update Configs wasn't running, and yet finished"); }
+-        cmd_running = false;
+-        validateResults(name, master, slaves);
+-        if (cmd_count === 10) { return done(); }
+-      });
+-
+-      rcf.on('connected', function () {
+-        // Try to kick off 3, just for giggles.
+-        rcf.updateConfigs();
+-        rcf.updateConfigs();
+-        rcf.updateConfigs();
+-      });
+-
+-      client.emit('ready');
+-    });
+-  });
+-});
+diff --git a/tests/redis_replica_test.js b/tests/redis_replica_test.js
+deleted file mode 100644
+index e8c076a..0000000
+--- a/tests/redis_replica_test.js
++++ /dev/null
+@@ -1,540 +0,0 @@
+-var RedisReplica = require('../src/redisReplica')
+-  , mockRandom = require('./util/mockRandom')
+-  , expect = require('expect');
+-
+-
+-describe('RedisReplica', function () {
+-
+-  describe("when checking isDown", function () {
+-
+-    var isDown = RedisReplica._isDown;
+-
+-    it("handles null values", function () {
+-      expect(isDown("slave", null)).toBe(true);
+-      expect(isDown("slave", undefined)).toBe(true);
+-      expect(isDown("master", null)).toBe(true);
+-      expect(isDown("master", undefined)).toBe(true);
+-    });
+-
+-    it("handles config without flags", function () {
+-      expect(isDown("slave", {})).toBe(false);
+-      expect(isDown("master", {})).toBe(false);
+-    });
+-
+-    it("detects an up slave", function () {
+-      expect(isDown("slave", {flags: ["slave"]})).toBe(false);
+-    });
+-
+-    it("detects a down slave", function () {
+-      expect(isDown("slave", {flags: ["slave", "s_down"]})).toBe(true);
+-    });
+-
+-    it("detects an up master", function () {
+-      expect(isDown("master", {flags: ["master"]})).toBe(false);
+-      expect(isDown("master", {flags: ["master", "s_down"]})).toBe(false);
+-    });
+-
+-    it("detects a down master", function () {
+-      expect(isDown("master", {flags: ["slave", "o_down"]})).toBe(true);
+-    });
+-  });
+-
+-  describe("when loading a master config", function () {
+-    it("detects no change from null to null", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig(null);
+-      expect(res).toBe(false);
+-    });
+-
+-    it("detects change from null to config", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects change from config to null", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig(null);
+-      expect(res).toBe(true);
+-    });
+-
+-    it("rejects loading a config from the wrong name", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-
+-      expect(function () {
+-        repl._loadMasterConfig({name: "totally_real", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      }).toThrow(/wrong replica/i);
+-    });
+-
+-    it("detects no change from config to config", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(false);
+-    });
+-
+-    it("detects changes in ip", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig({name: "fake", ip: "10.123.45.67", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects changes in port", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 16379, flags: ["master"]});
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects changes in up/down", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master", "o_down"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects s_down's for master", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(true);
+-      res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master", "s_down"]});
+-      expect(res).toBe(false);
+-      res = repl._loadMasterConfig({name: "fake", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-      expect(res).toBe(false);
+-    });
+-  });
+-
+-  describe("when loading slave configs", function () {
+-    it("detects no change from null to null", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var res = repl._loadSlaveConfigs(null);
+-      expect(res).toBe(false);
+-    });
+-
+-    it("detects change from null to list", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects change from list to null", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(null);
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects no change from list to same list", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(false);
+-    });
+-
+-    it("detects change when lists are different length", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var old_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        },
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6380,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(old_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects change when new ip is introduced", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var old_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.2",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(old_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects change when new port is introduced", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var old_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6380,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(old_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-    });
+-
+-    it("detects change when server changes up/down state", function () {
+-      var repl = new RedisReplica("fake", null, {});
+-      var old_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave", "s_down"]
+-        }
+-      ];
+-      var new_conf = [
+-        {
+-          name: "fake",
+-          ip: "127.0.0.1",
+-          port: 6379,
+-          flags: ["slave"]
+-        }
+-      ];
+-      var res = repl._loadSlaveConfigs(old_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(new_conf);
+-      expect(res).toBe(true);
+-      res = repl._loadSlaveConfigs(old_conf);
+-      expect(res).toBe(true);
+-    });
+-  });
+-
+-  describe("when creating user clients", function () {
+-
+-    var _conf = {"lol": 123};
+-
+-    function makeCreateClient() {
+-      return function _createClient(port, host, config) {
+-        expect(config.lol).toBe(123);
+-        return host + ":" + port;
+-      };
+-    }
+-
+-    describe("for a master", function () {
+-      it("returns null when no config", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        var res = repl.connectMaster();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns null when master is down", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadMasterConfig({name: "lol", ip: "10.0.0.1", port: 6379, flags: ["master", "o_down"]});
+-        var res = repl.connectMaster();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns a client when master is up", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadMasterConfig({name: "lol", ip: "10.0.0.1", port: 6379, flags: ["master"]});
+-        var res = repl.connectMaster();
+-        expect(res).toBe("10.0.0.1:6379");
+-      });
+-    });
+-
+-    describe("for a random slave", function () {
+-
+-      // RNG setup:
+-      mockRandom.installHooks();
+-
+-      it("returns null when no slaves", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        var res = repl.connectSlave();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns null when all slaves are down", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave", "s_down"]}
+-        ]);
+-        var res = repl.connectSlave();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns a random slave when at least one is up", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave"]}
+-        ]);
+-
+-        var counts = {"10.0.0.1:6380": 0, "10.0.0.1:6381": 0};
+-        for (var i=0; i<100; i++) {
+-          var res = repl.connectSlave();
+-          if (!counts.hasOwnProperty(res)) {
+-            throw new Error("Unexpected result: " + String(res));
+-          }
+-          counts[res]++;
+-        }
+-        expect(counts["10.0.0.1:6380"]).toBeGreaterThan(40);
+-        expect(counts["10.0.0.1:6381"]).toBeGreaterThan(40);
+-      });
+-    });
+-
+-    describe("for all slaves", function () {
+-      it("returns an empty array when no slaves", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        var res = repl.connectAllSlaves();
+-        expect(res).toBeAn(Array);
+-        expect(res.length).toBe(0);
+-      });
+-
+-      it("returns an empty array when all slaves are down", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave", "s_down"]}
+-        ]);
+-        var res = repl.connectAllSlaves();
+-        expect(res).toBeAn(Array);
+-        expect(res.length).toBe(0);
+-      });
+-
+-      it("returns all live slaves in an array", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave"]}
+-        ]);
+-        var res = repl.connectAllSlaves();
+-
+-        expect(res)
+-          .toBeAn(Array)
+-          .toContain("10.0.0.1:6379")
+-          .toContain("10.0.0.1:6381");
+-
+-        expect(res.length).toBe(2);
+-      });
+-    });
+-  });
+-
+-  describe("when getting connection info", function () {
+-
+-    var _conf = {"lol": 123};
+-
+-    function makeCreateClient() {
+-      return function _createClient() {
+-        throw new Error("This shouldn't have been called...");
+-      };
+-    }
+-
+-    describe("for a master", function () {
+-      it("returns null when no config", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        var res = repl.getMasterConfig();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns null when master is down", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadMasterConfig({name: "lol", ip: "10.0.0.1", port: 6379, flags: ["master", "o_down"]});
+-        var res = repl.getMasterConfig();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns a client when master is up", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadMasterConfig({name: "lol", ip: "10.0.0.1", port: 6379, flags: ["master"]});
+-        var res = repl.getMasterConfig();
+-        expect(res).toEqual({ host: "10.0.0.1", port:6379 });
+-      });
+-    });
+-
+-    describe("for a random slave", function () {
+-
+-      // RNG setup:
+-      mockRandom.installHooks();
+-
+-      it("returns null when no slaves", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        var res = repl.getSlaveConfig();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns null when all slaves are down", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave", "s_down"]}
+-        ]);
+-        var res = repl.getSlaveConfig();
+-        expect(res).toBe(null);
+-      });
+-
+-      it("returns a random slave when at least one is up", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave"]}
+-        ]);
+-
+-        var counts = {"10.0.0.1:6380": 0, "10.0.0.1:6381": 0};
+-        for (var i=0; i<100; i++) {
+-          var res = repl.getSlaveConfig();
+-          res = res.host + ":" + res.port;
+-          if (!counts.hasOwnProperty(res)) {
+-            throw new Error("Unexpected result: " + String(res));
+-          }
+-          counts[res]++;
+-        }
+-        expect(counts["10.0.0.1:6380"]).toBeGreaterThan(40);
+-        expect(counts["10.0.0.1:6381"]).toBeGreaterThan(40);
+-      });
+-    });
+-
+-    describe("for all slaves", function () {
+-      it("returns an empty array when no slaves", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        var res = repl.getAllSlaveConfigs();
+-        expect(res).toEqual([]);
+-      });
+-
+-      it("returns an empty array when all slaves are down", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave", "s_down"]}
+-        ]);
+-        var res = repl.getAllSlaveConfigs();
+-        expect(res).toEqual([]);
+-      });
+-
+-      it("returns all live slaves in an array", function () {
+-        var repl = new RedisReplica("lol", makeCreateClient(), _conf);
+-        repl._loadSlaveConfigs([
+-          {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-          {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave"]}
+-        ]);
+-        var res = repl.getAllSlaveConfigs();
+-
+-        expect(res)
+-          .toBeAn(Array)
+-          .toContain({ host: "10.0.0.1", port:6379 })
+-          .toContain({ host: "10.0.0.1", port:6381 });
+-
+-        expect(res.length).toBe(2);
+-      });
+-    });
+-  });
+-
+-  describe("when shown as a string", function () {
+-    it("works when empty", function () {
+-      var repl = new RedisReplica("lol", null, {});
+-      var str = repl.toString();
+-      expect(str).toMatch(/RedisReplica/i);
+-    });
+-
+-    it("works with a master", function () {
+-      var repl = new RedisReplica("lol", null, {});
+-
+-      repl._loadMasterConfig({name: "lol", ip: "127.0.0.1", port: 6379, flags: ["master"]});
+-
+-      expect(repl.toString())
+-        .toMatch(/RedisReplica/i)
+-        .toMatch(/127\.0\.0\.1:6379 UP/);
+-
+-      repl._loadMasterConfig({name: "lol", ip: "127.0.0.1", port: 6379, flags: ["master", "o_down"]});
+-
+-      expect(repl.toString())
+-        .toMatch(/RedisReplica/i)
+-        .toMatch(/127\.0\.0\.1:6379 DOWN/);
+-    });
+-
+-    it("works with slaves", function () {
+-      var repl = new RedisReplica("lol", null, {});
+-      repl._loadSlaveConfigs([
+-        {name: "lol", ip: "10.0.0.1", port: 6379, flags: ["slave"]},
+-        {name: "lol", ip: "10.0.0.1", port: 6380, flags: ["slave", "s_down"]},
+-        {name: "lol", ip: "10.0.0.1", port: 6381, flags: ["slave"]}
+-      ]);
+-
+-      expect(repl.toString())
+-        .toMatch(/RedisReplica/i)
+-        .toMatch(/10\.0\.0\.1:6379 UP/)
+-        .toMatch(/10\.0\.0\.1:6380 DOWN/)
+-        .toMatch(/10\.0\.0\.1:6381 UP/);
+-    });
+-  });
+-});
+diff --git a/tests/redis_sentinel_test.js b/tests/redis_sentinel_test.js
+deleted file mode 100644
+index ea8b817..0000000
+--- a/tests/redis_sentinel_test.js
++++ /dev/null
+@@ -1,572 +0,0 @@
+-var RedisSentinel_lib = require('../src/redisSentinel')
+-  , RedisSentinel = RedisSentinel_lib.RedisSentinel
+-  , MockSentinel = require('./util/mockSentinel')
+-  , async = require('async')
+-  , expect = require('expect');
+-
+-describe("RedisSentinel", function () {
+-
+-  describe("when validating a sentinel array", function () {
+-
+-    var validate = RedisSentinel._validateSentinelList;
+-
+-    it("fails when array is falsy", function () {
+-      expect(function () {
+-        validate(null);
+-      }).toThrow(/array/i);
+-    });
+-
+-    it("fails when array is not an array", function () {
+-      expect(function () {
+-        validate("wrong type");
+-      }).toThrow(/array/i);
+-    });
+-
+-    it("fails when array is empty", function () {
+-      expect(function () {
+-        validate([]);
+-      }).toThrow(/empty/i);
+-    });
+-
+-    it("fails when item in array is falsy", function () {
+-      expect(function () {
+-        validate([{host: "10.0.0.1"}, null]);
+-      }).toThrow(/#1 .*isn't an object/i);
+-    });
+-
+-    it("fails when item in array is not an object", function () {
+-      expect(function () {
+-        validate([{host: "10.0.0.1"}, "10.0.0.2"]);
+-      }).toThrow(/#1 .*isn't an object/i);
+-    });
+-
+-    it("fails when item in array omits host", function () {
+-      expect(function () {
+-        validate([{host: "10.0.0.1"}, {foo: "bar"}]);
+-      }).toThrow(/#1 .*host/i);
+-    });
+-
+-    it("succeeds when everything is ok", function () {
+-      expect(function () {
+-        validate([{host: "10.0.0.1"}, {host: "10.0.0.2", port: 1234}]);
+-      }).toNotThrow();
+-    });
+-  });
+-
+-  describe("when constructing", function () {
+-
+-    // At this stage, we're just testing constructing. Suppress the
+-    // actual connections:
+-    var saved_connect = null;
+-    beforeEach(function () {
+-      saved_connect = RedisSentinel.prototype._connectSentinel;
+-      RedisSentinel.prototype._connectSentinel = function () {};
+-    });
+-
+-    afterEach(function () {
+-      RedisSentinel.prototype._connectSentinel = saved_connect;
+-      saved_connect = null;
+-    });
+-
+-    it("rejects a bad sentinel list", function () {
+-      expect(function () {
+-        var s = new RedisSentinel([], {outageRetryTimeout: -1}); // jshint ignore:line
+-      }).toThrow(/empty/);
+-    });
+-
+-    it("will allow overrides to options", function () {
+-      var conf = {outageRetryTimeout: -1};
+-      var s = new RedisSentinel([{host:"127.0.0.1", port: 6323}]);
+-      var default_val = s.options.outageRetryTimeout;
+-      s = new RedisSentinel([{host:"127.0.0.1", port: 6323}], conf);
+-
+-      expect(s.options.outageRetryTimeout)
+-        .toBe(-1)
+-        .toNotBe(default_val);
+-    });
+-
+-    it("will allow a client redis lib to be injected", function () {
+-      var client_redis = { createClient: function () { return "TEST PASS"; }};
+-      RedisSentinel_lib.setClientRedis(client_redis);
+-      var s = new RedisSentinel([{host:"127.0.0.1", port: 6323}]);
+-      expect(s.options.createClient()).toBe("TEST PASS");
+-    });
+-
+-    it("will dedupe the list of sentinels", function () {
+-      var s = new RedisSentinel([
+-        { host:"127.0.0.1", port: 26379 },
+-        { host:"127.0.1.2", port: 6323 },
+-        { host:"127.0.0.1" }
+-      ]);
+-
+-      function _equal(a, b) { return a.host === b.host && a.port === b.port; }
+-
+-      expect(s.sentinels.length).toBe(2);
+-      expect(s.sentinels)
+-        .toContain({ host:"127.0.0.1", port: 26379 }, _equal)
+-        .toContain({ host:"127.0.1.2", port: 6323 }, _equal);
+-    });
+-
+-    it("works as both a constructor and a function call", function () {
+-      var s = new RedisSentinel([{host:"127.0.0.1", port: 6323}], {outageRetryTimeout: -1});
+-      expect(s).toBeA(RedisSentinel);
+-      s = RedisSentinel([{host:"127.0.0.1", port: 6323}], {outageRetryTimeout: -1});
+-      expect(s).toBeA(RedisSentinel);
+-    });
+-  });
+-
+-  describe("when connecting", function () {
+-
+-    var DEBUG_LOGGING = false;
+-
+-    var mocks = [];
+-    var sentinel;
+-
+-    // Be sure to have plenty of clean-up:
+-    beforeEach(function () {
+-      mocks = [new MockSentinel(), new MockSentinel(), new MockSentinel()];
+-      sentinel = null;
+-    });
+-    afterEach (function () {
+-      mocks.forEach(function (p) { p.kill(); });
+-      if (sentinel) { sentinel.kill(); }
+-    });
+-
+-    // Used for starting the first n mock Sentinels:
+-    function startNMocks(num, cb) {
+-      async.map(
+-        mocks.slice(0, num),
+-        function (mock, done) {
+-          mock.start(done);
+-        },
+-        cb
+-      );
+-    }
+-
+-    // A createClient that only encodes the info thrown at it:
+-    function testCreateClient(port, host, config) {
+-      return host + ":" + port + " " + JSON.stringify(config);
+-    }
+-
+-    it("can connect to a sentinel and pull a configuration", function (done) {
+-      mocks[0]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      startNMocks(1, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          debugLogging: DEBUG_LOGGING
+-        };
+-
+-        sentinel = new RedisSentinel([{host:"127.0.0.1", port: ports[0]}], s_conf);
+-        sentinel.on('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will dodge bad connections", function (done) {
+-      this.timeout(2000);
+-
+-      mocks[1]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      startNMocks(2, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Kill the first server fast, but keep using its port. That way, the connection gets refused:
+-        mocks[0].kill(function (err) {
+-          if (err) { return done(err); }
+-
+-          // Try a connection?
+-          var s_conf = {
+-            outageRetryTimeout: -1,
+-            createClient: testCreateClient,
+-            randomizeSentinels: false,
+-            debugLogging: DEBUG_LOGGING,
+-            timeout: 100
+-          };
+-
+-          var s_list = [
+-            {host:"127.0.0.1", port: ports[0]},
+-            {host:"127.0.0.1", port: ports[1]}
+-          ];
+-
+-          sentinel = new RedisSentinel(s_list, s_conf);
+-          sentinel.on('change', function (name, repl) {
+-            expect(name).toBe("main");
+-            expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-            expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-            done();
+-          });
+-        });
+-      });
+-    });
+-
+-    it("will dodge timeouts", function (done) {
+-      this.timeout(1000);
+-
+-      mocks[1]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      startNMocks(2, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          randomizeSentinels: false,
+-          debugLogging: DEBUG_LOGGING,
+-          commandTimeout: 250,
+-          timeout: 100
+-        };
+-
+-        // We use MockSentinel 0 because it'll timeout on the INFO command:
+-
+-        var s_list = [
+-          {host:"127.0.0.1", port: ports[0]},
+-          {host:"127.0.0.1", port: ports[1]}
+-        ];
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.on('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will dodge non-sentinels", function (done) {
+-      this.timeout(1000);
+-
+-      mocks[0]
+-        .setInfo('normal');
+-
+-      mocks[1]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      startNMocks(2, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          randomizeSentinels: false,
+-          debugLogging: DEBUG_LOGGING,
+-          commandTimeout: 250,
+-          timeout: 100
+-        };
+-
+-        var s_list = [
+-          {host:"127.0.0.1", port: ports[0]},
+-          {host:"127.0.0.1", port: ports[1]}
+-        ];
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.on('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will retry if so configured", function (done) {
+-      this.timeout(1000);
+-
+-      mocks[0]
+-        .setInfo('normal')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      mocks[1]
+-        .setInfo('normal');
+-
+-      startNMocks(2, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          createClient: testCreateClient,
+-          randomizeSentinels: false,
+-          debugLogging: DEBUG_LOGGING,
+-          commandTimeout: 250,
+-          outageRetryTimeout: 100,
+-          timeout: 100
+-        };
+-
+-        var s_list = [
+-          { host:"127.0.0.1", port: ports[0]},
+-          { host:"127.0.0.1", port: ports[1]}
+-        ];
+-
+-        // Both mocks are 'normal's, so they'll fail. When the lib tries
+-        // to connect to the second, however, we'll change the type of the
+-        // first to 'sentinel' so that on second pass, it'll succeed.
+-
+-        var did_change_type = false;
+-        mocks[1].once('connection', function () {
+-          if (did_change_type) {
+-            throw new Error("Looped around twice");
+-          }
+-          did_change_type = true;
+-          mocks[0].setInfo('sentinel');
+-        });
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.on('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(did_change_type).toBe(true);
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will error if so configured", function (done) {
+-      this.timeout(1000);
+-
+-      mocks[0]
+-        .setInfo('normal')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      mocks[1]
+-        .setInfo('normal');
+-
+-      startNMocks(2, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          randomizeSentinels: false,
+-          debugLogging: DEBUG_LOGGING,
+-          commandTimeout: 250,
+-          timeout: 100
+-        };
+-
+-        var s_list = [
+-          { host:"127.0.0.1", port: ports[0]},
+-          { host:"127.0.0.1", port: ports[1]}
+-        ];
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.on('error', function (err) {
+-          expect(err).toBeAn(Error);
+-          expect(err.message).toMatch(/could not connect/i);
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will find a sentinel server when in random mode", function (done) {
+-      this.timeout(1000);
+-
+-      mocks[0]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      mocks[1]
+-        .setInfo('normal');
+-
+-      mocks[2]
+-        .setInfo('normal');
+-
+-      startNMocks(3, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          debugLogging: DEBUG_LOGGING,
+-          commandTimeout: 250,
+-          timeout: 100
+-        };
+-
+-        var s_list = [
+-          { host:"127.0.0.1", port: ports[0]},
+-          { host:"127.0.0.1", port: ports[1]},
+-          { host:"127.0.0.1", port: ports[2]},
+-        ];
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.on('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will detect and emit when changes happen", function (done) {
+-      this.timeout(5000);
+-
+-      mocks[0]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      startNMocks(1, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          debugLogging: DEBUG_LOGGING
+-        };
+-
+-        var s_list = [
+-          { host:"127.0.0.1", port: ports[0]},
+-        ];
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.once('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-
+-          // Prepare for another change:
+-          sentinel.once('change', function (name, repl) {
+-            expect(name).toBe("main");
+-            expect(repl.connectMaster()).toBe(null);
+-            expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-            done();
+-          });
+-
+-          setTimeout(function () {
+-            // Oh no. The "master" just went down. :-O
+-            mocks[0].addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: true});
+-            mocks[0].sendEvent("+odown", "master main 127.0.0.1 9001 #quorum 4/3");
+-          }, 100);
+-        });
+-      });
+-    });
+-
+-    it("will emit events", function (done) {
+-      this.timeout(5000);
+-
+-      mocks[0]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-
+-      startNMocks(1, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          debugLogging: DEBUG_LOGGING
+-        };
+-
+-        var s_list = [
+-          { host:"127.0.0.1", port: ports[0]},
+-        ];
+-
+-        var EV_NAME = "+slave";
+-        var EV_MSG  = "slave 127.0.0.1:9002 127.0.0.1 9002 @ main 127.0.0.1 9001";
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.once('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-
+-          setTimeout(function () {
+-            // Oh boy. An interesting event!
+-            mocks[0].addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: true});
+-            mocks[0].sendEvent(EV_NAME, EV_MSG);
+-          }, 100);
+-        });
+-        sentinel.once('event', function (name, msg) {
+-          expect(name).toBe(EV_NAME);
+-          expect(msg).toBe(EV_MSG);
+-          done();
+-        });
+-      });
+-    });
+-
+-    it("will reconnect on errors", function (done) {
+-      this.timeout(1500);
+-
+-      mocks[0]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.0.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.1.1", port: 6379, isDown: false});
+-      mocks[1]
+-        .setInfo('sentinel')
+-        .addMaster("main", {ip: "10.0.1.1", port: 6379, isDown: false})
+-        .addSlave ("main", {ip: "10.0.0.1", port: 6379, isDown: false});
+-
+-      startNMocks(2, function (err, ports) {
+-        if (err) { return done(err); }
+-
+-        // Try a connection?
+-        var s_conf = {
+-          outageRetryTimeout: -1,
+-          createClient: testCreateClient,
+-          debugLogging: DEBUG_LOGGING,
+-          randomizeSentinels: false,
+-          commandTimeout: 100
+-        };
+-
+-        var s_list = [
+-          { host:"127.0.0.1", port: ports[0]},
+-          { host:"127.0.0.1", port: ports[1]},
+-          { host:"127.0.0.1", port: ports[2]},
+-        ];
+-
+-        sentinel = new RedisSentinel(s_list, s_conf);
+-        sentinel.once('change', function (name, repl) {
+-          expect(name).toBe("main");
+-          expect(repl.connectMaster()).toBe("10.0.0.1:6379 {}");
+-          expect(repl.connectSlave()).toBe("10.0.1.1:6379 {}");
+-
+-          // Prepare for another change:
+-          sentinel.once('change', function (name, repl) {
+-            expect(name).toBe("main");
+-            expect(repl.connectMaster()).toBe("10.0.1.1:6379 {}");
+-            expect(repl.connectSlave()).toBe("10.0.0.1:6379 {}");
+-            done();
+-          });
+-
+-          setTimeout(function () {
+-            // Get the first sentinel to stop responding. Once the event is sent, the
+-            // lib should reconnect to the second sentinel, which has the correct
+-            // config to use.
+-            mocks[0].stopResponding();
+-            mocks[0].sendEvent("+odown", "master main 127.0.0.1 9001 #quorum 4/3");
+-          }, 100);
+-        });
+-      });
+-    });
+-  });
+-});
+diff --git a/tests/redis_watcher_test.js b/tests/redis_watcher_test.js
+deleted file mode 100644
+index bb8d10f..0000000
+--- a/tests/redis_watcher_test.js
++++ /dev/null
+@@ -1,153 +0,0 @@
+-var RedisWatcher = require('../src/redisWatcher')
+-  , EventEmitter = require('events').EventEmitter
+-  , util = require('../src/util')
+-  , expect = require('expect');
+-
+-
+-function FakeClient() {
+-  this.subscribe = function () {};
+-  this.end = function () {};
+-}
+-
+-util.inherits(FakeClient, EventEmitter);
+-
+-
+-describe("RedisWatcher", function () {
+-  this.timeout(200);
+-
+-  // For clean up:
+-  var w = null;
+-  afterEach(function (done) {
+-    if (!w || w.finalized) { return done(); }
+-    w.on('error', function () {
+-      done();
+-    });
+-    w.kill();
+-  });
+-
+-  it("emits 'refresh' on startup", function (done) {
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: new FakeClient(),
+-      refreshTimeout: 5000
+-    });
+-    w.on('refresh', done);
+-  });
+-
+-  it("emits 'refresh' after period of no changes", function (done) {
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: new FakeClient(),
+-      refreshTimeout: 75
+-    });
+-
+-    var count = 0;
+-    w.on('refresh', function () {
+-      // 1 init + 75 ms + 150ms
+-      if (++count === 3) {
+-        return done();
+-      }
+-    });
+-  });
+-
+-  it("emits 'refresh' after change", function (done) {
+-    var fake_client = new FakeClient();
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: fake_client,
+-      refreshTimeout: 500
+-    });
+-
+-    fake_client.emit('ready');
+-
+-    w.once('refresh', function () {
+-      // init
+-      w.once('refresh', done);
+-      // Emit a "change":
+-      fake_client.emit('message', '+sdown', "oh noes it's down. :'(");
+-    });
+-  });
+-
+-  it("emits 'event' after events", function (done) {
+-    var fake_client = new FakeClient();
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: fake_client,
+-      refreshTimeout: 500
+-    });
+-
+-    fake_client.emit('ready');
+-
+-    w.once('refresh', function () {
+-      // Emit a "change":
+-      w.once('event', function (type, msg) {
+-        expect(type).toBe("+slave");
+-        expect(msg).toBe("oh noes it's down. :'(");
+-        done();
+-      });
+-
+-      fake_client.emit('message', '+slave', "oh noes it's down. :'(");
+-    });
+-  });
+-
+-  it("emits 'error' on error", function (done) {
+-    var fake_client = new FakeClient();
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: fake_client,
+-      refreshTimeout: 500
+-    });
+-
+-    w.once('error', function (err) {
+-      expect(err.message).toBe("LOL HI");
+-      done();
+-    });
+-
+-    fake_client.emit('error', new Error("LOL HI"));
+-  });
+-
+-  it("emits 'error' on hangup", function (done) {
+-    var fake_client = new FakeClient();
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: fake_client,
+-      refreshTimeout: 500
+-    });
+-
+-    w.once('error', function () {
+-      done();
+-    });
+-
+-    fake_client.emit('end');
+-  });
+-
+-  it("is useless after kill", function () {
+-    var is_dead = false;
+-    var fake_client = new FakeClient();
+-    fake_client.end = function () {
+-      if (is_dead) { throw new Error("end() called twice"); }
+-      is_dead = true;
+-    };
+-    fake_client.subscribe = function () {
+-      if (is_dead) { throw new Error("subscribe after death"); }
+-    };
+-
+-    w = new RedisWatcher("localhost", 6379, {
+-      _testClient: fake_client,
+-      refreshTimeout: 500
+-    });
+-
+-    var times_emitted = 0;
+-    w.on('error', function () {
+-      if (++times_emitted !== 1) {
+-        throw new Error("Multiple emits");
+-      }
+-    });
+-
+-    w.kill();
+-
+-    // Hit the various endpoints, making sure things don't happen:
+-    w.kill();
+-    w._handleClientError(new Error());
+-    w._handleClientHangup();
+-    w._handleConnectReady();
+-    w._resetTimer();
+-    expect(w.timeout).toBe(undefined);
+-
+-    expect(is_dead).toBe(true);
+-  });
+-});
+diff --git a/tests/util/mockRandom.js b/tests/util/mockRandom.js
+deleted file mode 100644
+index ad74f04..0000000
+--- a/tests/util/mockRandom.js
++++ /dev/null
+@@ -1,40 +0,0 @@
+-var rand = require('random-seed');
+-
+-
+-// Random tests suck, so we swap out Math.random for a good PRNG with a fixed seed,
+-// so that we can have all the fun of a random() function with a high period, and
+-// yet still be consistent and repeatable.
+-
+-
+-var SAVED_SEED = 382948;
+-
+-module.exports.installHooks = function () {
+-
+-  // Swap out Math.random before tests:
+-  var saved_random = null;
+-  var rand_engine = null;
+-
+-  before(function initRNG() {
+-    rand_engine = rand.create(SAVED_SEED);
+-  });
+-
+-  after(function releaseRNG() {
+-    rand_engine.done();
+-    rand_engine = null;
+-  });
+-
+-  beforeEach(function swapOut() {
+-    saved_random = Math.random;
+-
+-    Math.random = function () {
+-      var out = rand_engine.random();
+-      return out;
+-    };
+-  });
+-
+-  // Repair it after each test:
+-  afterEach(function repair() {
+-    Math.random = saved_random;
+-    saved_random = null;
+-  });
+-};
+diff --git a/tests/util/mockSentinel.js b/tests/util/mockSentinel.js
+deleted file mode 100644
+index 51a4787..0000000
+--- a/tests/util/mockSentinel.js
++++ /dev/null
+@@ -1,235 +0,0 @@
+-var net = require('net');
+-var boris = require("boris");
+-var util = require('../../src/util');
+-var events = require('events');
+-
+-
+-// It's hard to test sentinel property, especially when we want to support environments
+-// like TravisCI, where they have only very simple redis support, and no redis-sentinel
+-// support.
+-//
+-// So we have this. It is a simple TCP server that responds exactly as you configure it
+-// to, and speaks the Redis protocol.
+-
+-
+-var INFO_STRINGS = {
+-  normal:
+-    "# Server\r\nredis_version:2.8.11\r\nredis_git_sha1:00000000\r\nredis_git_dirty:0" +
+-    "\r\nredis_build_id:cd43e547b41f72f\r\nredis_mode:standalone\r\nos:Darwin 13.4.0 " +
+-    "x86_64\r\narch_bits:64\r\nmultiplexing_api:kqueue\r\ngcc_version:4.2.1\r\nproces" +
+-    "s_id:56422\r\nrun_id:8c786b8dd9e86ff83d360ac0c34a7632afbbff66\r\ntcp_port:6379\r" +
+-    "\nuptime_in_seconds:25781\r\nuptime_in_days:0\r\nhz:10\r\nlru_clock:6747792\r\nc" +
+-    "onfig_file:/usr/local/etc/redis.conf\r\n\r\n# Clients\r\nconnected_clients:9\r\n" +
+-    "client_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0" +
+-    "\r\n\r\n# Memory\r\nused_memory:1145552\r\nused_memory_human:1.09M\r\nused_memory" +
+-    "_rss:2015232\r\nused_memory_peak:1499792\r\nused_memory_peak_human:1.43M\r\nused" +
+-    "_memory_lua:33792\r\nmem_fragmentation_ratio:1.76\r\nmem_allocator:libc\r\n\r\n#" +
+-    " Persistence\r\nloading:0\r\nrdb_changes_since_last_save:0\r\nrdb_bgsave_in_prog" +
+-    " ress:0\r\nrdb_last_save_time:1416014109\r\nrdb_last_bgsave_status:ok\r\nrdb_last" +
+-    "_bgsave_time_sec:0\r\nrdb_current_bgsave_time_sec:-1\r\naof_enabled:0\r\naof_rew" +
+-    "rite_in_progress:0\r\naof_rewrite_scheduled:0\r\naof_last_rewrite_time_sec:-1\r" +
+-    "\naof_current_rewrite_time_sec:-1\r\naof_last_bgrewrite_status:ok\r\naof_last_wri" +
+-    "te_status:ok\r\n\r\n# Stats\r\ntotal_connections_received:33\r\ntotal_commands_p" +
+-    "rocessed:343\r\ninstantaneous_ops_per_sec:0\r\nrejected_connections:0\r\nsync_fu" +
+-    "ll:0\r\nsync_partial_ok:0\r\nsync_partial_err:0\r\nexpired_keys:0\r\nevicted_key" +
+-    "s:0\r\nkeyspace_hits:41\r\nkeyspace_misses:126\r\npubsub_channels:0\r\npubsub_pa" +
+-    "tterns:0\r\nlatest_fork_usec:233\r\n\r\n# Replication\r\nrole:master\r\nconnecte" +
+-    "d_slaves:0\r\nmaster_repl_offset:0\r\nrepl_backlog_active:0\r\nrepl_backlog_size" +
+-    ":1048576\r\nrepl_backlog_first_byte_offset:0\r\nrepl_backlog_histlen:0\r\n\r\n# " +
+-    "CPU\r\nused_cpu_sys:1.21\r\nused_cpu_user:1.15\r\nused_cpu_sys_children:0.00\r\n" +
+-    "used_cpu_user_children:0.00\r\n\r\n# Keyspace\r\ndb0:keys=1,expires=0,avg_ttl=0" +
+-    "\r\ndb1:keys=11,expires=5,avg_ttl=101643976\r\ndb3:keys=3,expires=0,avg_ttl=0\r" +
+-    "\ndb4:keys=7,expires=3,avg_ttl=926438415\r\ndb9:keys=1,expires=1,avg_ttl=665737" +
+-    "58\r\n",
+-
+-  sentinel:
+-    "# Server\r\nredis_version:2.8.11\r\nredis_git_sha1:00000000\r\nredis_git_dirty:0" +
+-    "\r\nredis_build_id:cd43e547b41f72f\r\nredis_mode:sentinel\r\nos:Darwin 13.4.0 x8" +
+-    "6_64\r\narch_bits:64\r\nmultiplexing_api:kqueue\r\ngcc_version:4.2.1\r\nprocess_" +
+-    "id:48377\r\nrun_id:8397fda691ee9289b623c3904e21301ac4ef82ae\r\ntcp_port:9501\r\n" +
+-    "uptime_in_seconds:116301\r\nuptime_in_days:1\r\nhz:16\r\nlru_clock:6748294\r\nco" +
+-    "nfig_file:/Users/lolusername/sentinel-test/a/sentinel.conf\r\n\r\n# Sentinel\r\n" +
+-    "sentinel_masters:3\r\nsentinel_tilt:0\r\nsentinel_running_scripts:0\r\nsentinel_" +
+-    "scripts_queue_length:0\r\nmaster0:name=cache,status=ok,address=127.0.0.1:9203,sl" +
+-    "aves=2,sentinels=5\r\nmaster1:name=main,status=ok,address=127.0.0.1:9001,slaves=" +
+-    "1,sentinels=5\r\nmaster2:name=shard,status=ok,address=127.0.0.1:9102,slaves=1,se" +
+-    "ntinels=5\r\n"
+-};
+-
+-
+-function MockSentinel() {
+-  var sentinel = this;
+-
+-  this.info = null;
+-  this.masters = {};
+-  this.slaves = {};
+-  this.was_started = false;
+-  this.stop_responding = false;
+-
+-  this.server = net.createServer(function (socket) {
+-
+-    sentinel.emit('connection');
+-
+-    var parser = boris({return_buffers: false});
+-    var subscribed_on = [];
+-
+-    parser.on('match', function (err, cmd) {
+-      if (err) {
+-        socket.destroy();
+-        throw err;
+-      }
+-
+-      var arr;
+-
+-      if (sentinel.stop_responding) { return; }
+-
+-      switch(cmd[0] && cmd[0].toLowerCase()) {
+-        case 'info':
+-          if (sentinel.info !== null) {
+-            socket.write("$" + sentinel.info.length + "\r\n" + sentinel.info + "\r\n");
+-          }
+-          break;
+-
+-        case 'subscribe':
+-          var new_channels = cmd.slice(1);
+-          subscribed_on = subscribed_on.concat(new_channels);
+-          var response = new_channels
+-            .map(function (ch, idx) {
+-              return "*3\r\n$9\r\nsubscribe\r\n$" + ch.length + "\r\n" + ch + "\r\n:" + (idx+1) + "\r\n";
+-            })
+-            .join("");
+-          socket.write(response);
+-          break;
+-
+-        case 'sentinel':
+-          switch(cmd[1] && cmd[1].toLowerCase()) {
+-            case 'masters':
+-              // Build masters arrays:
+-              arr = Object.keys(sentinel.masters)
+-                .map(function (name) {
+-                  var obj = sentinel.masters[name];
+-                  var row = [];
+-                  row.push("name", name);
+-                  row.push("ip", obj.ip);
+-                  row.push("port", obj.port);
+-                  row.push("flags", "master" + (obj.isDown ? ",o_down" : ""));
+-                  return row;
+-                });
+-              socket.write(serializeArray(arr));
+-              break;
+-
+-            case 'slaves':
+-              // Build masters arrays:
+-              arr = (sentinel.slaves[cmd[2]] || [])
+-                .map(function (obj) {
+-                  var row = [];
+-                  row.push("name", obj.ip + ":" + obj.port);
+-                  row.push("ip", obj.ip);
+-                  row.push("port", obj.port);
+-                  row.push("flags", "slave" + (obj.isDown ? ",s_down" : ""));
+-                  return row;
+-                });
+-              socket.write(serializeArray(arr));
+-              break;
+-
+-            default:
+-              socket.destroy();
+-              throw new Error("Unsupported SENTINEL command:" + String(cmd));
+-          }
+-          break;
+-
+-        default:
+-          // Unknown command:
+-          socket.destroy();
+-          throw new Error("Unsupported command: " + String(cmd));
+-      }
+-    });
+-
+-    sentinel.on('event', function (name, msg) {
+-      if (subscribed_on.indexOf(name) >= 0) {
+-        // Send the message:
+-        var output = "*3\r\n$7\r\nmessage\r\n$" + name.length + "\r\n" + name + "\r\n$" + msg.length + "\r\n" + msg + "\r\n";
+-        socket.write(output);
+-      }
+-    });
+-
+-    sentinel.on('suicide', function () {
+-      socket.destroy();
+-    });
+-
+-    socket.on('data', function (d) {
+-      parser.parse(d);
+-    });
+-  });
+-}
+-
+-util.inherits(MockSentinel, events.EventEmitter);
+-
+-MockSentinel.prototype.setInfo = function (type) {
+-  if (!INFO_STRINGS.hasOwnProperty(type)) { throw new Error("Invalid type"); }
+-  this.info = INFO_STRINGS[type];
+-  return this;
+-};
+-
+-MockSentinel.prototype.addMaster = function (name, obj) {
+-  if (!name || !obj || typeof name !== 'string' || typeof obj !== 'object') {
+-    throw new Error("Wrong args passed to addMaster");
+-  }
+-  // obj is like: {ip: "...", port: 6379, isDown: true}
+-  this.masters[name] = obj;
+-  return this;
+-};
+-
+-MockSentinel.prototype.addSlave = function (name, obj) {
+-  if (!name || !obj || typeof name !== 'string' || typeof obj !== 'object') {
+-    throw new Error("Wrong args passed to addSlave");
+-  }
+-  // obj is like: {ip: "...", port: 6379, isDown: true}
+-  this.slaves[name] = this.slaves[name] || [];
+-  this.slaves[name].push(obj);
+-  return this;
+-};
+-
+-MockSentinel.prototype.stopResponding = function () {
+-  this.stop_responding = true;
+-  return this;
+-};
+-
+-MockSentinel.prototype.start = function (cb) {
+-  var server = this.server;
+-  this.was_started = true;
+-  // Listen on random port, but only respond to localhost:
+-  server.listen(0, '127.0.0.1', function () {
+-    var addr = server.address();
+-    return cb(null, addr.port);
+-  });
+-};
+-
+-MockSentinel.prototype.kill = function (cb) {
+-  if (!this.was_started) { return cb && cb(); }
+-  this.emit('suicide');
+-  this.was_started = false;
+-  this.server.close(cb);
+-};
+-
+-MockSentinel.prototype.sendEvent = function (name, msg) {
+-  this.emit('event', name, msg);
+-};
+-
+-
+-function serializeArray(arr) {
+-  var out = "*" + arr.length + "\r\n";
+-
+-  arr.forEach(function (item) {
+-    if (Array.isArray(item)) {
+-      out += serializeArray(item);
+-    } else {
+-      var str = String(item);
+-      out += "$" + str.length + "\r\n" + str + "\r\n";
+-    }
+-  });
+-
+-  return out;
+-}
+-
+-module.exports = MockSentinel;
+diff --git a/tests/util_test.js b/tests/util_test.js
+deleted file mode 100644
+index 9fc640a..0000000
+--- a/tests/util_test.js
++++ /dev/null
+@@ -1,171 +0,0 @@
+-var util = require('../src/util')
+-  , mockRandom = require('./util/mockRandom')
+-  , fs = require('fs')
+-  , path = require('path')
+-  , temp = require('temp').track()
+-  , expect = require('expect');
+-
+-describe('Util', function () {
+-
+-  it("extends the Node.js util lib", function () {
+-    expect(util.format).toBeA(Function);
+-    expect(util.inherits).toBeA(Function);
+-  });
+-
+-  describe("when require()-ing from a parent", function () {
+-
+-    beforeEach(function () {
+-      // Blank the util cache reference:
+-      delete require.cache[require.resolve('../src/util')];
+-    });
+-
+-    afterEach(function () {
+-      // Restore the util cache to a non-temp require chain:
+-      delete require.cache[require.resolve('../src/util')];
+-      util = require('../src/util');
+-    });
+-
+-    it("gets the right module", function () {
+-
+-      // This test is tricky. We need to create a temp directory with a sub
+-      // directory. We then test the ability of one file to use the parent
+-      // require function with a relative path, and make sure that the path
+-      // correctly evaluates from the parent directory.
+-      //
+-      // We use sync functions here, because this is a test and I'm not insane.
+-
+-      var util_dir         = path.join(__dirname, "../src/util");
+-      var util_dir_escaped = util_dir.replace(/'/g, "\\'");
+-      var temp_dir         = temp.mkdirSync("sentinel_require_test");
+-      var temp_subdir      = path.join(temp_dir, "dir");
+-
+-      var test_start_path = path.join(temp_dir, "run_test.js");
+-
+-      fs.mkdirSync(temp_subdir);
+-
+-      fs.writeFileSync(test_start_path,                  "module.exports=require('./dir');");
+-      fs.writeFileSync(path.join(temp_dir, "dep.js"),    "module.exports='root_dir';");
+-
+-      fs.writeFileSync(path.join(temp_subdir, "dep.js"), "module.exports='sub_dir';");
+-      fs.writeFileSync(path.join(temp_subdir, "index.js"),
+-        "var util = require('"+util_dir_escaped+"');\n" +
+-        "module.exports = {\n" +
+-        "  ours:   require('./dep'),\n" +
+-        "  parent: util.parentRequire('./dep')\n" +
+-        "};\n"
+-      );
+-
+-      // Require the bottom object, and see what it comes up with:
+-      var result = require(test_start_path);
+-      expect(result.ours).toBe("sub_dir");
+-      expect(result.parent).toBe("root_dir");
+-    });
+-
+-    it("gets null on not found", function () {
+-      // This module BETTER not exist:
+-      var out = util.parentRequire("fdsjafdsajkfldsjaifodlkfsdjalkf-" + Date.now());
+-      expect(out).toBe(null);
+-    });
+-  });
+-
+-  describe("when making a logger", function () {
+-
+-    // Swap out the console.log, so we don't get annoying output while testing:
+-
+-    var last_log = null;
+-
+-    function _customLogger(msg) {
+-      last_log = msg;
+-    }
+-
+-    afterEach(function () {
+-      last_log = null;
+-    });
+-
+-    it("will create a muted log", function () {
+-      var logger = util.buildLogger("Derp");
+-      logger("Sup");
+-      expect(last_log).toBe(null);
+-    });
+-
+-    it("can unmute a log", function () {
+-      var logger = util.buildLogger("Derp");
+-      logger.configure({debugLogging: true, customLogger: _customLogger});
+-      logger("Sup");
+-      expect(last_log).toBe("Derp: Sup");
+-    });
+-
+-    it("will accept formatting stuff", function () {
+-      var logger = util.buildLogger("Derp");
+-      logger.configure({debugLogging: true, customLogger: _customLogger});
+-      logger("Hello %s!!!%d!", "World", 1);
+-      expect(last_log).toBe("Derp: Hello World!!!1!");
+-    });
+-
+-    describe("with errors", function () {
+-      it("will show stack traces if available", function () {
+-        var logger = util.buildLogger("Derp");
+-        logger.configure({debugLogging: true, customLogger: _customLogger});
+-        logger("Error encountered:", new Error("I AM AN ERROR"));
+-        expect(last_log).toMatch(/^Derp: Error encountered: /);
+-        expect(last_log).toMatch(/I AM AN ERROR/);
+-        expect(last_log).toMatch(/util_test\.js/);
+-      });
+-
+-      it("will stringify an error if no stack trace", function () {
+-        var logger = util.buildLogger("Derp");
+-        var err = new Error("I AM AN ERROR");
+-        delete err.stack;
+-        logger.configure({debugLogging: true, customLogger: _customLogger});
+-        logger("Error encountered:", err);
+-        expect(last_log)
+-          .toMatch(/^Derp: Error encountered: /)
+-          .toMatch(/I AM AN ERROR/);
+-      });
+-    });
+-  });
+-
+-  describe("when shuffling an array", function () {
+-
+-    mockRandom.installHooks();
+-
+-    it("both edits in place and returns the shuffled array", function () {
+-      var a = [1,2,3,4,5,6,7,8,9];
+-      var res = util.shuffleArray(a);
+-
+-      expect(a)
+-        .toExist()
+-        .toBeAn(Array);
+-
+-      expect(res)
+-        .toExist()
+-        .toBeAn(Array);
+-
+-      for (var idx=0; idx<a.length; idx++) {
+-        expect(a[idx]).toBe(res[idx], "Shuffled arrays differ at index " + idx);
+-      }
+-    });
+-
+-    it("gives an ok distribution", function () {
+-      this.timeout(10000);
+-      var array;
+-      var ours = {};
+-      for(var i=0; i<48000; i++) {
+-        array = ["1", "2", "3", "4"];
+-        util.shuffleArray(array);
+-        var key = array.join("");
+-        ours[key] = (ours[key] || 0) + 1;
+-      }
+-
+-      Object.keys(ours).forEach(function (perm) {
+-        // Biased solutions cause greater variations in the counts.
+-        // Good ones will split evenly between the 24 possible permutations,
+-        // so 2000 each. Bad shuffles will accidentally give some orderings
+-        // preference, so we use 1700 and 2300 as cutoffs.
+-        expect(ours[perm])
+-          .toBeGreaterThan(1700, "Detected a shuffle bias for: " + perm)
+-          .toBeLessThan   (2300, "Detected a shuffle bias for: " + perm);
+-      });
+-    });
+-  });
+-});

@@ -1,0 +1,19 @@
+diff --git a/lib/processor.js b/lib/processor.js
+index dddf9bd..9bfb17c 100755
+--- a/lib/processor.js
++++ b/lib/processor.js
+@@ -62,8 +62,12 @@ var execs = {
+             return e;
+         }
+     }},
+-    min: _.min,
+-    max: _.max,
++    min: function (content, callback) {
++        return _.minBy(content, callback)
++    },
++    max: function (content, callback) {
++        return _.maxBy(content, callback)
++    },
+     prop: { wrapper: function (content, name) {
+         try {
+             return _.result(content, name)

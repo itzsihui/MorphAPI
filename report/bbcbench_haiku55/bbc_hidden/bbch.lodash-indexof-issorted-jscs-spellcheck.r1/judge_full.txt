@@ -1,0 +1,9 @@
+JUDGE lodash-indexof-issorted-jscs-spellcheck
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): test/mocha.opts test/specs/rules/require-dictionary-words.js
+  prod     : yes
+  rerun    : exit 0, counts [31 passing ]
+  patch    : /srv/agentcmp/ws/bbch.lodash-indexof-issorted-jscs-spellcheck.r1/w/.judge/agent.patch
+PASS lodash-indexof-issorted-jscs-spellcheck

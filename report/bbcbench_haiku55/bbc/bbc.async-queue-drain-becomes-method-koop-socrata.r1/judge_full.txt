@@ -1,0 +1,9 @@
+JUDGE async-queue-drain-becomes-method-koop-socrata
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [passing:   47 ]
+  patch    : /srv/agentcmp/ws/bbc.async-queue-drain-becomes-method-koop-socrata.r1/w/.judge/agent.patch
+PASS async-queue-drain-becomes-method-koop-socrata

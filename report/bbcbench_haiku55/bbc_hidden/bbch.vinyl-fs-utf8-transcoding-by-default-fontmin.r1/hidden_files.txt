@@ -1,0 +1,5 @@
+test/base.js
+test/font.js
+test/subset.js
+test/svg2ttf.js
+test/svgs2ttf.js

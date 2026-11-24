@@ -1,0 +1,9 @@
+JUDGE lodash-capitalize-sails-navigator
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : ok
+  prod     : yes
+  rerun    : exit 0, counts [1 pending 29 passing ]
+  patch    : /srv/agentcmp/ws/bbc.lodash-capitalize-sails-navigator.r1/w/.judge/agent.patch
+PASS lodash-capitalize-sails-navigator

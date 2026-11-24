@@ -1,0 +1,72 @@
+diff --git a/index.js b/index.js
+index 35c27d4..6c007b1 100644
+--- a/index.js
++++ b/index.js
+@@ -11,6 +11,8 @@ var EventEmitter = require('events').EventEmitter;
+ var inherits = require('util').inherits;
+ var bufferToVinyl = require('buffer-to-vinyl');
+ var vfs = require('vinyl-fs');
++var _ = require('lodash');
++var PassThrough = require('stream').PassThrough;
+ 
+ /**
+  * Initialize Fontmin
+@@ -114,7 +116,7 @@ Fontmin.prototype.createStream = function () {
+ 
+     if (this.dest()) {
+         this.streams.push(
+-            vfs.dest.apply(vfs, this.dest())
++            vfs.dest.apply(vfs, binaryArgs(this.dest()))
+         );
+     }
+ 
+@@ -133,9 +135,48 @@ Fontmin.prototype.getFiles = function () {
+         return bufferToVinyl.stream(this._src[0]);
+     }
+ 
+-    return vfs.src.apply(vfs, this.src());
++    return toNodeStream(vfs.src.apply(vfs, binaryArgs(this.src())));
+ };
+ 
++/**
++ * vinyl-fs 4 returns streams built on `streamx`, which tears down the
++ * destination of a pipe by calling `destroy()` on it when the source fails.
++ * The plugins here are `through2` 2.x streams, which have no `destroy()`,
++ * so that teardown throws. Bridge through a Node core stream, which has
++ * `destroy()`, and forward source errors to it.
++ *
++ * @param {Stream} src stream returned by vinyl-fs
++ * @return {Stream} Node core stream carrying the same files
++ * @api private
++ */
++function toNodeStream(src) {
++    var bridge = new PassThrough({objectMode: true});
++
++    src.on('error', function (err) {
++        bridge.destroy(err);
++    });
++
++    return src.pipe(bridge);
++}
++
++/**
++ * Font files are binary. vinyl-fs 4 transcodes file contents as UTF-8 by
++ * default, which corrupts them on read and write, so disable transcoding
++ * unless the caller explicitly provides an `encoding` option.
++ *
++ * @param {Arguments|Array} args arguments of `src()` or `dest()`
++ * @return {Array} arguments with the options object defaulting to `encoding: false`
++ * @api private
++ */
++function binaryArgs(args) {
++    var list = Array.prototype.slice.call(args);
++    var opts = list[1] || {};
++
++    list[1] = _.assign({encoding: false}, opts);
++
++    return list;
++}
++
+ /**
+  * plugins
+  *

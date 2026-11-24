@@ -1,0 +1,15 @@
+diff --git a/generators/app/index.js b/generators/app/index.js
+index 487ce3c..c938cf2 100644
+--- a/generators/app/index.js
++++ b/generators/app/index.js
+@@ -22,7 +22,9 @@ module.exports = yeoman.generators.Base.extend({
+ 
+     this.prompt(prompts, function (props) {
+       this.componentName = props.componentName;
+-      this.componentNamePC = lodash.capitalize(lodash.camelCase(props.componentName));
++      // lodash 4's capitalize() also lower-cases the rest of the string
++      // (lodash 3 did not), so use upperFirst() to keep "FieldName" intact.
++      this.componentNamePC = lodash.upperFirst(lodash.camelCase(props.componentName));
+       this.componentNameCC = lodash.camelCase(props.componentName);
+ 
+       done();

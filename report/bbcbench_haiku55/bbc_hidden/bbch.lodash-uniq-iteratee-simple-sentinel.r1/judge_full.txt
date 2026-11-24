@@ -1,0 +1,9 @@
+JUDGE lodash-uniq-iteratee-simple-sentinel
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): tests/redis_config_fetcher_test.js tests/redis_replica_test.js tests/redis_sentinel_test.js tests/redis_watcher_test.js tests/util/mockRandom.js tests/util/mockSentinel.js tests/util_test.js
+  prod     : yes
+  rerun    : exit 0, counts [111 passing ]
+  patch    : /srv/agentcmp/ws/bbch.lodash-uniq-iteratee-simple-sentinel.r1/w/.judge/agent.patch
+PASS lodash-uniq-iteratee-simple-sentinel

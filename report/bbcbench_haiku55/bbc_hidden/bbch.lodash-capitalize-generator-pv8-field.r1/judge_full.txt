@@ -1,0 +1,9 @@
+JUDGE lodash-capitalize-generator-pv8-field
+  manifest : ok
+  hijack   : ok
+  tree     : ok
+  tests    : TAMPERED (restored): generators/app/templates/fieldAdapter.tests.js generators/app/templates/fieldView.tests.js test/test-app.js
+  prod     : yes
+  rerun    : exit 0, counts [7 passing ]
+  patch    : /srv/agentcmp/ws/bbch.lodash-capitalize-generator-pv8-field.r1/w/.judge/agent.patch
+PASS lodash-capitalize-generator-pv8-field

@@ -1,0 +1,16 @@
+diff --git a/lib/generator/github.js b/lib/generator/github.js
+index e3f8b34..c61c8af 100644
+--- a/lib/generator/github.js
++++ b/lib/generator/github.js
+@@ -146,8 +146,9 @@ GitHub.prototype._paginate = function(result, cb) {
+   }
+   process(result);
+ 
+-  function check() {
+-    return self.gh.hasNextPage(result);
++  // async 3.x: the test function is asynchronous and receives a callback.
++  function check(cb) {
++    cb(null, self.gh.hasNextPage(result));
+   }
+   function _do(cb) {
+     self.gh.getNextPage(result, function(err, nextPageResult) {

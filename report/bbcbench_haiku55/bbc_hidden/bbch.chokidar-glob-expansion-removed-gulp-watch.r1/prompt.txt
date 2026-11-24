@@ -1,0 +1,6 @@
+This project's dependency `chokidar` has been upgraded from 3.4.2 to 4.0.3. The project is in src/ (dependencies are installed in src/node_modules, with chokidar at 4.0.3).
+
+Update the project's own code for chokidar 4.0.3 so that the project behaves exactly as it did with 3.4.2.
+- The project's test suite is not included in this workspace.
+- Do not downgrade, remove or replace chokidar, and do not change package.json, lockfiles or anything in node_modules.
+- Edits to test files are discarded when your work is judged.

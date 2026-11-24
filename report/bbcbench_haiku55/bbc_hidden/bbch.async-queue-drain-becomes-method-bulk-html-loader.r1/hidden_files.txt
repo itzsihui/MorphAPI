@@ -1,0 +1,4 @@
+test/index.spec.js
+test/mock/bing.com.html
+test/mock/google.com.html
+test/mock/yahoo.com.html

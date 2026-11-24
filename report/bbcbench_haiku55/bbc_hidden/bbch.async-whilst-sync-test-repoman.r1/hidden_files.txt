@@ -1,0 +1,10 @@
+test-integration/fixtures/.somerepoman_failure.json
+test-integration/fixtures/.somerepoman_success.json
+test/.jshintrc
+test/cli.js
+test/generator/bitbucket.js
+test/generator/github.js
+test/generator/gitorious.js
+test/generator/local.js
+test/mocha.opts
+test/repoman.js
