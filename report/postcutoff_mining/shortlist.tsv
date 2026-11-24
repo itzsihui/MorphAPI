@@ -1,0 +1,333 @@
+i18next	AGI-is-going-to-arrive/Memory-Palace-Openclaw	frontend/package.json	vitest	vitest run
+i18next	AlEkramHossainAbir/Omnivo	packages/i18n/package.json	vitest	vitest run --passWithNoTests
+i18next	Anders-planck/portfolio	package.json	vitest	vitest run
+i18next	B3nedikt/Tenshu	web/app-kit/template/package.json.tmpl	vitest	vitest run
+i18next	City-of-Helsinki/kukkuu-ui	package.json	vitest	cross-env NODE_ENV=test TZ=Europe/Helsinki pnpm update-runtime-env && cross-env 
+i18next	Constella-OS/constella-desktop	package.json	jest	jest
+i18next	Darker98/vendure-paypal-http-integration	packages/core/package.json	vitest	vitest --config vitest.config.mts --run
+i18next	Darker98/vendure-paypal-integration-context-plugin	packages/core/package.json	vitest	vitest --config vitest.config.mts --run
+i18next	Ditto190/tauri-dashboard-ui	package.json	vitest	vitest
+i18next	Domiki/STARY	ui/package.json	vitest	vitest run
+i18next	ELMERGAWY/auditrypos	package.json	vitest	vitest run
+i18next	Emad001salah/aswaq22	package.json	jest	cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest
+i18next	Enterprize1/phishy-mailbox	package.json	vitest	yarn test:unit && yarn test:e2e
+i18next	Eugenech1988/react-flow-nodes	apps/next/package.json	vitest	vitest
+i18next	FAHID-KHAN/Traffic_insights_agent_BD	frontend/package.json	vitest	vitest run
+i18next	Fahmid-Bin-Mosharof/Mindora-AI	package.json	vitest	vitest run
+i18next	Felix157-creator/trialz	package.json	jest	jest
+i18next	Garkatron/Limpora	apps/client/package.json	vitest	vitest
+i18next	Georg1703/crew-challenge	frontend/package.json	vitest	vitest run
+i18next	GuiMayer/mm3e-builder	package.json	vitest	vitest
+i18next	HerrBertling/virtualsupporttalks	package.json	vitest	vitest
+i18next	Hexlet/jsbrowser	package.json	jest	react-scripts test
+i18next	Jeremy8776/AIModelDB	package.json	vitest	vitest run
+i18next	Jy-EggRoll/repodex	package.json	vitest	vitest run
+i18next	Koimsurai/sora-to-ki	package.json	vitest	vp test run
+i18next	LBYPatrick/shelf	package.json	vitest	vitest run
+i18next	LeonGaoHaining/opencowork	package.json	vitest	vitest
+i18next	LongLeo287/OmniClaw	ecosystem/skills/aperant/apps/desktop/package.json.knowledge	vitest	vitest run
+i18next	Lucas-on-the-code/humans-are-cats-investigation	package.json	other	node --experimental-strip-types --test tests/*.test.ts
+i18next	Lukes-Git-Beginning/KMU-Hub	desktop/package.json	vitest	vitest
+i18next	M6rM6r/sh3l	lumosity-app/package.json.tmp	vitest	vitest
+i18next	Madlezz/Recall	package.json	vitest	vitest run
+i18next	Modtale/modtale	frontend/package.json	vitest	node scripts/run-tests.mjs run
+i18next	NGUEND-ARTHUR/SmartCAMPOST	smartcampost-frontend/package.json	vitest	vitest
+i18next	NasDex/nasdex-front	package.json	other	craco test
+i18next	ProTechCloud/medusa-app	apps/native/package.json	jest	jest
+i18next	Radgor144/PewnyRegionUI	package.json	vitest	vitest run
+i18next	ReCoded-Org/pebble-work-capstone-project	package.json	jest	jest --passWithNoTests
+i18next	Resgrid/Dispatch	package.json	jest	jest --coverage=true --coverageReporters=cobertura
+i18next	Scoofer4/clipcura	ui/package.json	other	playwright test
+i18next	Sienci-Labs/gsender	package.json	jest	jest --config jest.config.js
+i18next	Siralexisstar/service.reathlet-fisio	package.json	node --test	tsc -p tsconfig.api.json && node --test node_modules/.tmp/api-tests/tests/enviar
+i18next	SoluceTechnologies/nextcloud-calendar-mobile	package.json	jest	jest
+i18next	SoraYama/omo-configurator	package.json	vitest	vitest run
+i18next	Swiss-Armed-Forces/Loom	Frontend/package.json	vitest	vitest
+i18next	TNT-Likely/PanWatch	frontend/package.json	vitest	vitest
+i18next	TradeGit-Binary/gittrader	package.json	jest	jest
+i18next	Tryfwntsip/CalorieTracker	package.json	jest	jest
+i18next	VeriTeknik/pluggedin-app	package.json	vitest	vitest run
+i18next	YoxeLaunch/MagnusOS2	package.json	jest	NODE_ENV=test node --test tests/*.test.js
+i18next	ZWkang/mailbox	package.json	vitest	vitest run
+i18next	ZaguanLabs/ZaguanBlade	package.json	other	bun test ./src
+i18next	abutkeev/audiobooks	frontend/package.json	vitest	vitest run
+i18next	airswap/airswap-web	package.json	jest	craco test
+i18next	albramvar1/introduction-to-sike	frontend/package.json	jest	react-scripts test --silent
+i18next	alifsayalee/vendure-opus-4.8-	packages/core/package.json	vitest	vitest --config vitest.config.mts --run
+i18next	alyghaly2020-ux/prime	package.json	vitest	vitest run
+i18next	amirelhalabi/Liratek	frontend/package.json	jest	node ../node_modules/jest/bin/jest.js --config jest.config.ts
+i18next	annnsvm/buro-de	buero-frontend/package.json	vitest	vitest run
+i18next	arukaraz/synthseek	package.json	vitest	vitest run
+i18next	aws-solutions/generative-ai-application-builder-on-aws	source/ui-chat/package.json	vitest	vitest run --coverage --silent
+i18next	bannergress/website	package.json	vitest	vitest
+i18next	barbieri/local-openfinance	package.json	vitest	vitest run
+i18next	beihaili/Get-Started-with-Web3	package.json	vitest	vitest run
+i18next	brenosss/touchlines	package.json	other	bun test
+i18next	bsv-blockchain/bsv-desktop	package.json	vitest	vitest run --config vitest.config.electron.ts test/translations.test.ts test/pay
+i18next	chairemobilite/evolution	packages/evolution-common/package.json	jest	NODE_ENV=test jest --config=jest.config.js
+i18next	cinepro-org/ui	package.json	tsx --test	tsx --test
+i18next	covidgreen/covid-green-app	package.json	jest	jest
+i18next	damiansire/web-vaccine-tracker	package.json	vitest	vitest run
+i18next	dannysmith/tauri-template	package.json	vitest	vitest
+i18next	devTomek/mirumee-task	package.json	jest	react-scripts test
+i18next	devadvance/sms-backup-reader-2	package.json	vitest	vitest
+i18next	devandmus/master-fullstack	51-proyecto-web/actividad-01/package.json	other	react-scripts test
+i18next	dieuxuanhien/SeShop	frontend/package.json	vitest	vitest run
+i18next	digital-blueprint/mono-app	package.json	mocha	rolldown -c rolldown.config.js --environment APP_ENV:test && web-test-runner
+i18next	emporix/md-extensions	users-and-groups/package.json	vitest	vitest
+i18next	ever-co/ever-teams	apps/web/package.json	jest	jest --ci
+i18next	fady-zakaria/NBE	package.json	jest	jest
+i18next	fatbo/marksix-lucky-scan	package.json	vitest	vitest run
+i18next	feurle/tg-app	frontend/package.json	vitest	vitest run
+i18next	fpirim/fikopar	frontend/package.json	vitest	vitest run
+i18next	fullstacknights/website	package.json	other	echo "Write tests! -> https://gatsby.dev/unit-testing "
+i18next	gajjartejas/OHM-Client	package.json	jest	jest
+i18next	headwindsim/aircraft	package.json	vitest	vitest run
+i18next	iccanobif/gikopoi2	package.json	mocha	tsx ./node_modules/mocha/bin/mocha.js "tests/**/*.tests.ts"
+i18next	igorbogdanoski/MathDigitizer	package.json	vitest	vitest
+i18next	inbuxa/inbuxa-admin	package.json	vitest	vitest run
+i18next	jeongwookie/WhereMyTokens	package.json	node --test	npm run typecheck:reset-contract && npm run build:main && node --test scripts/mo
+i18next	jondarrer/smart-adviser-site	package.json	jest	jest --passWithNoTests
+i18next	julytian/tinypng-cli	package.json	node --test	node --test --experimental-transform-types 'tests/**/*.test.ts'
+i18next	karbowiak/hibiki	package.json	other	cd src-tauri && cargo test
+i18next	kazumasakawahara/ja-llm-wiki	package.json	vitest	npm run test:mocks && npm run test:llm
+i18next	kilianvivien/calqo	package.json	vitest	vitest run
+i18next	kqrlaSolis/U_SYSTEM_API	desktop/package.json	vitest	vitest run
+i18next	kuronosec/zk-voto-digital	package.json	other	craco test
+i18next	lixmal/gdprshare	package.json	jest	jest --watchAll=false
+i18next	merteldem1r/Kinpaw-AI-Pet-8x-Hackathon	apps/mobile/package.json	jest	jest
+i18next	michaelmassee/Petanque-Turnier-Manager-Online	package.json	vitest	npm run test:checks && npm run test:ui
+i18next	mikeyfe6/menefex	package.json	other	echo "Write tests! -> https://gatsby.dev/unit-testing" && exit 1
+i18next	minhvo99/shadowing	package.json	vitest	vitest run
+i18next	mirconsulting26-star/Mir-Consulting	frontend/package.json	other	craco test
+i18next	mukiwu/tempo-term	package.json	vitest	vitest run
+i18next	muyaallan/IroncladTrade	package.json	jest	jest
+i18next	naruhiyo/naruhiyo.github.io	package.json	vitest	vitest run
+i18next	near-daos/astro-ui	package.json	jest	TZ=UTC jest --silent
+i18next	neyugn-hnid/vibe-trading-tools	frontend/package.json	vitest	vitest
+i18next	nishantpainter/personal-kanban	package.json	other	react-scripts test
+i18next	nulogy/design-system	package.json	vitest	pnpm test:components && pnpm test:storybook
+i18next	ogarich89/iso	package.json	vitest	vitest run --coverage
+i18next	papyengtiger/-	package.json	vitest	vitest run --no-isolate
+i18next	pley-media-server/pley	apps/desktop/package.json	vitest	vitest run
+i18next	punisherpeter60-code/aigacau	package.json	jest	jest
+i18next	ramnivasattanti2008-cloud/VOJAS	legacy/frontend-v1/package.json.disabled	vitest	vitest
+i18next	rechedev9/gravity-room	apps/frontend/web/package.json	vitest	vitest run
+i18next	rex-9/rexone-web	package.json	vitest	vitest run
+i18next	rickstaa/github-emoji-picker	package.json	vitest	vitest run
+i18next	rockbenben/legend-talk	package.json	vitest	vitest run
+i18next	sLuCHaa/prudii-app	package.json	vitest	vitest run
+i18next	sabuhiteymurov/expo-base	package.json	jest	jest --watchAll
+i18next	senapati484/teledrive	package.json	vitest	vitest run
+i18next	sheehe/coase	package.json	vitest	vitest run
+i18next	solidSpoon/DashPlayer	package.json	vitest	run-s test:base
+i18next	stancheva880/PulseDesk	frontend/package.json	vitest	vitest run
+i18next	starcoinorg/starcoin-explorer	package.json	other	react-scripts test
+i18next	tarassov/bonuts-client	package.json	vitest	vitest
+i18next	thaitld/FE-EXE201	package.json	vitest	vitest
+i18next	the-sea-man/ZZZ-Mod-Hub	package.json	vitest	vitest run
+i18next	tkadauke/tiny_ci	package.json	vitest	vitest run
+i18next	umutcankurt/goworks	package.json	vitest	vitest
+i18next	versyxdigital/mkeditor	package.json	jest	jest
+i18next	vibe-dashboard/vibe-dashboard	vibe-kanban/packages/web-core/package.json	vitest	vitest run
+i18next	webmonitor/WebMonitor	frontend/package.json	jest	react-scripts test
+i18next	winterboy250-wq/smart-trader1	package.json	jest	jest
+i18next	wolox-training/mf-react-express	package.json	other	rescripts test --env=jsdom
+markdown-it	302ai/302-AI-Studio	package.json	vitest	npm run test:unit -- --run
+markdown-it	AKHegde22/Whiteboard999	package.json	jest	jest
+markdown-it	Aarayboy/PKU-Intelligence--2025	frontend/package.json	vitest	vitest
+markdown-it	AlataChan/octopus_studio	frontend/package.json	vitest	vitest run
+markdown-it	Arek525/prog_talk	frontend/package.json	vitest	vitest run
+markdown-it	Azar233/VisionPay-Agent	frontend/package.json	vitest	vitest
+markdown-it	CIDgravity/CIDgravity-X	services/app-frontend/package.json.backup	other	react-scripts test
+markdown-it	Constella-OS/constella-desktop	package.json	jest	jest
+markdown-it	Easy-Email-Pro/react-email-editor	package.json	other	eslint src --fix
+markdown-it	FarenRavirar/mesas_rpg_artificio	frontend/package.json	vitest	vitest run
+markdown-it	FelisDiligens/QuickConfiguration2	package.json	vitest	pnpm run ui:vitest && pnpm run cargo:nextest
+markdown-it	Gareleon/fCC-markdown-preview	package.json	other	react-scripts test
+markdown-it	HarshitShah6/Smart_Rental_Platform_Backend	package.json	jest	jest --runInBand
+markdown-it	Iraj-Aleem/QuranApp	package.json	other	gulp lint; gulp test
+markdown-it	Kabir-Narula/fragments	package.json	jest	jest -c jest.config.js --runInBand --
+markdown-it	MysticMilan369/markdown-multi-preview	package.json	mocha	vscode-test
+markdown-it	NASA-IMPACT/veda-ui	package.json	jest	TZ=UTC jest
+markdown-it	Nakajima-Foundation/ownplate	package.json	tsx --test	node --import tsx --test test/unit/test_*.ts
+markdown-it	OpenCSGs/csghub	frontend/package.json	vitest	vitest
+markdown-it	OpenHoof-AI/OpenHoof	package.json	vitest	node scripts/test-parallel.mjs
+markdown-it	PotentiaMod/scratch-vm	package.json	tap	npm run lint && npm run tap
+markdown-it	ShuiYunYueKeeper/mda-l2	package.json	jest	jest --coverage
+markdown-it	TCX123-a/MiAiCoding	package.json	vitest	vitest run
+markdown-it	TinyTapeout/tinytapeout_www	package.json	vitest	vitest run
+markdown-it	brunomatoscgna/markdown_teste	package.json	other	react-scripts test
+markdown-it	catdevnull/milei-twitter	sitio/package.json	vitest	vitest run
+markdown-it	chenjeraimunyaradzi05-art/mari	athena-platform/client/package.json	jest	start-server-and-test "npm run dev:e2e" http://localhost:3000 "playwright test"
+markdown-it	chuspeeism/dashi-taskboard	package.json	vitest	node --test && npm run test:components
+markdown-it	cloudcraftlabs-io/fincraft	frontend/package.json	vitest	vitest run --passWithNoTests
+markdown-it	colorful-tones/wp-trend-watcher	package.json	tsx --test	tsx --test tests/**/*.test.ts
+markdown-it	dimagi/Vellum	package.json	mocha	npm run test:mocha && npm run test:lint
+markdown-it	dizlexic/moo-tasks	package.json	vitest	vitest run
+markdown-it	edmundhung/edmund.dev	package.json	vitest	vitest run --config vitest.config.ts
+markdown-it	ember-cli/ember-cli	package.json	jest	node --unhandled-rejections=strict tests/runner
+markdown-it	fredabila/orcbot	package.json	vitest	vitest run --reporter=dot
+markdown-it	fsticza/pheproject	package.json	ava	ava
+markdown-it	fufankeji/FuFan-VibeCodingCourse	Stage2_Cursor_Deep_Dive/Lesson03_OpenClaw_Architecture_Digital_Employee/openclaw/package.json	vitest	node scripts/test-parallel.mjs
+markdown-it	gennit-project/multiforum-nuxt	package.json	vitest	playwright test
+markdown-it	heymoksedul/maxdraft	packages/markdown/package.json	vitest	vitest run
+markdown-it	hungtmbh1996/Vscode-python-unittest	package.json	vitest	npm-run-all test:*
+markdown-it	inclusive-design/wecount.inclusivedesign.ca	package.json	other	run-s test:*
+markdown-it	inocan-group/v-press-plus	package.json	uvu	yarn uvu tests -r ts-node/register
+markdown-it	intersystems-community/DeepSeeWeb	package.json	jest	jest
+markdown-it	jezztify/kanban-pilot	package.json	mocha	vscode-test
+markdown-it	jldec/agents-chat	package.json	vitest	tsc && vitest run
+markdown-it	joaostein/Eloquent-JavaScript	package.json	other	make test
+markdown-it	jseeio/jsee	package.json	jest	npm run test:types && npm run test:unit && npm run test:e2e
+markdown-it	ksw2000/hackmd-to-html-cli	package.json	jest	npx jest
+markdown-it	marijnh/Eloquent-JavaScript	package.json	other	make test
+markdown-it	mstein77/node-pi-flow	package.json	vitest	vitest
+markdown-it	naihe138/naice-blog-admin	package.json	other	react-scripts test
+markdown-it	nefevcore/AgentChat	packages/ac-client-ui-renderer/package.json	vitest	node ../../scripts/run-tests.mjs .
+markdown-it	nikola66/web-agent	package.json	tsx --test	npm run build:embed-runtime && tsx --test tests/*.test.ts
+markdown-it	ntzyz/Xplosiss	package.json	mocha	npm run build:test && npm run test:run
+markdown-it	onevcat/transcrab	package.json	node --test	node --test
+markdown-it	openqase/openqase	package.json	vitest	vitest run
+markdown-it	profcomff/webapp-ui	package.json	vitest	vitest
+markdown-it	puneetnith28/Draftly	package.json	jest	jest
+markdown-it	reptar/reptar	package.json	mocha	mocha --recursive --require ./test/setup.js --reporter spec
+markdown-it	rintoj/clifer	package.json	other	bun test
+markdown-it	scitix/siclaw	package.json	vitest	vitest run
+markdown-it	siesgstarena/Arena-2.0	package.json	other	run-script-os
+markdown-it	srtr42t2-max/blog	package.json	node --test	node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs
+markdown-it	supbro-dev/Wagner-front	package.json	other	react-scripts test
+markdown-it	tscanlin/processmd	package.json	other	jasmine
+markdown-it	uiseoklee/Pick-Place_gr00t_Isaac-sim_ROS2	.vscode-server/extensions/github.copilot-1.372.0/package.json	mocha	npm-run-all "test:extension --ignore-scripts" "test:headless --ignore-scripts" l
+markdown-it	ungoldman/sitedown	package.json	tap	tape test/*.js | tap-arc
+markdown-it	versyxdigital/mkeditor	package.json	jest	jest
+markdown-it	vivianeflowt/slice-workspace	packages/server/package.json	vitest	vitest run
+markdown-it	zouwei/moraya	package.json	vitest	vitest run
+markdown-it	zz5zz3/zz5zz3.github.io	package.json	node --test	node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs
+set-cookie-parser	ACRT-EVAL/kit-14-cr1	packages/adapter-netlify/package.json	vitest	vitest run
+set-cookie-parser	ACRT-EVAL/kit-14-cr10	packages/adapter-netlify/package.json	vitest	vitest run
+set-cookie-parser	ACRT-EVAL/kit-14-cr5	packages/adapter-netlify/package.json	vitest	vitest run
+set-cookie-parser	ACRT-EVAL/kit-14-cr7	packages/adapter-netlify/package.json	vitest	vitest run
+set-cookie-parser	ACRT-EVAL/kit-14-cr9	packages/adapter-netlify/package.json	vitest	vitest run
+set-cookie-parser	AztlanConsulting/ComposPet-Front	package.json	other	react-scripts test
+set-cookie-parser	BSc-Web-Apps/epic-news-2026	package.json	vitest	vitest
+set-cookie-parser	Blankeos/svelte-launch	package.json	vitest	npm run test:integration && npm run test:unit
+set-cookie-parser	Brfv/gassefals	package.json	other	gassefals-2
+set-cookie-parser	DeanArtDev/BigD-tracker	clients/web-client/package.json	vitest	vitest run
+set-cookie-parser	DevExpress/testcafe	package.json	mocha	gulp travis
+set-cookie-parser	FrazierMark/Node-Repo	package.json	vitest	vitest
+set-cookie-parser	Hikkywannafly/yuiani	package.json	vitest	vitest run
+set-cookie-parser	IndexXuan/v2ex-api-bridge	package.json	other	npm run cov
+set-cookie-parser	JacobFV/agent-twitter-client	package.json	jest	jest
+set-cookie-parser	Jenish094/providers	package.json	vitest	vitest run
+set-cookie-parser	Kovid63/mw-providers	package.json	vitest	vitest run
+set-cookie-parser	Kovid63/providers	package.json	vitest	vitest run
+set-cookie-parser	M-Kolacz/epic-stack-base-example	package.json	vitest	vitest
+set-cookie-parser	Mati365/upolujksiazke.pl	package.json	jest	jest --c config/jest.config.ts
+set-cookie-parser	MrRobot-fm/Vionex-Flow	apps/web/package.json	vitest	vitest run
+set-cookie-parser	OkitaT16/PROYECTO-FINALIZADO-DICI	package.json	other	npm run test --workspaces --if-present
+set-cookie-parser	R4tZz/meal-mind	apps/frontend/package.json	vitest	vitest
+set-cookie-parser	RounakDadsena/iosmirror-fixed	package.json	vitest	vitest run
+set-cookie-parser	RounakDadsena/providerfilmu	package.json	vitest	vitest run
+set-cookie-parser	Sabha-PEI/APL	package.json	vitest	vitest
+set-cookie-parser	Sangeetha963/kimar_website	package.json	vitest	vitest --watch --reporter=default --reporter=junit
+set-cookie-parser	SarkarKurdish/movie-web-providers	package.json	vitest	vitest run
+set-cookie-parser	Taciturno11/DICI-PROYECT	package.json	other	npm run test --workspaces --if-present
+set-cookie-parser	TheImaginear/providers	package.json	vitest	vitest run
+set-cookie-parser	VictorTaelin/agent-twitter-client	package.json	jest	jest
+set-cookie-parser	Whyriez/provider	package.json	vitest	vitest run
+set-cookie-parser	Whyriez/providers-stream	package.json	vitest	vitest run
+set-cookie-parser	YarikRevich/NewPhotoMobile	package.json	jest	jest --watchAll
+set-cookie-parser	Zarlanx/Movie_Lister	package.json	vitest	vitest run
+set-cookie-parser	andrewiggins/react-streaming-sandbox	package.json	node --test	node --test --experimental-strip-types ./server/__tests__/html-stream-parser.tes
+set-cookie-parser	annygabb/Help---TCC	Help/frontend/package.json	node --test	node --test services/*.test.js utils/*.test.js
+set-cookie-parser	anshumantekriwal/twitter-agent	package.json	jest	jest
+set-cookie-parser	appcelerator/amplify-tooling	packages/amplify-sdk/package.json	other	gulp test
+set-cookie-parser	ashdown0069/json-mock-hub	apps/web/package.json	jest	jest --maxWorkers=3
+set-cookie-parser	autogram-is/spidergram	package.json	ava	ava
+set-cookie-parser	benjamin-brady/memory-cards	package.json	vitest	playwright test
+set-cookie-parser	bigcommerce/bc-nuxt-vue-starter	package.json	jest	jest --runInBand --detectOpenHandles --forceExit
+set-cookie-parser	casal-innovations/launchfast-template	package.json	vitest	vitest
+set-cookie-parser	catamphetamine/imageboard	package.json	mocha	node --experimental-json-modules node_modules/mocha/bin/_mocha --require ./test/
+set-cookie-parser	charleslo1/weapp-cookie	package.json	mocha	mocha
+set-cookie-parser	chinpeerapat/cobalt	api/package.json	other	node src/util/test
+set-cookie-parser	clerk-community/svelte-clerk	package.json	other	pnpm test:setup && pnpm test:compat && pnpm test:e2e
+set-cookie-parser	datalens-tech/datalens-auth	package.json	jest	npm run build && npm run test:unit && npm run test:int:run
+set-cookie-parser	doged-io/doged	cashtab/package.json	jest	node scripts/test.cjs
+set-cookie-parser	epicweb-dev/epic-stack	package.json	vitest	vitest
+set-cookie-parser	epicweb-dev/react-e2e-testing-with-playwright	exercises/03.guides/02.problem.test-data/package.json	vitest	npx playwright test
+set-cookie-parser	event-catalog/eventcatalog	packages/core/package.json	vitest	cross-env DISABLE_EVENTCATALOG_CACHE=true vitest
+set-cookie-parser	exogen/node-fetch-har	package.json	jest	yarn run lint && yarn test:coverage
+set-cookie-parser	fabcotech/dappy	package.json	jest	jest
+set-cookie-parser	falcofemoralis/lumen	package.json	tsx --test	tsx --test "test/**/*.test.ts"
+set-cookie-parser	filiphric/cypress-plugin-api	package.json	other	cypress run
+set-cookie-parser	gauge-sh/epic-stack	package.json	vitest	vitest
+set-cookie-parser	geoffrich/svelte-adapter-azure-swa	package.json	vitest	vitest
+set-cookie-parser	gillkyle/epic-stack-template	package.json	vitest	vitest
+set-cookie-parser	ginger51011/ekorre	package.json	jest	jest
+set-cookie-parser	givelotus/lotusd	cashtab/package.json	jest	node scripts/test.cjs
+set-cookie-parser	honishi/nico-live-recorder	package.json	vitest	vitest run
+set-cookie-parser	hyperonpump/agent-twitter-client	package.json	jest	jest
+set-cookie-parser	jacobparis/epic-radial	package.json	vitest	vitest
+set-cookie-parser	japa/api-client	package.json	other	c8 npm run quick:test
+set-cookie-parser	jasonruesch/jasonruesch-4ccc	package.json	vitest	vitest
+set-cookie-parser	jina-ai/reader	package.json	other	npm run test:unit && npm run test:e2e
+set-cookie-parser	kentcdodds/epic-ai	package.json	vitest	vitest
+set-cookie-parser	khov4nfs/buddy	webapp/package.json	jest	jest
+set-cookie-parser	liaozh/wx-cookie	package.json	mocha	mocha
+set-cookie-parser	ligmajohn/mw-providers	package.json	vitest	vitest run
+set-cookie-parser	monsieurpigeon/epic-lopin	package.json	vitest	vitest
+set-cookie-parser	movie-web-archive/providers	package.json	vitest	vitest run
+set-cookie-parser	mswjs/headers-polyfill	package.json	vitest	vitest
+set-cookie-parser	nazarepiedady/sveltekit-docs-pt	packages/kit/package.json	vitest	pnpm test:unit && pnpm test:integration
+set-cookie-parser	nishanbhakta/kkkmk	package.json	jest	jest
+set-cookie-parser	okdargy/fxTikTok	package.json	jest	bun test
+set-cookie-parser	open-source-labs/Swell	package.json	jest	jest && webpack --mode=production --config ./webpack.production.js && cross-env 
+set-cookie-parser	oslabs-beta/NextWork	npm-package/package.json	jest	jest
+set-cookie-parser	petercossey/catalyst-msf	package.json	vitest	vitest run
+set-cookie-parser	rhaldkhein/vscode-xrest-client	package.json	mocha	node ./out/test/runTest.js
+set-cookie-parser	romeoscript/agent-twitter-client	package.json	jest	jest
+set-cookie-parser	social-protocols/jabble	package.json	vitest	vitest
+set-cookie-parser	supertokens/supertokens-node	package.json	mocha	TEST_MODE=testing npx ts-mocha -p lib/tsconfig.json -n loader=ts-node/esm --node
+set-cookie-parser	sussy-code/providers	package.json	vitest	vitest run
+set-cookie-parser	the-convocation/twitter-scraper	package.json	jest	node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --for
+set-cookie-parser	uniformdev/sitecore-jss-nuxtjs-starterkit	src/package.json	jest	jest
+set-cookie-parser	upperdo/backoffice-template	package.json	vitest	npm run test:integration && npm run test:unit
+set-cookie-parser	valeriangalliat/fetch-cookie	package.json	mocha	npm run build && mocha
+set-cookie-parser	veyzyn/kibelt	api/package.json	other	node src/util/test
+set-cookie-parser	vintasoftware/django-react-boilerplate	package.json	jest	jest
+set-cookie-parser	vtex/toolbelt	package.json	jest	jest
+set-cookie-parser	vuestorefront-community/moqui	packages/theme/package.json	jest	jest
+set-cookie-parser	vulppi-dev/IntREST	package.json	other	run-s build test:start
+set-cookie-parser	waq-r/ustream	package.json	vitest	vitest
+set-cookie-parser	website-scraper/website-scraper-puppeteer	package.json	mocha	c8 --all --reporter=text --reporter=lcov mocha --recursive --timeout 15000
+set-cookie-parser	wobsoriano/authey	package.json	vitest	vitest
+set-cookie-parser	workos/authkit-sveltekit	package.json	vitest	vitest
+set-cookie-parser	xinkjs/xink	packages/xink/package.json	vitest	vitest
+set-cookie-parser	zachfedor/mocktails	package.json	vitest	vitest
+set-cookie-parser	zed378/saftos-dashboard	package.json	jest	jest --watch
+set-cookie-parser	zisra/providers	package.json	vitest	vitest run
+set-cookie-parser	zoroxxxt/debias-ethos-vibeathon	agent-twitter-client/package.json	jest	jest
+set-cookie-parser	zwhitchcox/abc	package.json	vitest	vitest
+toml	Ah-saber/ReMind	package.json	tsx --test	tsx --test
+toml	EgoHackZero/Knowledge-graph-AI-Engineer	package.json	tsx --test	tsx --test
+toml	ExchangeUnion/xud	package.json	jest	npm run test:unit && npm run test:crypto && npm run test:int && npm run test:p2p
+toml	GageSorrell/SorrellWm	Package/EffectOld/Cli/package.json.old	vitest	vitest
+toml	Gioni06/stasis-generator	package.json	other	tsc --noEmit && NODE_ENV=test ts-node --files ./src/tests/cases/index.ts
+toml	Losant/mqtt-to-http-bridge	package.json	jest	jest test
+toml	NotePlan/plugins	package.json	jest	jest
+toml	brymck/brymck.github.io	package.json	tsx --test	tsx --test
+toml	dhzdhd/jade	package.json	vitest	npm run test:unit -- --run && npm run test:e2e
+toml	ferrarif1/MyNote	智能合约多种案例教程/triangular-arbitrage2-main/package.json	jest	cross-env NODE_ENV=test yarn jest -- --runInBand
+toml	folder/xdg	package.json	mocha	mocha
+toml	ikusner13/yahoo-fantasy-baseball	repos/effect/packages/effect/package.json	vitest	vitest --sequence.concurrent=false
+toml	jonmthomson/genealogy	package.json	tsx --test	tsx --test
+toml	microsoft/inshellisense	package.json	jest	node --experimental-vm-modules node_modules/jest/bin/jest.js
+toml	raspberrypi/pico-vscode	package.json	other	npm run lint
+toml	replicatedhq/hugo-algolia	package.json	other	bin/index.js
+toml	robinchoice/pleasance-thoughts	package.json	tsx --test	tsx --test
+toml	unfrgivn/jobspot	package.json	other	bun test
+toml	vyynl/lumeria-duskrunner	package.json	tsx --test	tsx --test
+toml	wbs-pro/wbs-pro.github.io	package.json	other	tsx ./quartz/util/path.test.ts && tsx ./quartz/depgraph.test.ts
+toml	wrathofrathma/devlog	package.json	other	tsx ./quartz/util/path.test.ts && tsx ./quartz/depgraph.test.ts
+toml	zenodotus280/apl	package.json	tsx --test	tsx --test
